@@ -13,14 +13,16 @@ object MicroServiceBuild extends Build with MicroService {
 
   val compile = Seq(
     ws,
-    "uk.gov.hmrc" %% "microservice-bootstrap" % "6.14.0"
+    "uk.gov.hmrc" %% "microservice-bootstrap" % "6.14.0",
+    "org.typelevel" %% "cats" % "0.9.0"
   )
 
   def test(scope: String = "test,it") = Seq(
     "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
     "org.scalatest" %% "scalatest" % "2.2.6" % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
-    "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
+    "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
+    "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % scope
   )
 
 }

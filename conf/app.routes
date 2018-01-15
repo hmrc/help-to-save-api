@@ -1,2 +1,1 @@
-# microservice specific routes
-
+POST /individuals/help-to-save/account @uk.gov.hmrc.helptosaveapi.controllers.CreateAccountController.createAccount
