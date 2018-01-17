@@ -21,10 +21,10 @@ uses:
   types: http://api-documentation-raml-frontend.service/api-documentation/assets/common/modules/types.raml
 
 /individuals/help-to-save/account:
-post:
-  description: Send a request to create an account from KCOM on behalf of the user
-  body:
-    application/json:
+  post:
+    description: Send a request to create an account from KCOM on behalf of the user
+    body:
+      application/json:
         schema: |
           {
            "header": {
@@ -48,115 +48,115 @@ post:
              "registrationChannel": "callCentre" 
            }
           }
-  responses: 
-    201: 
-      body:
-        application/json:        
-    400:
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+    responses:
+      201:
+        body:
+          application/json:
+      400:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0712",
-              "errorMessage": "The first character cannot be a special character",
-              "errorDetail": "Field: surname"
-             }  
-           }
-    401:        
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+              "error":
+               {
+                "errorMessageId": "ZYRA0712",
+                "errorMessage": "The first character cannot be a special character",
+                "errorDetail": "Field: surname"
+               }
+             }
+      401:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0713",
-              "errorMessage": "The request was not authenticated",
-              "errorDetail": "Unauthenticated request"
-             }  
-           }     
-    403:        
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+              "error":
+               {
+                "errorMessageId": "ZYRA0713",
+                "errorMessage": "The request was not authenticated",
+                "errorDetail": "Unauthenticated request"
+               }
+             }
+      403:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0714",
-              "errorMessage": "The request was forbidden",
-              "errorDetail": "Forbidden request"
-             }  
-           }   
-    404:        
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+              "error":
+               {
+                "errorMessageId": "ZYRA0714",
+                "errorMessage": "The request was forbidden",
+                "errorDetail": "Forbidden request"
+               }
+             }
+      404:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0713",
-              "errorMessage": "The requested resource was not found",
-              "errorDetail": "Resource not found"
-             }  
-           }      
-    405:        
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+              "error":
+               {
+                "errorMessageId": "ZYRA0713",
+                "errorMessage": "The requested resource was not found",
+                "errorDetail": "Resource not found"
+               }
+             }
+      405:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0713",
-              "errorMessage": "The method was not allowed",
-              "errorDetail": "Method not allowed"
-             }  
-           }   
-    409:        
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+              "error":
+               {
+                "errorMessageId": "ZYRA0713",
+                "errorMessage": "The method was not allowed",
+                "errorDetail": "Method not allowed"
+               }
+             }
+      409:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0713",
-              "errorMessage": "Account already exists, no changes have been made",
-              "errorDetail": "Conflict - account already exists"
-             }  
-           }    
-    500:        
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+              "error":
+               {
+                "errorMessageId": "ZYRA0713",
+                "errorMessage": "Account already exists, no changes have been made",
+                "errorDetail": "Conflict - account already exists"
+               }
+             }
+      500:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0713",
-              "errorMessage": "The request was unsuccessful because of an unexpected processing error",
-              "errorDetail": "Unexpected processing error"
-             }  
-           }   
-    502:        
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+              "error":
+               {
+                "errorMessageId": "ZYRA0713",
+                "errorMessage": "The request was unsuccessful because of an unexpected processing error",
+                "errorDetail": "Unexpected processing error"
+               }
+             }
+      502:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0713",
-              "errorMessage": "Server received an invalid response from the upstream server while trying to fulfil the request",
-              "errorDetail": "Bad gateway"
-             }  
-           }     
-    503:        
-      body:
-        application/json:
-          example: |
-           {
-            "error": 
+              "error":
+               {
+                "errorMessageId": "ZYRA0713",
+                "errorMessage": "Server received an invalid response from the upstream server while trying to fulfil the request",
+                "errorDetail": "Bad gateway"
+               }
+             }
+      503:
+        body:
+          application/json:
+            example: |
              {
-              "errorMessageId": "ZYRA0713",
-              "errorMessage": "The service was not available",
-              "errorDetail": "Service not available"
-             }  
-           }                              
+              "error":
+               {
+                "errorMessageId": "ZYRA0713",
+                "errorMessage": "The service was not available",
+                "errorDetail": "Service not available"
+               }
+             }
