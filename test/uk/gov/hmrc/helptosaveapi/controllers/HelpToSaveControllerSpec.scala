@@ -17,34 +17,38 @@
 package uk.gov.hmrc.helptosaveapi.controllers
 
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
-import org.scalamock.handlers.{CallHandler0, CallHandler1}
+import org.scalamock.handlers.CallHandler1
 import play.api.libs.json.{JsSuccess, Json}
 import play.api.mvc._
 import play.api.mvc.Results._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
-import uk.gov.hmrc.helptosaveapi.services.{CreateAccountRequestValidator, CreateAccountService, HeaderValidator}
+import uk.gov.hmrc.helptosaveapi.services.CreateAccountService
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, TestSupport}
+import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator}
 import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
 
-class CreateAccountControllerSpec extends TestSupport {
+class HelpToSaveControllerSpec extends TestSupport {
 
-  val headerValidator: HeaderValidator = mock[HeaderValidator]
+  val mockHttpHeaderValidator: APIHttpHeaderValidator = mock[APIHttpHeaderValidator]
 
   val createAccountService: CreateAccountService = mock[CreateAccountService]
 
-  val requestValidatorService: CreateAccountRequestValidator = mock[CreateAccountRequestValidator]
+  val mockRequestValidator: CreateAccountRequestValidator = mock[CreateAccountRequestValidator]
 
-  val controller = new CreateAccountController(headerValidator, requestValidatorService, createAccountService)
+  val controller: HelpToSaveController = new HelpToSaveController(createAccountService) {
+    override val httpHeaderValidator: APIHttpHeaderValidator = mockHttpHeaderValidator
+    override val createAccountRequestValidator: CreateAccountRequestValidator = mockRequestValidator
+  }
 
-  def mockHeaderValidator(response: ActionBuilder[Request]): CallHandler0[ActionBuilder[Request]] =
-    (headerValidator.validateHeader _).expects().returning(response)
+  def mockHeaderValidator(response: ActionBuilder[Request]): CallHandler1[String ⇒ Result, ActionBuilder[Request]] =
+    (mockHttpHeaderValidator.validateHeader(_: String ⇒ Result)).expects(*).returning(response)
 
   def mockRequestValidator(request: CreateAccountRequest)(response: Either[String, Unit]): CallHandler1[CreateAccountRequest, ValidatedNel[String, CreateAccountRequest]] =
-    (requestValidatorService.validateRequest(_: CreateAccountRequest))
+    (mockRequestValidator.validateRequest(_: CreateAccountRequest))
       .expects(request)
       .returning(Validated.fromEither(response).bimap(e ⇒ NonEmptyList.of(e), _ ⇒ request))
 

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.helptosaveapi.models
 
-import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
 
 import org.scalatest.{Matchers, WordSpec}
@@ -40,10 +39,15 @@ class CreateAccountHeaderSpec extends WordSpec with Matchers {
           """.stripMargin
 
         Json.parse(jsonString("\"2017-11-23 20:33:37 GMT\"")).validate[CreateAccountHeader] shouldBe a[JsSuccess[_]]
-        Json.parse(jsonString("\"2017-11-23 20:33:37\"")).validate[CreateAccountHeader] shouldBe a[JsError]
-        Json.parse(jsonString("\"20:33:37 2017-11-23\"")).validate[CreateAccountHeader] shouldBe a[JsError]
-        Json.parse(jsonString("\"2017/11/23 20:33:37 GMT\"")).validate[CreateAccountHeader] shouldBe a[JsError]
-        Json.parse(jsonString("true")).validate[CreateAccountHeader] shouldBe a[JsError]
+
+        List(
+          "\"2017-11-23 20:33:37\"",
+          "\"20:33:37 2017-11-23\"",
+          "\"2017/11/23 20:33:37 GMT\"",
+          "true"
+        ).foreach(s ⇒
+            Json.parse(jsonString(s)).validate[CreateAccountHeader] shouldBe a[JsError]
+          )
       }
 
     }

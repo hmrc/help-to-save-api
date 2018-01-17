@@ -44,10 +44,15 @@ class CreateAccountBodySpec extends TestSupport {
            """.stripMargin
 
         Json.parse(jsonString("\"19920423\"")).validate[CreateAccountBody] shouldBe a[JsSuccess[_]]
-        Json.parse(jsonString("\"1992-04-23\"")).validate[CreateAccountBody] shouldBe a[JsError]
-        Json.parse(jsonString("\"23041992\"")).validate[CreateAccountBody] shouldBe a[JsError]
-        Json.parse(jsonString("\"23-04-1992\"")).validate[CreateAccountBody] shouldBe a[JsError]
-        Json.parse(jsonString("true")).validate[CreateAccountBody] shouldBe a[JsError]
+
+        List(
+          "\"1992-04-23\"",
+          "\"23041992\"",
+          "\"23-04-1992\"",
+          "true"
+        ).foreach(s ⇒
+            Json.parse(jsonString(s)).validate[CreateAccountBody] shouldBe a[JsError]
+          )
       }
 
     }

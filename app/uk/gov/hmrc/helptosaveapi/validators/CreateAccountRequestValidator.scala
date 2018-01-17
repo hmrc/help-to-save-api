@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.services
+package uk.gov.hmrc.helptosaveapi.validators
 
 import java.util.regex.Matcher
 
@@ -22,28 +22,19 @@ import cats.data.ValidatedNel
 import cats.instances.string._
 import cats.syntax.cartesian._
 import cats.syntax.eq._
-import com.google.inject.{ImplementedBy, Singleton}
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
 
-@ImplementedBy(classOf[CreateAccountRequestValidatorImpl])
-trait CreateAccountRequestValidator {
+class CreateAccountRequestValidator {
+  import uk.gov.hmrc.helptosaveapi.validators.CreateAccountRequestValidator._
 
-  def validateRequest(request: CreateAccountRequest): ValidatedNel[String, CreateAccountRequest]
-
-}
-
-@Singleton
-class CreateAccountRequestValidatorImpl extends CreateAccountRequestValidator {
-  import uk.gov.hmrc.helptosaveapi.services.CreateAccountRequestValidatorImpl._
-
-  override def validateRequest(request: CreateAccountRequest): ValidatedNel[String, CreateAccountRequest] = {
+  def validateRequest(request: CreateAccountRequest): ValidatedNel[String, CreateAccountRequest] = {
     (request.header.validate() |@| request.body.validate()).map(CreateAccountRequest(_, _))
 
   }
 }
 
-object CreateAccountRequestValidatorImpl {
+object CreateAccountRequestValidator {
 
   implicit class CreateAccountBodyOps(val body: CreateAccountBody) extends AnyVal {
 
@@ -70,3 +61,4 @@ object CreateAccountRequestValidatorImpl {
   }
 
 }
+

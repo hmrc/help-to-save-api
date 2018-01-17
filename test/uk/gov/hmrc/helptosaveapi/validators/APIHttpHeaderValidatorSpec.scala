@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.services
+package uk.gov.hmrc.helptosaveapi.validators
 
 import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc.Results.{BadRequest, Ok}
@@ -25,11 +25,11 @@ import uk.gov.hmrc.helptosaveapi.util.TestSupport
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class HeaderValidatorImplSpec extends TestSupport {
+class APIHttpHeaderValidatorSpec extends TestSupport {
 
-  val validator: HeaderValidatorImpl = new HeaderValidatorImpl
+  val validator: APIHttpHeaderValidator = new APIHttpHeaderValidator
 
-  val action: Action[AnyContent] = validator.validateHeader(_ ⇒ play.api.mvc.Results.Ok)
+  val action: Action[AnyContent] = validator.validateHeader(_ ⇒ play.api.mvc.Results.BadRequest)(_ ⇒ play.api.mvc.Results.Ok)
 
   def await[A](a: Future[A]): A = Await.result(a, 5.seconds)
 
@@ -42,7 +42,7 @@ class HeaderValidatorImplSpec extends TestSupport {
         await(action(requestWithHeaders(headers)).run())
 
     val validRequestHeaders: Map[String, String] = Map(
-      HeaderValidatorImpl.expectedTxmHeaders.map(_ → "value") ++ List(
+      APIHttpHeaderValidator.expectedTxmHeaders.map(_ → "value") ++ List(
         HeaderNames.CONTENT_TYPE → ContentTypes.JSON,
         HeaderNames.ACCEPT → "application/vnd.hmrc.1.0+json"
       ): _*
@@ -65,8 +65,8 @@ class HeaderValidatorImplSpec extends TestSupport {
       }
 
       "does not have all the expected TxM headers" in {
-        (1 to HeaderValidatorImpl.expectedTxmHeaders.size).foreach{ size ⇒
-          HeaderValidatorImpl.expectedTxmHeaders.combinations(size).foreach{ headers ⇒
+        (1 to APIHttpHeaderValidator.expectedTxmHeaders.size).foreach{ size ⇒
+          APIHttpHeaderValidator.expectedTxmHeaders.combinations(size).foreach{ headers ⇒
             result(validRequestHeaders -- headers) shouldBe BadRequest
           }
         }

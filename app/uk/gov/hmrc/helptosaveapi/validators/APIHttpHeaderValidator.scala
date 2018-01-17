@@ -14,41 +14,32 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.services
+package uk.gov.hmrc.helptosaveapi.validators
 
 import cats.data.ValidatedNel
 import cats.instances.list._
 import cats.syntax.cartesian._
 import cats.syntax.traverse._
-import com.google.inject.{ImplementedBy, Singleton}
 import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc.{ActionBuilder, Headers, Request, Result}
-import play.api.mvc.Results.BadRequest
 import uk.gov.hmrc.helptosaveapi.util.{Logging, toFuture}
 import uk.gov.hmrc.helptosaveapi.util.Validation._
 
 import scala.concurrent.Future
 
-@ImplementedBy(classOf[HeaderValidatorImpl])
-trait HeaderValidator {
+class APIHttpHeaderValidator extends Logging {
 
-  def validateHeader(): ActionBuilder[Request]
+  import uk.gov.hmrc.helptosaveapi.validators.APIHttpHeaderValidator._
 
-}
-
-@Singleton
-class HeaderValidatorImpl extends HeaderValidator with Logging {
-
-  import uk.gov.hmrc.helptosaveapi.services.HeaderValidatorImpl._
-
-  val validateHeader: ActionBuilder[Request] = new ActionBuilder[Request] {
+  def validateHeader(errorResponse: ErrorDescription ⇒ Result): ActionBuilder[Request] = new ActionBuilder[Request] {
 
     def invokeBlock[A](request: Request[A],
                        block:   Request[A] ⇒ Future[Result]): Future[Result] =
       validateHttpHeaders(request).fold(
         { e ⇒
-          logger.warn(s"Could not validate headers: [${e.toList.mkString(",")}]")
-          BadRequest
+          val errorString = s"[${e.toList.mkString(",")}]"
+          logger.warn(s"Could not validate headers: $errorString")
+          errorResponse(errorString)
         },
         block
       )
@@ -80,7 +71,9 @@ class HeaderValidatorImpl extends HeaderValidator with Logging {
 
 }
 
-object HeaderValidatorImpl {
+object APIHttpHeaderValidator {
+
+  type ErrorDescription = String
 
   private[helptosaveapi] val expectedTxmHeaders: List[String] = List(
     "Gov-Client-User-ID",

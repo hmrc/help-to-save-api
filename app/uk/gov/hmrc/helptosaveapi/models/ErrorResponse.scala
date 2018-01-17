@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.util
+package uk.gov.hmrc.helptosaveapi.models
 
-import play.api.libs.json.JsError
+import play.api.libs.json.{Format, JsValue, Json}
 
-object JsErrorOps {
+case class ErrorResponse(errorMessageId: String, errorMessage: String, errorDetails: String)
 
-  implicit def jsErrorOps(error: JsError): JsErrorOps = new JsErrorOps(error)
+object ErrorResponse {
 
-}
+  def apply(errorMessage: String, errorDetails: String): ErrorResponse =
+    ErrorResponse("", errorMessage, errorDetails)
 
-class JsErrorOps(val error: JsError) extends AnyVal {
+  implicit val format: Format[ErrorResponse] = Json.format[ErrorResponse]
 
-  /**
-   * Create a legible string describing the error suitable for debugging purposes
-   */
-  def prettyPrint(): String = error.errors.map {
-    case (jsPath, validationErrors) ⇒
-      jsPath.toString + ": [" + validationErrors.map(_.message).mkString(",") + "]"
-  }.mkString("; ")
+  implicit class ErrorResponseOps(val errorResponse: ErrorResponse) extends AnyVal {
+    def toJson(): JsValue = format.writes(errorResponse)
+  }
 
 }
