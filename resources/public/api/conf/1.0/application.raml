@@ -19,12 +19,24 @@ uses:
   annotations: http://api-documentation-raml-frontend.service/api-documentation/assets/common/modules/annotations.raml
   types: http://api-documentation-raml-frontend.service/api-documentation/assets/common/modules/types.raml
 
+timeouts:
+  play: 20 seconds
+  api: 48 seconds
+
 /individuals/help-to-save/account:
   post:
+    is: [headers.acceptHeader]
     description: Send a request to create an account from KCOM on behalf of the user
+    headers:
+      content-type: application/json
+      authorization: bearer token
+      gov-client-user-ID: EL079651A
+      gov-client-timezone: UTC
+      gov-vendor-version: 1.3
+      gov-vendor-instance-ID: fa7c484c-d8cf-4f8a-a39c-54a2a4c04bc6
     body:
       application/json:
-        schema: |
+        example: |
           {
            "header": {
              "version": "1.0",
@@ -51,6 +63,7 @@ uses:
       201:
         body:
           application/json:
+            type: !include schemas/CreateAccount.json
       400:
         body:
           application/json:

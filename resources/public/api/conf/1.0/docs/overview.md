@@ -12,5 +12,6 @@ will have a controlled go-live with a pilot population in Q1/2018.
 
 # What is this API for?
 
-This API is for KCOM to use to create accounts for applicants who are digitally excluded. These applicants interact with
- KCOM via telephony.
+This API is used to create accounts for applicants who are eligible for Help To Save.
+
+It can also check eligibility to be enrolled into the Help To Save service.
