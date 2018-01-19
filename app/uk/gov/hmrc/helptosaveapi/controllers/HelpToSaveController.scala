@@ -41,7 +41,7 @@ class HelpToSaveController @Inject() (createAccountService: CreateAccountService
         validateRequest(request) {
           case CreateAccountRequest(_, body) ⇒
             createAccountService.createAccount(body).map { response ⇒
-              Status(response.status)(response.body)
+              Option(response.body).fold[Result](Status(response.status))(Status(response.status)(_))
             }
         }
       }
