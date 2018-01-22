@@ -7,9 +7,11 @@ documentation:
  - title: Overview
    content: !include docs/overview.md
  - title: Versioning
-   content: !include http://api-documentation-raml-frontend.service/api-documentation/assets/common/docs/versioning.md
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/versioning.md
  - title: Errors
-   content: !include http://api-documentation-raml-frontend.service/api-documentation/assets/common/docs/errors.md
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/errors.md
+ - title: Data Transformations
+   content: !include docs/dataTransformations.md
 
 mediaType: [ application/json ]
 
@@ -26,7 +28,7 @@ timeouts:
 /individuals/help-to-save/account:
   post:
     is: [headers.acceptHeader]
-    description: Send a request to create an account from KCOM on behalf of the user
+    description: Send a request to create an account on behalf of the user
     headers:
       content-type: application/json
       authorization: bearer [YOUR-SERVER-TOKEN]
@@ -41,7 +43,7 @@ timeouts:
            "header": {
              "version": "1.0",
              "createdTimestamp": "2017-11-22 23:11:09 GMT",
-             "clientCode": "KCOM",
+             "clientCode": "code",
              "requestCorrelationId": "123e4567-e89b-12d3-a456-426655440000"
             },
            "body": {

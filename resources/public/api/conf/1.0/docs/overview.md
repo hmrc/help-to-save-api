@@ -10,8 +10,13 @@ two years, meaning that people can save up to £2,400 and benefit from governmen
 be able to use the funds in any way they wish. The published implementation date for this is Q2/2018, but the project
 will have a controlled go-live with a pilot population in Q1/2018.
 
-# What is this API for?
+### What is this API for?
 
 This API is used to create accounts for applicants who are eligible for Help To Save.
 
 It can also check eligibility to be enrolled into the Help To Save service.
+
+#### For Digitally Excluded users
+
+In the json body email must not be specified, communicationPreference should be set to 00 and registrationChannel set to
+callCentre.
