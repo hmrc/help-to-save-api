@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.services
 
-import com.google.inject.{ImplementedBy, Singleton}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody
 import uk.gov.hmrc.helptosaveapi.util.Logging
@@ -32,7 +32,7 @@ trait CreateAccountService {
 }
 
 @Singleton
-class CreateAccountServiceImpl @Singleton() (htsConnector: HelpToSaveConnector) extends CreateAccountService with Logging {
+class CreateAccountServiceImpl @Inject()(htsConnector: HelpToSaveConnector) extends CreateAccountService with Logging {
 
   override def createAccount(createAccountBody: CreateAccountBody)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     htsConnector.createAccount(createAccountBody)
