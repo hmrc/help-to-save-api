@@ -16,20 +16,40 @@
 
 package uk.gov.hmrc.helptosaveapi.services
 
+import org.scalacheck.Arbitrary
+import org.scalamock.handlers.CallHandler3
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import play.api.libs.json.JsString
 import play.api.test.Helpers._
+import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
+import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody
+import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, TestSupport, toFuture}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
-import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, TestSupport}
+import scala.concurrent.{ExecutionContext, Future}
 
-class CreateAccountServiceImplSpec extends TestSupport {
+class CreateAccountServiceImplSpec extends TestSupport with GeneratorDrivenPropertyChecks {
 
-  val service = new CreateAccountServiceImpl
+  val htsConnector: HelpToSaveConnector = mock[HelpToSaveConnector]
+
+  val service: CreateAccountServiceImpl = new CreateAccountServiceImpl(htsConnector)
+
+  def mockHtsConnector(expectedBody: CreateAccountBody)(response: HttpResponse): CallHandler3[CreateAccountBody, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (htsConnector.createAccount(_: CreateAccountBody)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedBody, *, *)
+      .returning(response)
 
   "The CreateAccountServiceImpl" must {
 
-    "always return a 201" in {
-      val result = await(service.createAccount(DataGenerators.random(DataGenerators.createAccountBodyGen)))
-      result.status shouldBe CREATED
+    "always return the response as is from the connector" in {
+      implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.createAccountBodyGen)
 
+      forAll{ (body: CreateAccountBody, status: Int, response: String) ⇒
+        mockHtsConnector(body)(HttpResponse(status, Some(JsString(response))))
+        val result = await(service.createAccount(body))
+        result.status shouldBe status
+        result.json shouldBe JsString(response)
+      }
     }
 
   }

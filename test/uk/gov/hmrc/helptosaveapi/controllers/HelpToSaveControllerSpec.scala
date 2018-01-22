@@ -17,7 +17,7 @@
 package uk.gov.hmrc.helptosaveapi.controllers
 
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
-import org.scalamock.handlers.CallHandler1
+import org.scalamock.handlers.{CallHandler1, CallHandler3}
 import play.api.libs.json.{JsSuccess, Json}
 import play.api.mvc._
 import play.api.mvc.Results._
@@ -27,9 +27,9 @@ import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader,
 import uk.gov.hmrc.helptosaveapi.services.CreateAccountService
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, TestSupport}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator}
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveControllerSpec extends TestSupport {
 
@@ -52,9 +52,9 @@ class HelpToSaveControllerSpec extends TestSupport {
       .expects(request)
       .returning(Validated.fromEither(response).bimap(e ⇒ NonEmptyList.of(e), _ ⇒ request))
 
-  def mockCreateAccountService(expectedBody: CreateAccountBody)(response: Either[String, HttpResponse]): CallHandler1[CreateAccountBody, Future[HttpResponse]] =
-    (createAccountService.createAccount(_: CreateAccountBody))
-      .expects(expectedBody)
+  def mockCreateAccountService(expectedBody: CreateAccountBody)(response: Either[String, HttpResponse]): CallHandler3[CreateAccountBody, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (createAccountService.createAccount(_: CreateAccountBody)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedBody, *, *)
       .returning(response.fold(
         e ⇒ Future.failed(new Exception(e)),
         Future.successful

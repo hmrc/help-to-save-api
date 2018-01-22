@@ -17,24 +17,24 @@
 package uk.gov.hmrc.helptosaveapi.services
 
 import com.google.inject.{ImplementedBy, Singleton}
-import play.api.http.Status._
+import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody
-import uk.gov.hmrc.helptosaveapi.util.toFuture
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.helptosaveapi.util.Logging
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[CreateAccountServiceImpl])
 trait CreateAccountService {
 
-  def createAccount(createAccountBody: CreateAccountBody): Future[HttpResponse]
+  def createAccount(createAccountBody: CreateAccountBody)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
 }
 
 @Singleton
-class CreateAccountServiceImpl extends CreateAccountService {
+class CreateAccountServiceImpl @Singleton() (htsConnector: HelpToSaveConnector) extends CreateAccountService with Logging {
 
-  override def createAccount(createAccountBody: CreateAccountBody): Future[HttpResponse] =
-    HttpResponse(CREATED)
+  override def createAccount(createAccountBody: CreateAccountBody)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    htsConnector.createAccount(createAccountBody)
 
 }
