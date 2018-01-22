@@ -19,10 +19,17 @@ package uk.gov.hmrc.helptosaveapi.util
 import akka.stream.Materializer
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.WithFakeApplication
+
+import scala.concurrent.ExecutionContext
 
 class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeApplication {
 
   implicit lazy val materialiser: Materializer = fakeApplication.materializer
+
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+
+  implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
 
 }
