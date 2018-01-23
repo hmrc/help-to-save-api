@@ -7,10 +7,10 @@ the API permissioning is made against this ID. Perform the following steps:
 #### Initial Testing
 Step 1: setup a new Sandbox Test account at https://test-developer.service.hmrc.gov.uk/api-documentation old accounts must not be reused.
 Step 2: register the application at https://test-developer.service.hmrc.gov.uk/developer/login as new in order to acquire an ApplicationID.
-Step 3. Send the ApplicationID + “test” environment name is sent to the Help To Save Dev Team whereby they raise an
-internal ticket onto the API Platform backlog to setup access, and will additionally specify ‘grant suppress’ as part
-of this ticket. Once this ticket is done, the Help To Save Dev Team will notify the vendor that the API is ready to
-“sandbox test”.
+Step 3. Send the ApplicationID + “test” environment name to the Help To Save Dev Team via an email to
+hmrc-mdtp-team-helptosave-g@digital.hmrc.gov.uk whereby they raise an internal ticket onto the API Platform backlog to
+setup access, and will additionally specify ‘grant suppress’ as part of this ticket. Once this ticket is done, the Help
+To Save Dev Team will notify the vendor that the API is ready to “sandbox test”.
 
 #### Live running
 Step 1. setup a Live account at https://developer.service.hmrc.gov.uk/api-documentation old accounts must not be reused.
