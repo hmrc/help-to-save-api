@@ -2,6 +2,7 @@
 title: Help-To-Save-API
 version: 1.0
 protocols: [ HTTPS ]
+baseUri: https://api.service.hmrc.gov.uk/
 
 documentation:
  - title: Overview
@@ -12,6 +13,12 @@ documentation:
    content: !include docs/errors.md
  - title: Data Transformations
    content: !include docs/dataTransformations.md
+ - title: Access to the API
+   content: !include docs/access.md
+ - title: Diacritics and Legal Considerations
+   content: !include docs/diacritics.md
+ - title: Security Matters
+   content: !include docs/security.md
 
 mediaType: [ application/json ]
 
@@ -28,7 +35,7 @@ timeouts:
 /individuals/help-to-save/account:
   post:
     is: [headers.acceptHeader]
-    description: Send a request to create an account on behalf of the user
+    description: Sends a request to create an account on behalf of the user
     headers:
       content-type: application/json
       authorization: bearer [YOUR-SERVER-TOKEN]
@@ -38,6 +45,7 @@ timeouts:
       gov-vendor-instance-ID: fa7c484c-d8cf-4f8a-a39c-54a2a4c04bc6
     body:
       application/json:
+        schema: !include schemas/CreateAccount.json
         example: |
           {
            "header": {
@@ -65,7 +73,6 @@ timeouts:
       201:
         body:
           application/json:
-            type: !include schemas/CreateAccount.json
       400:
         body:
           application/json:
