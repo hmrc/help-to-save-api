@@ -23,6 +23,18 @@ trait MicroService {
   lazy val plugins: Seq[Plugins] = Seq.empty
   lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
+  lazy val scoverageSettings = {
+    import scoverage.ScoverageKeys
+    Seq(
+      // Semicolon-separated list of regexs matching classes to exclude
+      ScoverageKeys.coverageExcludedPackages := "<empty>;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps).*",
+      ScoverageKeys.coverageMinimum := 87,
+      ScoverageKeys.coverageFailOnMinimum := true,
+      ScoverageKeys.coverageHighlighting := true,
+      parallelExecution in Test := false
+    )
+  }
+
   lazy val scalariformSettings = {
     import com.typesafe.sbt.SbtScalariform.ScalariformKeys
     import scalariform.formatter.preferences._
@@ -76,7 +88,7 @@ trait MicroService {
   lazy val microservice = Project(appName, file("."))
     .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin) ++ plugins: _*)
     .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
-    .settings(playSettings: _*)
+    .settings(playSettings ++ scoverageSettings: _*)
     .settings(scalaSettings: _*)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)

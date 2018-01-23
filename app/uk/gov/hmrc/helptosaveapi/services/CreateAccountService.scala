@@ -32,7 +32,7 @@ trait CreateAccountService {
 }
 
 @Singleton
-class CreateAccountServiceImpl @Inject()(htsConnector: HelpToSaveConnector) extends CreateAccountService with Logging {
+class CreateAccountServiceImpl @Inject() (htsConnector: HelpToSaveConnector) extends CreateAccountService with Logging {
 
   override def createAccount(createAccountBody: CreateAccountBody)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     htsConnector.createAccount(createAccountBody)
