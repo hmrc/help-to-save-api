@@ -1,0 +1,22 @@
+{
+  "header": {
+    "version": "1.0",
+    "createdTimestamp": "2017-11-22 23:11:09 GMT",
+    "clientCode": "code",
+    "requestCorrelationId": "123e4567-e89b-12d3-a456-426655440000"
+  },
+  "body": {
+    "nino": "AB123456A",
+    "forename": "Alex",
+    "surname": "O'Connor",
+    "dateOfBirth": "19920423",
+    "contactDetails": {
+      "address1": "86 Ashopton Road",
+      "address2": "Blackpool",
+      "postcode": "FY43 1FB",
+      "countryCode": "GB",
+      "communicationPreference": "00"
+    },
+    "registrationChannel": "callCentre"
+  }
+}
