@@ -18,7 +18,9 @@ package uk.gov.hmrc.helptosaveapi.validators
 
 import cats.data.ValidatedNel
 import cats.instances.list._
+import cats.instances.string._
 import cats.syntax.cartesian._
+import cats.syntax.eq._
 import cats.syntax.traverse._
 import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc.{ActionBuilder, Headers, Request, Result}
@@ -53,7 +55,7 @@ class APIHttpHeaderValidator extends Logging {
       contentType ⇒ s"content type was not JSON: ${contentType.getOrElse("")}")
 
     val acceptCheck: ValidatedNel[String, Headers] = validationFromBoolean(headers)(
-      _.get(HeaderNames.ACCEPT).exists(_.contains(expectedAcceptType)),
+      _.get(HeaderNames.ACCEPT).exists(_ === expectedAcceptType),
       _ ⇒ s"accept did not contain expected mime type '$expectedAcceptType'")
 
     val txmHeadersCheck: ValidatedNel[String, List[String]] = {
