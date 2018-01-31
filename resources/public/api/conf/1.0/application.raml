@@ -1,5 +1,5 @@
 #%RAML 1.0
-title: Help-To-Save-API
+title: Help-To-Save
 version: 1.0
 protocols: [ HTTPS ]
 baseUri: https://api.service.hmrc.gov.uk/
@@ -9,8 +9,14 @@ documentation:
    content: !include docs/overview.md
  - title: Versioning
    content: !include docs/versioning.md
+ - title: Parameters
+   content: !include docs/parameters.md
+ - title: E2E Live Support Journey Analysis
+   content: !include docs/liveSupport.md
  - title: Errors
    content: !include docs/errors.md
+ - title: Timeouts
+   content: !include docs/timeouts.md
  - title: Data Transformations
    content: !include docs/dataTransformations.md
  - title: Access to the API
@@ -27,10 +33,6 @@ uses:
   headers: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/headers.raml
   annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
   types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
-
-timeouts:
-  play: 20 seconds
-  api: 48 seconds
 
 /individuals/help-to-save/account:
   post:
