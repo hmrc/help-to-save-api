@@ -12,8 +12,8 @@ will have a controlled go-live with a pilot population in Q1/2018.
 
 ### What is this API for?
 
-This is a private API on the HMRC API Platform for the Help to Save (HtS) product that behaves as a proxy for the Create
-HtS Account end point at NS&I.
+This is a private API on the HMRC API Platform termed an 'Application Restricted Endpoint' for the Help to Save (HtS)
+product that behaves as a proxy for the Create HtS Account end point at NS&I.
 
 Before invoking this synchronous API, the caller is assumed to have already invoked the HtS DES API #2A to check that the
 applicant is Eligible for a account creation, and that this returned SUCCESS.
@@ -21,11 +21,10 @@ applicant is Eligible for a account creation, and that this returned SUCCESS.
 On a successful account creation at NS&I, the API internals will additionally, and asynchronously in the background, set
 the HtS ‘Update Account’ flag in ITMP, aka endpoint HtS DES API #4A.
 
-The API will be called by an external supplier to make a request to create a Help to Save account on behalf of an Applicant
+The API will be called by a Vendor to make a request to create a Help to Save account on behalf of an Applicant
 who is eligible for a Help to Save account.
-
 
 ### For Digitally Excluded users
 
-In the json body email must not be specified, communicationPreference should be set to 00 and registrationChannel set to
-callCentre.
+In the JSON 'Body' object, the email must not be specified, communicationPreference should be set to 00 and
+registrationChannel set to callCentre.
