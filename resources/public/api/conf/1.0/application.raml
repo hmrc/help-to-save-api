@@ -36,12 +36,10 @@ uses:
 
 /individuals/help-to-save/account:
   post:
-    is: [headers.acceptHeader]
     description: Sends a request to create an account on behalf of the user
+    is: [headers.acceptHeader, headers.contentHeader]
+    securedBy: [ sec.x-application ]
     headers:
-      content-type: application/json
-      accept: application/vnd.hmrc.1.0+json
-      authorization: Bearer [YOUR-SERVER-TOKEN]
       gov-client-user-ID: EL079651A
       gov-client-timezone: UTC
       gov-vendor-version: 1.3
