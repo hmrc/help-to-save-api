@@ -16,25 +16,50 @@
 
 package uk.gov.hmrc.helptosaveapi
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import java.util.concurrent.TimeUnit
+import javax.inject.{Inject, Singleton}
 
-import play.api.Logger
-import uk.gov.hmrc.helptosaveapi.config.AppContext
+import akka.actor.Cancellable
+import play.api.inject.ApplicationLifecycle
+import play.api.{Application, Configuration}
 import uk.gov.hmrc.helptosaveapi.connectors.ServiceLocatorConnector
 import uk.gov.hmrc.helptosaveapi.util.Logging
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 @Singleton
-class ApplicationRegistration @Inject() (serviceLocatorConnector: ServiceLocatorConnector, config: AppContext) extends Logging {
-  val registrationEnabled: Boolean = config.getConfBool("service-locator.enabled", defBool = true)
+class ApplicationRegistration @Inject() (application:             Application,
+                                         applicationLifecycle:    ApplicationLifecycle,
+                                         serviceLocatorConnector: ServiceLocatorConnector,
+                                         config:                  Configuration)(implicit ec: ExecutionContext) extends Logging {
 
-  if (registrationEnabled) serviceLocatorConnector.register().onComplete{
-    case Success(result) ⇒
-      Logger.info("Service was successfully registered")
-    case Failure(e) ⇒
-      logger.error(s"Service could not register on the service locator", e)
+  val registrationEnabled: Boolean = config.underlying.getBoolean("service-locator.enabled")
+
+  val duration: FiniteDuration = FiniteDuration(config.underlying.getLong("app.scheduler.length"), TimeUnit.SECONDS)
+
+  val cancellable: Cancellable = application.actorSystem.scheduler.scheduleOnce(duration, new Runnable {
+    override def run(): Unit = if (registrationEnabled) serviceLocatorConnector.register().onComplete{
+      case Success(result) ⇒
+        logger.info("Service was successfully registered")
+      case Failure(e) ⇒
+        logger.error(s"Service could not register on the service locator", e)
+    }
+  })
+
+  applicationLifecycle.addStopHook{ () ⇒
+    Future[Unit](
+      if (!cancellable.isCancelled) {
+        val cancelled = cancellable.cancel()
+
+        if (!cancelled) {
+          logger.warn("Could not cancel service locator registration task")
+        } else {
+          logger.info("Cancelled service locator registration task")
+        }
+      }
+    )
   }
+
 }

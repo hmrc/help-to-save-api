@@ -18,7 +18,8 @@ package uk.gov.hmrc.helptosaveapi.connectors
 
 import javax.inject.Inject
 
-import play.api.Logger
+import cats.instances.int._
+import cats.syntax.eq._
 import com.google.inject.{ImplementedBy, Singleton}
 import play.api.Configuration
 import play.api.http.{ContentTypes, HeaderNames}
@@ -26,18 +27,20 @@ import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.models.Registration
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.config.ServicesConfig
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[ServiceLocatorConnectorImpl])
-trait ServiceLocatorConnector extends ServicesConfig {
+trait ServiceLocatorConnector {
 
   def register(): Future[Boolean]
 }
 
 @Singleton
-class ServiceLocatorConnectorImpl @Inject() (config: Configuration, http: WSHttp) extends ServiceLocatorConnector {
+class ServiceLocatorConnectorImpl @Inject() (config: Configuration, http: WSHttp) extends ServiceLocatorConnector with ServicesConfig {
+
+  override val runModeConfiguration: Configuration = config
 
   private lazy val appName: String = getString("appName")
   private lazy val appUrl: String = getString("appUrl")
@@ -45,16 +48,12 @@ class ServiceLocatorConnectorImpl @Inject() (config: Configuration, http: WSHttp
 
   val metadata: Option[Map[String, String]] = Some(Map("third-party-api" -> "true"))
 
-  def register(): Future[Boolean] = {
-    implicit val hc: HeaderCarrier = new HeaderCarrier
+  implicit val hc: HeaderCarrier = new HeaderCarrier
+  lazy val registration: Registration = Registration(appName, appUrl, metadata)
 
-    val registration = Registration(appName, appUrl, metadata)
-    http.POST(s"$serviceUrl/registration", registration, Seq(HeaderNames.CONTENT_TYPE -> ContentTypes.JSON)) map {
-      res ⇒
-        res.status match {
-          case 204 ⇒ true
-          case _   ⇒ false
-        }
+  def register(): Future[Boolean] = {
+    http.post(s"$serviceUrl/registration", registration, Map(HeaderNames.CONTENT_TYPE -> ContentTypes.JSON)) map {
+      _.status === 204
     } recover {
       case e: Throwable ⇒
         false

@@ -16,10 +16,27 @@
 
 package uk.gov.hmrc.helptosaveapi.config
 
+import javax.inject.Inject
+
+import com.google.inject.{ImplementedBy, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.play.config.ServicesConfig
 
-//@ImplementedBy(classOf[AppContextImpl])
+import scala.concurrent.Future
+
+//trait AppContext extends ServicesConfig {
+//
+//  val configuration: Configuration
+//
+//  lazy val access: Option[Configuration] = configuration.getConfig(s"api.access")
+//}
+//
+//object AppContext extends AppContext {
+//
+//  val configuration: Configuration = runModeConfiguration
+//}
+
+@ImplementedBy(classOf[AppContextImpl])
 trait AppContext extends ServicesConfig {
 
   val configuration: Configuration
@@ -27,15 +44,7 @@ trait AppContext extends ServicesConfig {
   lazy val access: Option[Configuration] = configuration.getConfig(s"api.access")
 }
 
-//@Singleton
-//class AppContextImpl @Inject()(override val runModeConfiguration: Configuration,
-//                                     environment: Environment) extends AppContext {
-//  override protected def mode = environment.mode
-//
-//  lazy val access = runModeConfiguration.getConfig(s"api.access")
-//}
-
-object AppContext extends AppContext {
-
+@Singleton
+class AppContextImpl @Inject() (config: Configuration) extends AppContext {
   val configuration: Configuration = runModeConfiguration
 }

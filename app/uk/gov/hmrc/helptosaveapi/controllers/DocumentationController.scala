@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package controllers
+package uk.gov.hmrc.helptosaveapi.controllers
 
+import javax.inject.{Inject, Singleton}
+
+import controllers.AssetsBuilder
 import domain.APIAccess
-import play.api.http.{HttpErrorHandler, LazyHttpErrorHandler}
+import play.api.http.HttpErrorHandler
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.helptosaveapi.config.AppContext
-import uk.gov.hmrc.play.microservice.controller.BaseController
 import uk.gov.hmrc.helptosaveapi.views.txt
+import uk.gov.hmrc.play.microservice.controller.BaseController
 
-class DocumentationController(httpErrorHandler: HttpErrorHandler)
+@Singleton
+class DocumentationController @Inject() (httpErrorHandler: HttpErrorHandler, appContext: AppContext)
   extends AssetsBuilder(httpErrorHandler) with BaseController {
 
   def definition(): Action[AnyContent] = Action {
-    Ok(txt.definition(APIAccess.build(AppContext.access))).withHeaders(CONTENT_TYPE -> JSON)
+    Ok(txt.definition(APIAccess.build(appContext.access))).withHeaders(CONTENT_TYPE -> JSON)
   }
 
   def raml(version: String, file: String): Action[AnyContent] = {
     super.at(s"/public/api/conf/$version", file)
   }
 }
-
-object Documentation extends DocumentationController(LazyHttpErrorHandler)
