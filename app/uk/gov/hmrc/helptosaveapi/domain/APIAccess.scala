@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.models
+package domain
 
 import play.api.libs.json.{Format, Json}
+import play.api.Configuration
 
-case class Registration(serviceName: String, serviceUrl: String, metadata: Option[Map[String, String]] = None)
+case class APIAccess(`type`: String, whitelistedApplicationIds: Option[Seq[String]])
 
-object Registration {
-  implicit val regFormat: Format[Registration] = Json.format[Registration]
+object APIAccess {
+  implicit val apiAccessFormats: Format[APIAccess] = Json.format[APIAccess]
+
+  def build(config: Option[Configuration])(version: String): APIAccess = APIAccess(
+    `type`                    = config.flatMap(_.getString(s"version-$version.type")).getOrElse("PRIVATE"),
+    whitelistedApplicationIds = config.flatMap(_.getStringSeq(s"version-$version.whitelistedApplicationIds")))
 }

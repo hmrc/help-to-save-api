@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.models
+package uk.gov.hmrc.helptosaveapi
 
-import play.api.libs.json.{Format, Json}
+import com.google.inject.AbstractModule
 
-case class Registration(serviceName: String, serviceUrl: String, metadata: Option[Map[String, String]] = None)
-
-object Registration {
-  implicit val regFormat: Format[Registration] = Json.format[Registration]
+class RegistrationModule extends AbstractModule {
+  override def configure() = {
+    bind(classOf[ApplicationRegistration]).asEagerSingleton()
+  }
 }

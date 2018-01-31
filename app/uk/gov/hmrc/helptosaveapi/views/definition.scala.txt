@@ -1,0 +1,26 @@
+@import domain.APIAccess
+@import play.api.libs.json.Json
+
+@(access: String => APIAccess)
+{
+  "scopes":[
+    {
+      "key":"help-to-save-api",
+      "name":"create hts account",
+      "description":"Create help to save accounts for eligible applicants",
+      "confidenceLevel": 200
+    }
+  ],
+  "api": {
+      "name":"Help To Save API",
+      "description":"Savings scheme for working people on low income",
+      "context":"help-to-save",
+      "versions": [
+        {
+          "version": "1.0",
+          "status": "PROTOTYPED",
+          "access": @Json.toJson(access("""1.0"""))
+        }
+      ]
+    }
+}
