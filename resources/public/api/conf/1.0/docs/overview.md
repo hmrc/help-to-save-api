@@ -26,5 +26,5 @@ who is eligible for a Help to Save account.
 
 ### For Digitally Excluded users
 
-In the JSON 'Body' object, the email must not be specified, communicationPreference should be set to 00 and
-registrationChannel set to callCentre.
+In the JSON 'Body' object, the email must not be specified, communicationPreference must be set to "00" and
+registrationChannel must be set to "callCentre".
