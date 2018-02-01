@@ -21,6 +21,7 @@ import javax.inject.Inject
 import cats.instances.int._
 import cats.syntax.eq._
 import com.google.inject.{ImplementedBy, Singleton}
+import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
 import play.api.http.{ContentTypes, HeaderNames}
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
@@ -38,23 +39,25 @@ trait ServiceLocatorConnector {
 }
 
 @Singleton
-class ServiceLocatorConnectorImpl @Inject() (config: Configuration, http: WSHttp, environment: Environment) extends ServiceLocatorConnector with ServicesConfig {
+class ServiceLocatorConnectorImpl @Inject() (config:      Configuration,
+                                             http:        WSHttp,
+                                             environment: Environment) extends ServiceLocatorConnector with ServicesConfig {
 
-  val mode = environment.mode
+  val mode: Mode = environment.mode
 
   override val runModeConfiguration: Configuration = config
 
-  private lazy val appName: String = getString("appName")
-  private lazy val appUrl: String = getString("appUrl")
-  private lazy val serviceUrl: String = baseUrl("service-locator")
+  private val appName: String = getString("appName")
+  private val appUrl: String = getString("appUrl")
+  private val serviceUrl: String = baseUrl("service-locator")
 
   val metadata: Option[Map[String, String]] = Some(Map("third-party-api" -> "true"))
 
   implicit val hc: HeaderCarrier = new HeaderCarrier
-  lazy val registration: Registration = Registration(appName, appUrl, metadata)
+  val registration: Registration = Registration(appName, appUrl, metadata)
 
   def register(): Future[Boolean] = {
-    http.post(s"$serviceUrl/registration", registration, Map(HeaderNames.CONTENT_TYPE -> ContentTypes.JSON)) map {
+    http.post(s"$serviceUrl/registration", registration).map{
       _.status === 204
     } recover {
       case e: Throwable ⇒

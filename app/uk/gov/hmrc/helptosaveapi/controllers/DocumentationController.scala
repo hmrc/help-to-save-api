@@ -18,23 +18,48 @@ package uk.gov.hmrc.helptosaveapi.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import com.typesafe.config.Config
 import controllers.AssetsBuilder
-import domain.APIAccess
+import play.api.Configuration
 import play.api.http.HttpErrorHandler
+import play.api.libs.json.{Format, Json}
 import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.helptosaveapi.config.AppContext
 import uk.gov.hmrc.helptosaveapi.views.txt
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import configs.syntax._
+import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
+import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess.Version
 
 @Singleton
-class DocumentationController @Inject() (httpErrorHandler: HttpErrorHandler, appContext: AppContext)
+class DocumentationController @Inject() (httpErrorHandler: HttpErrorHandler, configuration: Configuration)
   extends AssetsBuilder(httpErrorHandler) with BaseController {
 
+  val access: Version ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
+
   def definition(): Action[AnyContent] = Action {
-    Ok(txt.definition(APIAccess.build(appContext.access))).withHeaders(CONTENT_TYPE -> JSON)
+    Ok(txt.definition(access)).withHeaders(CONTENT_TYPE -> JSON)
   }
 
-  def raml(version: String, file: String): Action[AnyContent] = {
-    super.at(s"/public/api/conf/$version", file)
+  def raml(version: String, file: String): Action[AnyContent] =
+    at(s"/public/api/conf/$version", file)
+
+}
+
+object DocumentationController {
+
+  case class APIAccess(`type`: String, whitelistedApplicationIds: List[String])
+
+  object APIAccess {
+
+    implicit val apiAccessFormats: Format[APIAccess] = Json.format[APIAccess]
+
+    type Version = String
+
+    def apply(config: Config)(version: Version): APIAccess =
+      APIAccess(
+        `type`                    = config.getString(s"version-$version.type"),
+        whitelistedApplicationIds = config.get[List[String]](s"version-$version.whitelistedApplicationIds").value
+      )
   }
+
 }

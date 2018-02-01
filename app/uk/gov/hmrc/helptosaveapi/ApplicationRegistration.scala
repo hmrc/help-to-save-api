@@ -18,7 +18,7 @@ package uk.gov.hmrc.helptosaveapi
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
-
+import configs.syntax._
 import akka.actor.Cancellable
 import play.api.inject.ApplicationLifecycle
 import play.api.{Application, Configuration}
@@ -35,18 +35,19 @@ class ApplicationRegistration @Inject() (application:             Application,
                                          serviceLocatorConnector: ServiceLocatorConnector,
                                          config:                  Configuration)(implicit ec: ExecutionContext) extends Logging {
 
-  val registrationEnabled: Boolean = config.underlying.getBoolean("service-locator.enabled")
+  val registrationEnabled: Boolean = config.underlying.getBoolean("service-locator-registration.enabled")
 
-  val duration: FiniteDuration = FiniteDuration(config.underlying.getLong("app.scheduler.length"), TimeUnit.SECONDS)
+  val duration: FiniteDuration = config.underlying.get[FiniteDuration]("service-locator-registration.delay").value
 
-  val cancellable: Cancellable = application.actorSystem.scheduler.scheduleOnce(duration, new Runnable {
-    override def run(): Unit = if (registrationEnabled) serviceLocatorConnector.register().onComplete{
-      case Success(result) ⇒
-        logger.info("Service was successfully registered")
-      case Failure(e) ⇒
-        logger.error(s"Service could not register on the service locator", e)
-    }
-  })
+  val cancellable: Cancellable = application.actorSystem.scheduler.scheduleOnce(duration,
+    new Runnable {
+      override def run(): Unit = if (registrationEnabled) serviceLocatorConnector.register().onComplete{
+        case Success(result) ⇒
+          logger.info("Service was successfully registered")
+        case Failure(e) ⇒
+          logger.error(s"Service could not register on the service locator", e)
+      }
+    })
 
   applicationLifecycle.addStopHook{ () ⇒
     Future[Unit](

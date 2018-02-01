@@ -17,24 +17,18 @@
 package uk.gov.hmrc.helptosaveapi.connectors
 
 import org.scalacheck.Arbitrary
-import org.scalamock.handlers.CallHandler6
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.Configuration
-import play.api.libs.json.{JsString, Writes}
+import play.api.libs.json.JsString
 import play.api.test.Helpers._
-import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody
-import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, TestSupport, toFuture}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-
-import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, TestSupport}
+import uk.gov.hmrc.http.HttpResponse
 
 class HelpToSaveConnectorImplSpec extends TestSupport with GeneratorDrivenPropertyChecks {
 
   val host = "host"
   val port = 1
-
-  val http: WSHttp = mock[WSHttp]
 
   val connector = new HelpToSaveConnectorImpl(
     Configuration(
@@ -42,11 +36,6 @@ class HelpToSaveConnectorImplSpec extends TestSupport with GeneratorDrivenProper
       "microservice.services.help-to-save.port" → port),
     http
   )
-
-  def mockPost[A](expectedUrl: String, expectedBody: A)(response: HttpResponse): CallHandler6[String, A, Map[String, String], Writes[A], HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (http.post[A](_: String, _: A, _: Map[String, String])(_: Writes[A], _: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedUrl, expectedBody, Map.empty[String, String], *, *, *)
-      .returning(response)
 
   "The HelpToSaveConnectorImpl" when {
 
@@ -56,7 +45,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with GeneratorDrivenProper
         implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.createAccountBodyGen)
 
         forAll{ (body: CreateAccountBody, status: Int, response: String) ⇒
-          mockPost(s"http://$host:$port/help-to-save/create-de-account", body)(HttpResponse(status, Some(JsString(response))))
+          mockPost(s"http://$host:$port/help-to-save/create-de-account", body, Map.empty)(HttpResponse(status, Some(JsString(response))))
           val result = await(connector.createAccount(body))
           result.status shouldBe status
           result.json shouldBe JsString(response)

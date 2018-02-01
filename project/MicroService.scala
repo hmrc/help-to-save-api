@@ -28,6 +28,7 @@ trait MicroService {
     Seq(
       // Semicolon-separated list of regexs matching classes to exclude
       ScoverageKeys.coverageExcludedPackages := "<empty>;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps).*",
+      ScoverageKeys.coverageExcludedFiles := "uk.gov.hmrc.helptosaveapi.ApplicationRegistration; uk.gov.hmrc.helptosaveapi.RegistrationModule",
       ScoverageKeys.coverageMinimum := 87,
       ScoverageKeys.coverageFailOnMinimum := true,
       ScoverageKeys.coverageHighlighting := true,
@@ -94,6 +95,7 @@ trait MicroService {
     .settings(defaultSettings(): _*)
     .settings(scalariformSettings: _*)
     .settings(wartRemoverSettings)
+    .settings(unmanagedResourceDirectories in Compile += baseDirectory.value / "resources")
     // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
     // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
     // imcompatible with a lot of WordSpec

@@ -17,12 +17,15 @@
 package uk.gov.hmrc.helptosaveapi.util
 
 import akka.stream.Materializer
+import org.scalamock.handlers.CallHandler6
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
-import uk.gov.hmrc.http.HeaderCarrier
+import play.api.libs.json.Writes
+import uk.gov.hmrc.helptosaveapi.http.WSHttp
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.WithFakeApplication
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeApplication {
 
@@ -31,5 +34,14 @@ class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeA
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
+
+  val http: WSHttp = mock[WSHttp]
+
+  def mockPost[A](expectedUrl:  String,
+                  expectedBody: A,
+                  headers:      Map[String, String])(response: HttpResponse): CallHandler6[String, A, Map[String, String], Writes[A], HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (http.post[A](_: String, _: A, _: Map[String, String])(_: Writes[A], _: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedUrl, expectedBody, headers, *, *, *)
+      .returning(response)
 
 }

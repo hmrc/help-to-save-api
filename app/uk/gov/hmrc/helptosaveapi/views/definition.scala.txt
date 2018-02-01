@@ -1,16 +1,9 @@
-@import domain.APIAccess
+@import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
 @import play.api.libs.json.Json
 
 @(access: String => APIAccess)
 {
-  "scopes":[
-    {
-      "key":"write:help-to-save",
-      "name":"create hts account",
-      "description":"Create help to save accounts for eligible applicants",
-      "confidenceLevel": 200
-    }
-  ],
+  "scopes":[ ],
   "api": {
       "name":"Help To Save API",
       "description":"Savings scheme for working people on low income",

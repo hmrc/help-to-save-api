@@ -14,7 +14,8 @@ object MicroServiceBuild extends Build with MicroService {
   val compile = Seq(
     ws,
     "org.typelevel" %% "cats" % "0.9.0",
-    "uk.gov.hmrc" %% "bootstrap-play-25" % "1.3.0"
+    "uk.gov.hmrc" %% "bootstrap-play-25" % "1.3.0",
+    "com.github.kxbmap" %% "configs" % "0.4.4"
   )
 
   def test(scope: String = "test,it") = Seq(
