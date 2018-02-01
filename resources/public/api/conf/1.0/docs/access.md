@@ -14,8 +14,8 @@ hmrc-mdtp-team-helptosave-g@digital.hmrc.gov.uk whereby they raise an internal t
 setup access, and will additionally specify ‘grant suppress’ as part of this ticket. Once this ticket is done, the Help
 To Save Dev Team will notify the vendor that the API is ready to “sandbox test”.
 
-#### Live running
-Steps
+#### Live Running
+Steps:
 
 1. Setup a Live account at https://developer.service.hmrc.gov.uk/api-documentation old accounts must not be reused.
 2. Register the application at https://developer.service.hmrc.gov.uk/developer/applications/add as new in order to
