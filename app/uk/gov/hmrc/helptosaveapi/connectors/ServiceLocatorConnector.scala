@@ -21,7 +21,7 @@ import javax.inject.Inject
 import cats.instances.int._
 import cats.syntax.eq._
 import com.google.inject.{ImplementedBy, Singleton}
-import play.api.Configuration
+import play.api.{Configuration, Environment}
 import play.api.http.{ContentTypes, HeaderNames}
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.models.Registration
@@ -38,7 +38,9 @@ trait ServiceLocatorConnector {
 }
 
 @Singleton
-class ServiceLocatorConnectorImpl @Inject() (config: Configuration, http: WSHttp) extends ServiceLocatorConnector with ServicesConfig {
+class ServiceLocatorConnectorImpl @Inject() (config: Configuration, http: WSHttp, environment: Environment) extends ServiceLocatorConnector with ServicesConfig {
+
+  val mode = environment.mode
 
   override val runModeConfiguration: Configuration = config
 

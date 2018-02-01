@@ -5,7 +5,7 @@
 {
   "scopes":[
     {
-      "key":"help-to-save-api",
+      "key":"write:help-to-save",
       "name":"create hts account",
       "description":"Create help to save accounts for eligible applicants",
       "confidenceLevel": 200
@@ -20,6 +20,7 @@
           "version": "1.0",
           "status": "ALPHA",
           "access": @Json.toJson(access("""1.0"""))
+
         }
       ]
     }
