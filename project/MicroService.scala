@@ -27,8 +27,8 @@ trait MicroService {
     import scoverage.ScoverageKeys
     Seq(
       // Semicolon-separated list of regexs matching classes to exclude
-      ScoverageKeys.coverageExcludedPackages := "<empty>;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps).*",
-      ScoverageKeys.coverageExcludedFiles := "uk.gov.hmrc.helptosaveapi.ApplicationRegistration; uk.gov.hmrc.helptosaveapi.RegistrationModule",
+      ScoverageKeys.coverageExcludedPackages := "<empty>;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps).*;.*http.*",
+      ScoverageKeys.coverageExcludedFiles := ".*ApplicationRegistration.*;.*RegistrationModule.*",
       ScoverageKeys.coverageMinimum := 87,
       ScoverageKeys.coverageFailOnMinimum := true,
       ScoverageKeys.coverageHighlighting := true,
