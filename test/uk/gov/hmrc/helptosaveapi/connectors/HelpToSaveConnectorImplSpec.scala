@@ -45,7 +45,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with GeneratorDrivenProper
         implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.createAccountBodyGen)
 
         forAll{ (body: CreateAccountBody, status: Int, response: String) ⇒
-          mockPost(s"http://$host:$port/help-to-save/create-de-account", body, Map.empty)(HttpResponse(status, Some(JsString(response))))
+          mockPost(s"http://$host:$port/help-to-save/create-de-account", body, Map.empty)(Some(HttpResponse(status, Some(JsString(response)))))
           val result = await(connector.createAccount(body))
           result.status shouldBe status
           result.json shouldBe JsString(response)

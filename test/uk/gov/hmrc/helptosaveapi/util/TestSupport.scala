@@ -20,6 +20,7 @@ import akka.stream.Materializer
 import org.scalamock.handlers.CallHandler6
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
+import play.api.http.HttpErrorHandler
 import play.api.libs.json.Writes
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -37,11 +38,13 @@ class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeA
 
   val http: WSHttp = mock[WSHttp]
 
+  val httpErrorHandler: HttpErrorHandler = mock[HttpErrorHandler]
+
   def mockPost[A](expectedUrl:  String,
                   expectedBody: A,
-                  headers:      Map[String, String])(response: HttpResponse): CallHandler6[String, A, Map[String, String], Writes[A], HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+                  headers:      Map[String, String])(response: Option[HttpResponse]): CallHandler6[String, A, Map[String, String], Writes[A], HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
     (http.post[A](_: String, _: A, _: Map[String, String])(_: Writes[A], _: HeaderCarrier, _: ExecutionContext))
       .expects(expectedUrl, expectedBody, headers, *, *, *)
-      .returning(response)
+      .returning(response.fold(Future.failed[HttpResponse](new Exception("")))(Future.successful))
 
 }

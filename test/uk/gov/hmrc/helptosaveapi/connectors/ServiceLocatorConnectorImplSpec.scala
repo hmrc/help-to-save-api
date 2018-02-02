@@ -22,6 +22,8 @@ import uk.gov.hmrc.helptosaveapi.models.Registration
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 import uk.gov.hmrc.http.HttpResponse
 
+import scala.concurrent.Future
+
 class ServiceLocatorConnectorImplSpec extends TestSupport {
 
   val appName: String = "testApp"
@@ -39,18 +41,24 @@ class ServiceLocatorConnectorImplSpec extends TestSupport {
 
   "register" must {
     "return a status of 204" in {
-      mockPost("http://localhost:1/registration", registration, Map.empty)(HttpResponse(204))
+      mockPost("http://localhost:1/registration", registration, Map.empty)(Some(HttpResponse(204)))
 
       val result = connector.register()
       await(result) shouldBe true
     }
 
-    "test for when future fails" in {
+    "return false when the future fails" ignore {
+      mockPost("http://localhost:1/registration", registration, Map.empty)(None)
 
+      val result = connector.register()
+      await(result) shouldBe false
     }
 
-    "test for status other than a 204" in {
+    "return false when the HttpResponse is other than 204" in {
+      mockPost("http://localhost:1/registration", registration, Map.empty)(Some(HttpResponse(415)))
 
+      val result = connector.register()
+      await(result) shouldBe false
     }
   }
 
