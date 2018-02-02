@@ -36,7 +36,7 @@ class ApplicationRegistration @Inject() (application:             Application,
 
   val registrationEnabled: Boolean = config.underlying.getBoolean("service-locator-registration.enabled")
 
-  val duration: FiniteDuration = config.underlying.get[FiniteDuration]("service-locator-registration.delay").value
+  val duration: FiniteDuration = config.underlying.getInt("service-locator-registration.delay-in-seconds").seconds
 
   if (registrationEnabled) {
     logger.info(s"Will register with service locator in ${duration.toString}")

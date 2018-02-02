@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.helptosaveapi
 
-import com.google.inject.AbstractModule
+import play.api.{Configuration, Environment}
+import play.api.inject.{Binding, Module}
 
-class RegistrationModule extends AbstractModule {
-  override def configure() = {
-    bind(classOf[ApplicationRegistration]).asEagerSingleton()
-  }
+class RegistrationModule extends Module {
+
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
+    Seq(bind[ApplicationRegistration].toSelf.eagerly())
+
 }
