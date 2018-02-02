@@ -24,7 +24,7 @@ import uk.gov.hmrc.helptosaveapi.services.CreateAccountService
 import uk.gov.hmrc.helptosaveapi.util.{Logging, WithMdcExecutionContext, toFuture}
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator}
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.Future
 

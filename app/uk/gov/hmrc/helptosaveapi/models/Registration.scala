@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.auditing
+package uk.gov.hmrc.helptosaveapi.models
 
-import uk.gov.hmrc.play.audit.http.config.AuditingConfig
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.config.AppName
-import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
+import play.api.libs.json.{Format, Json}
 
-object HTSAuditConnector extends AuditConnector with AppName {
-  override lazy val auditingConfig: AuditingConfig = LoadAuditingConfig("auditing")
+case class Registration(serviceName: String, serviceUrl: String, metadata: Option[Map[String, String]] = None)
+
+object Registration {
+  implicit val regFormat: Format[Registration] = Json.format[Registration]
 }
