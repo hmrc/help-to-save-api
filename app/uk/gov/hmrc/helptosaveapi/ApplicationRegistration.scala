@@ -38,6 +38,12 @@ class ApplicationRegistration @Inject() (application:             Application,
 
   val duration: FiniteDuration = config.underlying.get[FiniteDuration]("service-locator-registration.delay").value
 
+  if (registrationEnabled) {
+    logger.info(s"Will register with service locator in ${duration.toString}")
+  } else {
+    logger.info("Will not register will service locator")
+  }
+
   val cancellable: Cancellable = application.actorSystem.scheduler.scheduleOnce(duration,
     new Runnable {
       override def run(): Unit = if (registrationEnabled) serviceLocatorConnector.register().onComplete{

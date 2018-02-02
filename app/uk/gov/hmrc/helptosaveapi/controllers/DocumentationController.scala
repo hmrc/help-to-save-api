@@ -37,7 +37,7 @@ class DocumentationController @Inject() (httpErrorHandler: HttpErrorHandler, con
   val access: Version ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
   def definition(): Action[AnyContent] = Action {
-    Ok(txt.definition(access)).withHeaders(CONTENT_TYPE -> JSON)
+    Ok(txt.definition(access)).as("application/json")
   }
 
   def raml(version: String, file: String): Action[AnyContent] =
