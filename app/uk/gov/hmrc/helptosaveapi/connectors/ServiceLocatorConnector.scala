@@ -28,13 +28,12 @@ import uk.gov.hmrc.helptosaveapi.models.Registration
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[ServiceLocatorConnectorImpl])
 trait ServiceLocatorConnector {
 
-  def register(): Future[Either[String, Unit]]
+  def register()(implicit ec: ExecutionContext): Future[Either[String, Unit]]
 }
 
 @Singleton
@@ -57,7 +56,7 @@ class ServiceLocatorConnectorImpl @Inject() (config:      Configuration,
     Registration(appName, appUrl, metadata)
   }
 
-  def register(): Future[Either[String, Unit]] = {
+  def register()(implicit ec: ExecutionContext): Future[Either[String, Unit]] = {
     http.post(s"$serviceUrl/registration", registration).map[Either[String, Unit]]{ res ⇒
       if (res.status === 204) {
         Right(())
