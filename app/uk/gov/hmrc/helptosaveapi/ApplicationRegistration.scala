@@ -41,12 +41,10 @@ class ApplicationRegistration @Inject() (application:             Application,
   val cancellable: Cancellable = application.actorSystem.scheduler.scheduleOnce(duration,
     new Runnable {
       override def run(): Unit = if (registrationEnabled) serviceLocatorConnector.register().onComplete{
-        case Success(result) ⇒
-          if (result) {
-            logger.info("Registration with service locator successful")
-          } else {
-            logger.warn("Registration with service locator unsuccessful")
-          }
+        case Success(Right(())) ⇒
+          logger.info("Registration with service locator successful")
+        case Success(Left(error)) ⇒
+          logger.warn(s"Registration with service locator unsuccessful: error was $error")
         case Failure(e) ⇒
           logger.error(s"Service could not register on the service locator", e)
       }

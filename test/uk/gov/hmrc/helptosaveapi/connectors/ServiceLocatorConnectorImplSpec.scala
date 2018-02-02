@@ -40,25 +40,25 @@ class ServiceLocatorConnectorImplSpec extends TestSupport {
   val registration = Registration(appName, appUrl, Some(Map("third-party-api" -> "true")))
 
   "register" must {
-    "return a status of 204" in {
+    "return a Right() when given a status of 204" in {
       mockPost("http://localhost:1/registration", registration, Map.empty)(Some(HttpResponse(204)))
 
       val result = connector.register()
-      await(result) shouldBe true
+      await(result) shouldBe Right(())
     }
 
-    "return false when the future fails" ignore {
+    "return a Left when the future fails" ignore {
       mockPost("http://localhost:1/registration", registration, Map.empty)(None)
 
       val result = connector.register()
-      await(result) shouldBe false
+      await(result).isLeft shouldBe true
     }
 
-    "return false when the HttpResponse is other than 204" in {
+    "return a Left when the HttpResponse is other than 204" in {
       mockPost("http://localhost:1/registration", registration, Map.empty)(Some(HttpResponse(415)))
 
       val result = connector.register()
-      await(result) shouldBe false
+      await(result).isLeft shouldBe true
     }
   }
 

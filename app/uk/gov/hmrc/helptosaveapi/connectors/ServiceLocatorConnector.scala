@@ -34,7 +34,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ServiceLocatorConnectorImpl])
 trait ServiceLocatorConnector {
 
-  def register(): Future[Boolean]
+  def register(): Future[Either[String, Unit]]
 }
 
 @Singleton
@@ -57,12 +57,16 @@ class ServiceLocatorConnectorImpl @Inject() (config:      Configuration,
     Registration(appName, appUrl, metadata)
   }
 
-  def register(): Future[Boolean] = {
-    http.post(s"$serviceUrl/registration", registration).map{
-      _.status === 204
+  def register(): Future[Either[String, Unit]] = {
+    http.post(s"$serviceUrl/registration", registration).map[Either[String, Unit]]{ res ⇒
+      if (res.status === 204) {
+        Right(())
+      } else {
+        Left(s"Received unexpected status: ${res.status}. Body was ${res.body}")
+      }
     } recover {
       case e: Throwable ⇒
-        false
+        Left(s"Call to service locator failed: ${e.getMessage}")
     }
   }
 }
