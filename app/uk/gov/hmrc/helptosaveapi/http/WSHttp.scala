@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.helptosaveapi.http
 
-import com.google.inject.{ImplementedBy, Singleton}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
+import play.api.Mode.Mode
 import play.api.libs.json.Writes
-import uk.gov.hmrc.helptosaveapi.auditing.HTSAuditConnector
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.play.audit.http.HttpAuditing
@@ -39,15 +40,18 @@ trait WSHttp extends HttpPost with WSPost {
 }
 
 @Singleton
-class WSHttpExtension extends WSHttp with HttpAuditing with ServicesConfig {
+class WSHttpExtension @Inject() (val auditConnector:       AuditConnector,
+                                 val runModeConfiguration: Configuration,
+                                 environment:              Environment)
+  extends WSHttp with HttpAuditing with ServicesConfig {
+
+  val mode: Mode = environment.mode
 
   val httpReads: HttpReads[HttpResponse] = new HttpReads[HttpResponse] {
     override def read(method: String, url: String, response: HttpResponse): HttpResponse = response
   }
 
   override val hooks: Seq[HttpHook] = NoneRequired
-
-  override def auditConnector: AuditConnector = HTSAuditConnector
 
   override def appName: String = getString("appName")
 
