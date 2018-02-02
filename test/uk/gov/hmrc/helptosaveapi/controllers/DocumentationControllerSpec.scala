@@ -62,7 +62,7 @@ class DocumentationControllerSpec extends TestSupport {
 
   "APIAccess" must {
     "write valid json" in {
-      val expectedJson = Json.parse(s"""{\"type\":\"PRIVATE\",\"whitelistedApplicationIds":["abc","def"]}""")
+      val expectedJson = Json.parse("""{"type":"PRIVATE","whitelistedApplicationIds":["abc","def"]}""")
       val apiAccess = APIAccess(access, whiteList)
 
       Json.toJson[APIAccess](apiAccess) shouldBe expectedJson
