@@ -60,6 +60,7 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
 
       "do not have 'application/vnd.hmrc.1.0+json' in the accept header" in {
         result(validRequestHeaders.updated(HeaderNames.ACCEPT, "invalid")) shouldBe BadRequest
+        result(validRequestHeaders.updated(HeaderNames.ACCEPT, "application/vnd.hmrc.1.0+jsonx")) shouldBe BadRequest
         result(validRequestHeaders - HeaderNames.ACCEPT) shouldBe BadRequest
 
       }
