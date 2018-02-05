@@ -3,7 +3,6 @@
 
 @(access: String => APIAccess)
 {
-  "scopes":[ ],
   "api": {
       "name":"Help To Save API",
       "description":"Savings scheme for working people on low income",
