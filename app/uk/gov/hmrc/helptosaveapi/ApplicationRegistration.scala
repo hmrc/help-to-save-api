@@ -44,21 +44,26 @@ class ApplicationRegistration @Inject() (application:             Application,
     logger.info("Will not register will service locator")
   }
 
+  var hasExecuted: Boolean = false
+
   val cancellable: Cancellable = application.actorSystem.scheduler.scheduleOnce(duration,
     new Runnable {
-      override def run(): Unit = if (registrationEnabled) serviceLocatorConnector.register().onComplete{
-        case Success(Right(())) ⇒
-          logger.info("Registration with service locator successful")
-        case Success(Left(error)) ⇒
-          logger.warn(s"Registration with service locator unsuccessful: error was $error")
-        case Failure(e) ⇒
-          logger.error(s"Service could not register on the service locator", e)
+      override def run(): Unit = if (registrationEnabled) serviceLocatorConnector.register().onComplete{ result ⇒
+        result match {
+          case Success(Right(())) ⇒
+            logger.info("Registration with service locator successful")
+          case Success(Left(error)) ⇒
+            logger.warn(s"Registration with service locator unsuccessful: error was $error")
+          case Failure(e) ⇒
+            logger.error(s"Service could not register on the service locator", e)
+        }
+        hasExecuted = true
       }
     })
 
   applicationLifecycle.addStopHook{ () ⇒
     Future[Unit](
-      if (!cancellable.isCancelled) {
+      if (!cancellable.isCancelled && !hasExecuted) {
         val cancelled = cancellable.cancel()
 
         if (!cancelled) {
