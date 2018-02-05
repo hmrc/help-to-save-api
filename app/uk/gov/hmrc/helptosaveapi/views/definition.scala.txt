@@ -12,8 +12,8 @@
         {
           "version": "1.0",
           "status": "ALPHA",
-          "access": @Json.toJson(access("""1.0"""))
-
+          "access": @Json.toJson(access("""1.0""")),
+          "endpointsEnabled": true
         }
       ]
     }
