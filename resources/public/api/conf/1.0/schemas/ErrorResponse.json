@@ -2,24 +2,20 @@
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
-  "required": false,
   "properties":{
     "error": {
       "type":"object",
-      "required":false,
       "properties":{
-        "errorDetail": {
-          "type":"string",
-          "required":false
-        },
         "errorMessageId": {
-          "type":"string",
-          "required":false
+          "type":"string"
         },
         "errorMessage": {
-          "type":"string",
-          "required":false
+          "type":"string"
+        },
+        "errorDetail": {
+          "type":"string"
         }
+
       }
     }
   }
