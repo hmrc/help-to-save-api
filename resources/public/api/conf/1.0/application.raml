@@ -61,24 +61,24 @@ uses:
       400:
         body:
           application/json:
-          type: !include schemas/ErrorResponse.json
+            type: !include schemas/ErrorResponse.json
             description: Bad request http response
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0712",
                 "errorMessage": "The first character cannot be a special character",
                 "errorDetail": "Field: surname"
                }
-             }
+            }
       401:
         body:
           application/json:
-          type: !include schemas/ErrorResponse.json
+            type: !include schemas/ErrorResponse.json
             description: Unauthorized http response
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0713",
@@ -92,95 +92,95 @@ uses:
             type: !include schemas/ErrorResponse.json
             description: Forbidden http response
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0714",
                 "errorMessage": "The request was forbidden",
                 "errorDetail": "Forbidden request"
                }
-             }
+            }
       404:
         body:
           application/json:
             type: !include schemas/ErrorResponse.json
             description: Not found http response
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0713",
                 "errorMessage": "The requested resource was not found",
                 "errorDetail": "Resource not found"
                }
-             }
+            }
       405:
         body:
           application/json:
             type: !include schemas/ErrorResponse.json
             description: Method not allowed http response
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0713",
                 "errorMessage": "The method was not allowed",
                 "errorDetail": "Method not allowed"
                }
-             }
+            }
       409:
         body:
           application/json:
             type: !include schemas/ErrorResponse.json
             description: Conflict http response
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0713",
                 "errorMessage": "Account already exists, no changes have been made",
                 "errorDetail": "Conflict - account already exists"
                }
-             }
+            }
       500:
         body:
           application/json:
             type: !include schemas/ErrorResponse.json
             description: Internal server error response
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0713",
                 "errorMessage": "The request was unsuccessful because of an unexpected processing error",
                 "errorDetail": "Unexpected processing error"
                }
-             }
+            }
       502:
         body:
           application/json:
             type: !include schemas/ErrorResponse.json
             description: Bad gateway http repsonse
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0713",
                 "errorMessage": "Server received an invalid response from the upstream server while trying to fulfil the request",
                 "errorDetail": "Bad gateway"
                }
-             }
+            }
       503:
         body:
           application/json:
             type: !include schemas/ErrorResponse.json
             description: Service unavailable http response
             example: |
-             {
+            {
               "error":
                {
                 "errorMessageId": "ZYRA0713",
                 "errorMessage": "The service was not available",
                 "errorDetail": "Service not available"
                }
-             }
+            }
