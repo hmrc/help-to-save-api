@@ -309,23 +309,33 @@
     },
     "registrationChannel": "callCentre"
   }
-}</code></pre></div></div><div class="tab-pane" id="individuals_help_to_save_account_post_response"><h2>HTTP status code <a href="http://httpstatus.es/201" target="_blank">201</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
- "error":
-  {
-   "errorMessageId": "ZYRA0712",
-   "errorMessage": "The first character cannot be a special character",
-   "errorDetail": "Field: surname"
+}</code></pre></div></div><div class="tab-pane" id="individuals_help_to_save_account_post_response"><h2>HTTP status code <a href="http://httpstatus.es/201" target="_blank">201</a></h2><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><h2>HTTP status code <a href="http://httpstatus.es/403" target="_blank">403</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for error response",
+  "type":"object",
+  "required": false,
+  "properties":{
+    "error": {
+      "type":"object",
+      "required":false,
+      "properties":{
+        "errorDetail": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessageId": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessage": {
+          "type":"string",
+          "required":false
+        }
+      }
+    }
   }
 }
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
- "error":
-  {
-   "errorMessageId": "ZYRA0713",
-   "errorMessage": "The request was not authenticated",
-   "errorDetail": "Unauthenticated request"
-  }
-}
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/403" target="_blank">403</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
  "error":
   {
    "errorMessageId": "ZYRA0714",
@@ -333,7 +343,33 @@
    "errorDetail": "Forbidden request"
   }
 }
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for error response",
+  "type":"object",
+  "required": false,
+  "properties":{
+    "error": {
+      "type":"object",
+      "required":false,
+      "properties":{
+        "errorDetail": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessageId": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessage": {
+          "type":"string",
+          "required":false
+        }
+      }
+    }
+  }
+}
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
  "error":
   {
    "errorMessageId": "ZYRA0713",
@@ -341,7 +377,33 @@
    "errorDetail": "Resource not found"
   }
 }
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/405" target="_blank">405</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/405" target="_blank">405</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for error response",
+  "type":"object",
+  "required": false,
+  "properties":{
+    "error": {
+      "type":"object",
+      "required":false,
+      "properties":{
+        "errorDetail": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessageId": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessage": {
+          "type":"string",
+          "required":false
+        }
+      }
+    }
+  }
+}
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
  "error":
   {
    "errorMessageId": "ZYRA0713",
@@ -349,7 +411,33 @@
    "errorDetail": "Method not allowed"
   }
 }
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/409" target="_blank">409</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/409" target="_blank">409</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for error response",
+  "type":"object",
+  "required": false,
+  "properties":{
+    "error": {
+      "type":"object",
+      "required":false,
+      "properties":{
+        "errorDetail": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessageId": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessage": {
+          "type":"string",
+          "required":false
+        }
+      }
+    }
+  }
+}
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
  "error":
   {
    "errorMessageId": "ZYRA0713",
@@ -357,7 +445,33 @@
    "errorDetail": "Conflict - account already exists"
   }
 }
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/500" target="_blank">500</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/500" target="_blank">500</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for error response",
+  "type":"object",
+  "required": false,
+  "properties":{
+    "error": {
+      "type":"object",
+      "required":false,
+      "properties":{
+        "errorDetail": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessageId": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessage": {
+          "type":"string",
+          "required":false
+        }
+      }
+    }
+  }
+}
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
  "error":
   {
    "errorMessageId": "ZYRA0713",
@@ -365,7 +479,33 @@
    "errorDetail": "Unexpected processing error"
   }
 }
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/502" target="_blank">502</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/502" target="_blank">502</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for error response",
+  "type":"object",
+  "required": false,
+  "properties":{
+    "error": {
+      "type":"object",
+      "required":false,
+      "properties":{
+        "errorDetail": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessageId": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessage": {
+          "type":"string",
+          "required":false
+        }
+      }
+    }
+  }
+}
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
  "error":
   {
    "errorMessageId": "ZYRA0713",
@@ -373,7 +513,33 @@
    "errorDetail": "Bad gateway"
   }
 }
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/503" target="_blank">503</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: object</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/503" target="_blank">503</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for error response",
+  "type":"object",
+  "required": false,
+  "properties":{
+    "error": {
+      "type":"object",
+      "required":false,
+      "properties":{
+        "errorDetail": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessageId": {
+          "type":"string",
+          "required":false
+        },
+        "errorMessage": {
+          "type":"string",
+          "required":false
+        }
+      }
+    }
+  }
+}
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
  "error":
   {
    "errorMessageId": "ZYRA0713",

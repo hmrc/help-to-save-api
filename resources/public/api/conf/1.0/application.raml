@@ -54,17 +54,14 @@ uses:
          description: Hashed value, unique to a specific installation of the vendor's software
     body:
       application/json:
-        description: Json payload of create account request
-        example: !include schemas/CreateAccountExample.json
         type: !include schemas/CreateAccount.json
+        example: !include schemas/CreateAccountExample.json
     responses:
       201:
-        body:
-          application/json:
-            description: Account created, no json response body
       400:
         body:
           application/json:
+          type: !include schemas/ErrorResponse.json
             description: Bad request http response
             example: |
              {
@@ -78,6 +75,7 @@ uses:
       401:
         body:
           application/json:
+          type: !include schemas/ErrorResponse.json
             description: Unauthorized http response
             example: |
              {
@@ -91,6 +89,7 @@ uses:
       403:
         body:
           application/json:
+            type: !include schemas/ErrorResponse.json
             description: Forbidden http response
             example: |
              {
@@ -104,6 +103,7 @@ uses:
       404:
         body:
           application/json:
+            type: !include schemas/ErrorResponse.json
             description: Not found http response
             example: |
              {
@@ -117,6 +117,7 @@ uses:
       405:
         body:
           application/json:
+            type: !include schemas/ErrorResponse.json
             description: Method not allowed http response
             example: |
              {
@@ -130,6 +131,7 @@ uses:
       409:
         body:
           application/json:
+            type: !include schemas/ErrorResponse.json
             description: Conflict http response
             example: |
              {
@@ -143,6 +145,7 @@ uses:
       500:
         body:
           application/json:
+            type: !include schemas/ErrorResponse.json
             description: Internal server error response
             example: |
              {
@@ -156,6 +159,7 @@ uses:
       502:
         body:
           application/json:
+            type: !include schemas/ErrorResponse.json
             description: Bad gateway http repsonse
             example: |
              {
@@ -169,6 +173,7 @@ uses:
       503:
         body:
           application/json:
+            type: !include schemas/ErrorResponse.json
             description: Service unavailable http response
             example: |
              {
