@@ -331,7 +331,13 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{ "error":
+  {
+    "errorMessageId": "ZYRA0712",
+    "errorMessage": "The first character cannot be a special character",
+    "errorDetail": "Field: surname"
+  }
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
@@ -353,7 +359,14 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/403" target="_blank">403</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "The request was not authenticated",
+    "errorDetail": "Unauthenticated request"
+  }
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/403" target="_blank">403</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
@@ -375,7 +388,14 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error":
+  {
+    "errorMessageId": "ZYRA0714",
+    "errorMessage": "The request was forbidden",
+    "errorDetail": "Forbidden request"
+  }
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/404" target="_blank">404</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
@@ -397,7 +417,14 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/405" target="_blank">405</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "The requested resource was not found",
+    "errorDetail": "Resource not found"
+  }
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/405" target="_blank">405</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
@@ -419,7 +446,14 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/409" target="_blank">409</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "The method was not allowed",
+    "errorDetail": "Method not allowed"
+  }
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/409" target="_blank">409</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
@@ -441,7 +475,14 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/500" target="_blank">500</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "Account already exists, no changes have been made",
+    "errorDetail": "Conflict - account already exists"
+  }
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/500" target="_blank">500</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
@@ -463,7 +504,14 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/502" target="_blank">502</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "The request was unsuccessful because of an unexpected processing error",
+    "errorDetail": "Unexpected processing error"
+  }
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/502" target="_blank">502</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
@@ -485,7 +533,14 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/503" target="_blank">503</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "Server received an invalid response from the upstream server while trying to fulfil the request",
+    "errorDetail": "Bad gateway"
+  }
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/503" target="_blank">503</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
   "type":"object",
@@ -507,4 +562,11 @@
     }
   }
 }
-</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>[object Object]</code></pre></div></div><div class="tab-pane" id="individuals_help_to_save_account_post_securedby"><h1>Secured by x-application</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em>required (string)</em><p>Used to send the server token.</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>Authorization: Bearer [YOUR-SERVER-TOKEN]</code></pre></div></li></ul></div></div></div></div></div></div></div></div></div></div></div><div class="col-md-3"><div id="sidebar" class="hidden-print affix" role="complementary"><ul class="nav nav-pills nav-stacked"><li><a href="#individuals_help_to_save_account">/individuals/help-to-save/account</a></li></ul></div></div></div></div></body></html>
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "The service was not available",
+    "errorDetail": "Service not available"
+  }
+}</code></pre></div></div><div class="tab-pane" id="individuals_help_to_save_account_post_securedby"><h1>Secured by x-application</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em>required (string)</em><p>Used to send the server token.</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>Authorization: Bearer [YOUR-SERVER-TOKEN]</code></pre></div></li></ul></div></div></div></div></div></div></div></div></div></div></div><div class="col-md-3"><div id="sidebar" class="hidden-print affix" role="complementary"><ul class="nav nav-pills nav-stacked"><li><a href="#individuals_help_to_save_account">/individuals/help-to-save/account</a></li></ul></div></div></div></div></body></html>
