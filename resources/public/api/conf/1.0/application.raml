@@ -26,7 +26,7 @@ documentation:
  - title: Security Matters
    content: !include docs/security.md
 
-mediaType: [ application/json ]
+mediaType: [ application/json, application/hal+json ]
 
 uses:
   sec: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/securitySchemes.raml
@@ -42,12 +42,16 @@ uses:
     headers:
       gov-client-user-ID:
         example: EL079651A
+        description: Caller's NINO
       gov-client-timezone:
          example: UTC
+         description: Timezone Abbreviation
       gov-vendor-version:
          example: "1.3"
+         description: Gov Vendor Version
       gov-vendor-instance-ID:
          example: fa7c484c-d8cf-4f8a-a39c-54a2a4c04bc6
+         description: Hashed value, unique to a specific installation of the vendor's software
     body:
       application/json:
         example: !include schemas/CreateAccountExample.json
@@ -56,9 +60,11 @@ uses:
       201:
         body:
           application/json:
+            description: Account created, no json response body
       400:
         body:
           application/json:
+            description: Bad request http response
             example: |
              {
               "error":
@@ -71,6 +77,7 @@ uses:
       401:
         body:
           application/json:
+            description: Unauthorized http response
             example: |
              {
               "error":
@@ -83,6 +90,7 @@ uses:
       403:
         body:
           application/json:
+            description: Forbidden http response
             example: |
              {
               "error":
@@ -95,6 +103,7 @@ uses:
       404:
         body:
           application/json:
+            description: Not found http response
             example: |
              {
               "error":
@@ -107,6 +116,7 @@ uses:
       405:
         body:
           application/json:
+            description: Method not allowed http response
             example: |
              {
               "error":
@@ -119,6 +129,7 @@ uses:
       409:
         body:
           application/json:
+            description: Conflict http response
             example: |
              {
               "error":
@@ -131,6 +142,7 @@ uses:
       500:
         body:
           application/json:
+            description: Internal server error response
             example: |
              {
               "error":
@@ -143,6 +155,7 @@ uses:
       502:
         body:
           application/json:
+            description: Bad gateway http repsonse
             example: |
              {
               "error":
@@ -155,6 +168,7 @@ uses:
       503:
         body:
           application/json:
+            description: Service unavailable http response
             example: |
              {
               "error":

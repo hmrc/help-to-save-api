@@ -3,17 +3,18 @@
 
 @(access: String => APIAccess)
 {
-  "scopes":[ ],
   "api": {
       "name":"Help To Save API",
       "description":"Savings scheme for working people on low income",
-      "context":"/individuals/help-to-save",
-      "versions": [
+      "context":"help-to-save-api",
+      "isTestSupport": false,
+      "requiresTrust": false,
+      "versions":[
         {
-          "version": "1.0",
-          "status": "ALPHA",
-          "access": @Json.toJson(access("""1.0""")),
-          "endpointsEnabled": true
+          "version":"1.0",
+          "status":"ALPHA",
+          "access":@Json.toJson(access("""1.0""")),
+          "endpointsEnabled":true
         }
       ]
     }
