@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveapi.services
 
+import java.util.UUID
+
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody
@@ -27,14 +29,16 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[CreateAccountServiceImpl])
 trait CreateAccountService {
 
-  def createAccount(createAccountBody: CreateAccountBody)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def createAccount(createAccountBody: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
 }
 
 @Singleton
 class CreateAccountServiceImpl @Inject() (htsConnector: HelpToSaveConnector) extends CreateAccountService with Logging {
 
-  override def createAccount(createAccountBody: CreateAccountBody)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    htsConnector.createAccount(createAccountBody)
+  override def createAccount(createAccountBody: CreateAccountBody, correlationId: UUID)(
+      implicit
+      hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    htsConnector.createAccount(createAccountBody, correlationId)
 
 }

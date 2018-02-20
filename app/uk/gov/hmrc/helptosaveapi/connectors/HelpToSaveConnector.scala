@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveapi.connectors
 
+import java.util.UUID
+
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
@@ -27,21 +29,19 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[HelpToSaveConnectorImpl])
 trait HelpToSaveConnector {
 
-  def createAccount(body: CreateAccountBody)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def createAccount(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
 }
 
 @Singleton
 class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: WSHttp) extends HelpToSaveConnector {
 
-  val createAccountUrl: String = {
-    val host = config.underlying.getString("microservice.services.help-to-save.host")
-    val port = config.underlying.getInt("microservice.services.help-to-save.port")
+  val host: String = config.underlying.getString("microservice.services.help-to-save.host")
+  val port: Int = config.underlying.getInt("microservice.services.help-to-save.port")
 
-    s"http://$host:$port/help-to-save/create-de-account"
-  }
+  def createAccountUrl(correlationId: UUID): String = s"http://$host:$port/help-to-save/create-de-account?$correlationId"
 
-  override def createAccount(body: CreateAccountBody)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.post(createAccountUrl, body)
+  override def createAccount(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    http.post(createAccountUrl(correlationId), body)
 
 }
