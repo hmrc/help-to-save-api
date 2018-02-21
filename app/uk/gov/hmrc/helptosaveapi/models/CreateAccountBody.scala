@@ -43,7 +43,9 @@ object CreateAccountBody {
       address5:                Option[String],
       postcode:                String,
       countryCode:             Option[String],
-      communicationPreference: String)
+      communicationPreference: String,
+      phoneNumber:             Option[String],
+      email:                   Option[String])
 
   object ContactDetails {
 
