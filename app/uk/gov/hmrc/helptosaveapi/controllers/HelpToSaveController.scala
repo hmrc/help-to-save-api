@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
+import cats.syntax.show._
 import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess}
 import play.api.mvc._
@@ -40,7 +41,7 @@ class HelpToSaveController @Inject() (createAccountService: CreateAccountService
       .async { implicit request ⇒
         validateRequest(request) {
           case CreateAccountRequest(headers, body) ⇒
-            logger.info(s"Create Account Request has been made with headers: $headers")
+            logger.info(s"Create Account Request has been made with headers: ${headers.show}")
             createAccountService.createAccount(body, headers.requestCorrelationId).map { response ⇒
               Option(response.body).fold[Result](Status(response.status))(Status(response.status)(_))
             }
