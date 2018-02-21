@@ -19,7 +19,7 @@ package uk.gov.hmrc.helptosaveapi.services
 import java.util.UUID
 
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalamock.handlers.CallHandler3
+import org.scalamock.handlers.CallHandler4
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.libs.json.JsString
 import play.api.test.Helpers._
@@ -36,9 +36,9 @@ class CreateAccountServiceImplSpec extends TestSupport with GeneratorDrivenPrope
 
   val service: CreateAccountServiceImpl = new CreateAccountServiceImpl(htsConnector)
 
-  def mockHtsConnector(expectedBody: CreateAccountBody, correlationId: UUID)(response: HttpResponse): CallHandler3[CreateAccountBody, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (htsConnector.createAccount(_: CreateAccountBody, correlationId: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedBody, *, *)
+  def mockHtsConnector(expectedBody: CreateAccountBody, correlationId: UUID)(response: HttpResponse): CallHandler4[CreateAccountBody, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (htsConnector.createAccount(_: CreateAccountBody, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedBody, *, *, *)
       .returning(response)
 
   "The CreateAccountServiceImpl" must {

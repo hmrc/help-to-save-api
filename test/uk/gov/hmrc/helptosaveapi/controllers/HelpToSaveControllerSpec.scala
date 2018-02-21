@@ -19,7 +19,7 @@ package uk.gov.hmrc.helptosaveapi.controllers
 import java.util.UUID
 
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
-import org.scalamock.handlers.{CallHandler1, CallHandler3}
+import org.scalamock.handlers.{CallHandler1, CallHandler4}
 import play.api.libs.json.{JsSuccess, Json}
 import play.api.mvc._
 import play.api.mvc.Results._
@@ -56,9 +56,9 @@ class HelpToSaveControllerSpec extends TestSupport {
       .expects(request)
       .returning(Validated.fromEither(response).bimap(e ⇒ NonEmptyList.of(e), _ ⇒ request))
 
-  def mockCreateAccountService(expectedBody: CreateAccountBody, correlationId: UUID)(response: Either[String, HttpResponse]): CallHandler3[CreateAccountBody, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (createAccountService.createAccount(_: CreateAccountBody, correlationId: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedBody, *, *)
+  def mockCreateAccountService(expectedBody: CreateAccountBody, correlationId: UUID)(response: Either[String, HttpResponse]): CallHandler4[CreateAccountBody, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (createAccountService.createAccount(_: CreateAccountBody, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedBody, *, *, *)
       .returning(response.fold(
         e ⇒ Future.failed(new Exception(e)),
         Future.successful
