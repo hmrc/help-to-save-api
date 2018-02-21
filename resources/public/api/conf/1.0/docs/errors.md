@@ -3,7 +3,7 @@ the given details. Other 4xx and 5xx ranges indicates failure.
 
 The error response will include a JSON body which follows this schema:
 
-````
+<pre class="snippet--block code_text">
 {
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "JSON schema for error response",
@@ -26,7 +26,7 @@ The error response will include a JSON body which follows this schema:
     }
   }
 }
-````
+</pre>
 
 Here is a list of possible HTTP response error codes:
 
