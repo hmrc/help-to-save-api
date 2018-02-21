@@ -28,3 +28,14 @@ The error response will include a JSON body which follows this schema:
 }
 ````
 
+Here is a list of possible HTTP response error codes:
+
+400 - Bad Request,
+401 - Unauthorized,
+403 - Forbidden,
+404 - Not Found,
+405 - Method Not Allowed,
+409 - Conflict,
+500 - Internal Server Error,
+502 - Bad Gateway,
+503 - Service Unavailable
