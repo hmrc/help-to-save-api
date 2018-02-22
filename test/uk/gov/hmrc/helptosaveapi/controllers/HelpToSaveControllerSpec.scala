@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
+import java.util.UUID
+
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
-import org.scalamock.handlers.{CallHandler1, CallHandler3}
+import org.scalamock.handlers.{CallHandler1, CallHandler4}
 import play.api.libs.json.{JsSuccess, Json}
 import play.api.mvc._
 import play.api.mvc.Results._
@@ -39,6 +41,8 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   val mockRequestValidator: CreateAccountRequestValidator = mock[CreateAccountRequestValidator]
 
+  val correlationId: UUID = UUID.fromString("6f20ae18-38e9-4054-ac30-2ef294fa5279")
+
   val controller: HelpToSaveController = new HelpToSaveController(createAccountService) {
     override val httpHeaderValidator: APIHttpHeaderValidator = mockHttpHeaderValidator
     override val createAccountRequestValidator: CreateAccountRequestValidator = mockRequestValidator
@@ -52,9 +56,9 @@ class HelpToSaveControllerSpec extends TestSupport {
       .expects(request)
       .returning(Validated.fromEither(response).bimap(e ⇒ NonEmptyList.of(e), _ ⇒ request))
 
-  def mockCreateAccountService(expectedBody: CreateAccountBody)(response: Either[String, HttpResponse]): CallHandler3[CreateAccountBody, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (createAccountService.createAccount(_: CreateAccountBody)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedBody, *, *)
+  def mockCreateAccountService(expectedBody: CreateAccountBody, correlationId: UUID)(response: Either[String, HttpResponse]): CallHandler4[CreateAccountBody, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (createAccountService.createAccount(_: CreateAccountBody, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedBody, *, *, *)
       .returning(response.fold(
         e ⇒ Future.failed(new Exception(e)),
         Future.successful
@@ -80,7 +84,7 @@ class HelpToSaveControllerSpec extends TestSupport {
           mockHeaderValidator(passingHeaderValidatorResponse)
           mockRequestValidator(createAccountRequest)(Right(()))
           // put some dummy JSON in the response to see if it comes out the other end
-          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CREATED, Some(Json.toJson(createAccountRequest.header)))))
+          mockCreateAccountService(createAccountRequest.body, correlationId)(Right(HttpResponse(CREATED, Some(Json.toJson(createAccountRequest.header)))))
         }
 
         val result = controller.createAccount()(FakeRequest().withJsonBody(Json.toJson(createAccountRequest)))
