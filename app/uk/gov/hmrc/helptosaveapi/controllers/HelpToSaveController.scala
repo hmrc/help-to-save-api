@@ -39,8 +39,8 @@ class HelpToSaveController @Inject() (createAccountService: CreateAccountService
     httpHeaderValidator.validateHeader(e ⇒ BadRequest(ErrorResponse("Invalid HTTP headers in request", e).toJson()))
       .async { implicit request ⇒
         validateRequest(request) {
-          case CreateAccountRequest(_, body) ⇒
-            createAccountService.createAccount(body).map { response ⇒
+          case CreateAccountRequest(header, body) ⇒
+            createAccountService.createAccount(body, header.requestCorrelationId).map { response ⇒
               Option(response.body).fold[Result](Status(response.status))(Status(response.status)(_))
             }
         }

@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.helptosaveapi.services
 
-import org.scalacheck.Arbitrary
-import org.scalamock.handlers.CallHandler3
+import java.util.UUID
+
+import org.scalacheck.{Arbitrary, Gen}
+import org.scalamock.handlers.CallHandler4
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.libs.json.JsString
 import play.api.test.Helpers._
@@ -34,19 +36,20 @@ class CreateAccountServiceImplSpec extends TestSupport with GeneratorDrivenPrope
 
   val service: CreateAccountServiceImpl = new CreateAccountServiceImpl(htsConnector)
 
-  def mockHtsConnector(expectedBody: CreateAccountBody)(response: HttpResponse): CallHandler3[CreateAccountBody, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (htsConnector.createAccount(_: CreateAccountBody)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedBody, *, *)
+  def mockHtsConnector(expectedBody: CreateAccountBody)(response: HttpResponse): CallHandler4[CreateAccountBody, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (htsConnector.createAccount(_: CreateAccountBody, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedBody, *, *, *)
       .returning(response)
 
   "The CreateAccountServiceImpl" must {
 
     "always return the response as is from the connector" in {
       implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.createAccountBodyGen)
+      implicit val correlationIdArb: Arbitrary[UUID] = Arbitrary(Gen.uuid)
 
-      forAll{ (body: CreateAccountBody, status: Int, response: String) ⇒
+      forAll{ (body: CreateAccountBody, correlationId: UUID, status: Int, response: String) ⇒
         mockHtsConnector(body)(HttpResponse(status, Some(JsString(response))))
-        val result = await(service.createAccount(body))
+        val result = await(service.createAccount(body, correlationId))
         result.status shouldBe status
         result.json shouldBe JsString(response)
       }

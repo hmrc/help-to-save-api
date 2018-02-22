@@ -16,7 +16,9 @@
 
 package uk.gov.hmrc.helptosaveapi.connectors
 
-import org.scalacheck.Arbitrary
+import java.util.UUID
+
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.Configuration
 import play.api.libs.json.JsString
@@ -43,10 +45,11 @@ class HelpToSaveConnectorImplSpec extends TestSupport with GeneratorDrivenProper
 
       "call the correct url and return the response as is" in {
         implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.createAccountBodyGen)
+        implicit val correlationIdArb: Arbitrary[UUID] = Arbitrary(Gen.uuid)
 
-        forAll{ (body: CreateAccountBody, status: Int, response: String) ⇒
-          mockPost(s"http://$host:$port/help-to-save/create-de-account", body, Map.empty)(Some(HttpResponse(status, Some(JsString(response)))))
-          val result = await(connector.createAccount(body))
+        forAll { (body: CreateAccountBody, correlationId: UUID, status: Int, response: String) ⇒
+          mockPost(s"http://$host:$port/help-to-save/create-de-account", body, Map("X-CorrelationId" -> correlationId.toString))(Some(HttpResponse(status, Some(JsString(response)))))
+          val result = await(connector.createAccount(body, correlationId))
           result.status shouldBe status
           result.json shouldBe JsString(response)
         }
