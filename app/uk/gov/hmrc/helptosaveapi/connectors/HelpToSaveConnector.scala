@@ -43,8 +43,10 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: WSHttp) ex
     s"http://$host:$port/help-to-save/create-de-account"
   }
 
+  val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
+
   override def createAccount(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    http.post(createAccountUrl, body, Map("X-CorrelationId" -> correlationId.toString))
+    http.post(createAccountUrl, body, Map(correlationIdHeaderName -> correlationId.toString))
   }
 
 }
