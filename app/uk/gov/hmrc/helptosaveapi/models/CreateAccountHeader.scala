@@ -20,9 +20,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import play.api.libs.json._
+import cats.Show
 import play.api.libs.json.Reads.zonedDateTimeReads
 import play.api.libs.json.Writes.temporalWrites
+import play.api.libs.json._
 
 case class CreateAccountHeader(
     version:              String,
@@ -39,4 +40,12 @@ object CreateAccountHeader {
 
   implicit val format: Format[CreateAccountHeader] = Json.format[CreateAccountHeader]
 
+  implicit val show: Show[CreateAccountHeader] =
+    Show.show(createAccountHeader ⇒
+      s"""{version: ${createAccountHeader.version},
+          createdTimestamp: ${createAccountHeader.createdTimestamp},
+          clientCode: ${createAccountHeader.clientCode},
+          requestCorrelationId: ${createAccountHeader.requestCorrelationId}
+          }"""
+    )
 }
