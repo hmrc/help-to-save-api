@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
+import cats.syntax.show._
 import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess}
 import play.api.mvc._
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountRequest, ErrorResponse}
 import uk.gov.hmrc.helptosaveapi.services.CreateAccountService
-import uk.gov.hmrc.helptosaveapi.util.{Logging, WithMdcExecutionContext, toFuture}
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
+import uk.gov.hmrc.helptosaveapi.util.{Logging, WithMdcExecutionContext, toFuture}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
@@ -39,8 +40,9 @@ class HelpToSaveController @Inject() (createAccountService: CreateAccountService
     httpHeaderValidator.validateHeader(e ⇒ BadRequest(ErrorResponse("Invalid HTTP headers in request", e).toJson()))
       .async { implicit request ⇒
         validateRequest(request) {
-          case CreateAccountRequest(_, body) ⇒
-            createAccountService.createAccount(body).map { response ⇒
+          case CreateAccountRequest(header, body) ⇒
+            logger.info(s"Create Account Request has been made with headers: ${header.show}")
+            createAccountService.createAccount(body, header.requestCorrelationId).map { response ⇒
               Option(response.body).fold[Result](Status(response.status))(Status(response.status)(_))
             }
         }
