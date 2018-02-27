@@ -28,7 +28,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
 
   val validator = new CreateAccountRequestValidator
 
-  val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
+  val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0.1.2.3", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
 
   val validCreateAccountBody: CreateAccountBody =
     CreateAccountBody("", "", "", LocalDate.now(),
