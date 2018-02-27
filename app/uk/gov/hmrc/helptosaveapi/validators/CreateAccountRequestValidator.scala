@@ -47,7 +47,7 @@ object CreateAccountRequestValidator {
     }
   }
 
-  private val versionRegex: String ⇒ Matcher = "^[0-9]+.[0-9]+$".r.pattern.matcher _
+  private val versionRegex: String ⇒ Matcher = "^(\\d\\.)+\\d+$".r.pattern.matcher _
 
   private val clientCodeRegex: String ⇒ Matcher = "^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$".r.pattern.matcher _
 
