@@ -6,7 +6,7 @@
   "api": {
       "name":"Help To Save API",
       "description":"Savings scheme for working people on low income",
-      "context":"/",
+      "context":"individuals/help-to-save",
       "isTestSupport": false,
       "requiresTrust": false,
       "versions":[
