@@ -38,7 +38,9 @@ uses:
 
 /individuals/help-to-save/account:
   post:
-    description: Sends a request to create an account on behalf of the user
+    description: Sends a request to create an account on behalf of the user, noting the Value fields below are all
+    example values with the exception of fields Accept and Content-Type which should be presented as quoted string
+    values as shown.
     is: [headers.acceptHeader, headers.contentHeader]
     securedBy: [ sec.x-application ]
     headers:
