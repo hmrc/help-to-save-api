@@ -19,7 +19,6 @@ package uk.gov.hmrc.helptosaveapi.validators
 import java.util.regex.Matcher
 
 import cats.data.ValidatedNel
-import cats.instances.int._
 import cats.instances.string._
 import cats.syntax.cartesian._
 import cats.syntax.eq._
@@ -38,13 +37,6 @@ class CreateAccountRequestValidator {
 
 object CreateAccountRequestValidator {
 
-  private implicit class StringOps(val s: String) {
-    def removeAllSpaces: String = s.replaceAll(" ", "")
-
-    def cleanupSpecialCharacters: String = s.replaceAll("\t|\n|\r", " ").trim.replaceAll("\\s{2,}", " ")
-
-  }
-
   implicit class CreateAccountBodyOps(val body: CreateAccountBody) extends AnyVal {
 
     // checks the communication preference and registration channel - the rest of the body is validated downstream
@@ -54,11 +46,7 @@ object CreateAccountRequestValidator {
 
       val registrationChannelCheck = validationFromBoolean(body.registrationChannel)(_ === "callCentre", r ⇒ s"Unknown registration channel: $r")
 
-      val countryCodeCheck = validationFromBoolean(body.contactDetails.countryCode)(
-        _.forall(cc ⇒ cc.removeAllSpaces.cleanupSpecialCharacters.length === 2), error ⇒ s"length of countryCode should be 2: $error"
-      )
-
-      (communicationPreferenceCheck |@| registrationChannelCheck |@| countryCodeCheck).map { case _ ⇒ body }
+      (communicationPreferenceCheck |@| registrationChannelCheck).map { case _ ⇒ body }
     }
   }
 

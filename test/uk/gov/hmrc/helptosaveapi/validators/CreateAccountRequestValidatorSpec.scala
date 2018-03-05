@@ -88,15 +88,6 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
 
       "have a body" which {
 
-        "has an invalid countryCode" in {
-          validator.validateRequest(
-            CreateAccountRequest(
-              validCreateAccountHeader,
-              validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(countryCode = Some("GB-UK")))
-            )).isInvalid shouldBe true
-
-        }
-
         "has an invalid registration channel" in {
           validator.validateRequest(
             CreateAccountRequest(
