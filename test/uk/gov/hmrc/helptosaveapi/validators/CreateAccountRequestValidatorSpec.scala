@@ -60,6 +60,15 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
 
         }
 
+        "has an invalid version length" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader.copy(version = "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1"),
+              validCreateAccountBody
+            )).isInvalid shouldBe true
+
+        }
+
         "has an invalid client code" in {
           validator.validateRequest(
             CreateAccountRequest(
@@ -67,9 +76,26 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
               validCreateAccountBody
             )).isInvalid shouldBe true
         }
+
+        "has an invalid client code length" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader.copy(clientCode = "abcdefghijklmnopqrstuvwxyz"),
+              validCreateAccountBody
+            )).isInvalid shouldBe true
+        }
       }
 
       "have a body" which {
+
+        "has an invalid countryCode" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(countryCode = Some("GB-UK")))
+            )).isInvalid shouldBe true
+
+        }
 
         "has an invalid registration channel" in {
           validator.validateRequest(

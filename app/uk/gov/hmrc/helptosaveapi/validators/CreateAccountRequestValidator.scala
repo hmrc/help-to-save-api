@@ -19,6 +19,7 @@ package uk.gov.hmrc.helptosaveapi.validators
 import java.util.regex.Matcher
 
 import cats.data.ValidatedNel
+import cats.instances.int._
 import cats.instances.string._
 import cats.syntax.cartesian._
 import cats.syntax.eq._
@@ -26,6 +27,7 @@ import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader,
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
 
 class CreateAccountRequestValidator {
+
   import uk.gov.hmrc.helptosaveapi.validators.CreateAccountRequestValidator._
 
   def validateRequest(request: CreateAccountRequest): ValidatedNel[String, CreateAccountRequest] = {
@@ -36,14 +38,27 @@ class CreateAccountRequestValidator {
 
 object CreateAccountRequestValidator {
 
+  private implicit class StringOps(val s: String) {
+    def removeAllSpaces: String = s.replaceAll(" ", "")
+
+    def cleanupSpecialCharacters: String = s.replaceAll("\t|\n|\r", " ").trim.replaceAll("\\s{2,}", " ")
+
+  }
+
   implicit class CreateAccountBodyOps(val body: CreateAccountBody) extends AnyVal {
 
     // checks the communication preference and registration channel - the rest of the body is validated downstream
     def validate(): ValidatedNel[String, CreateAccountBody] = {
-      val communicationPreferenceCheck = validationFromBoolean(body.contactDetails.communicationPreference)(_ === "00", c ⇒ s"Unknown communication preference: $c")
+      val communicationPreferenceCheck =
+        validationFromBoolean(body.contactDetails.communicationPreference)(_ === "00", c ⇒ s"Unknown communication preference: $c")
+
       val registrationChannelCheck = validationFromBoolean(body.registrationChannel)(_ === "callCentre", r ⇒ s"Unknown registration channel: $r")
 
-      (communicationPreferenceCheck |@| registrationChannelCheck).map{ case _ ⇒ body }
+      val countryCodeCheck = validationFromBoolean(body.contactDetails.countryCode)(
+        _.forall(cc ⇒ cc.removeAllSpaces.cleanupSpecialCharacters.length === 2), error ⇒ s"length of countryCode should be 2: $error"
+      )
+
+      (communicationPreferenceCheck |@| registrationChannelCheck |@| countryCodeCheck).map { case _ ⇒ body }
     }
   }
 
@@ -54,9 +69,14 @@ object CreateAccountRequestValidator {
   implicit class CreateAccountHeaderOps(val header: CreateAccountHeader) extends AnyVal {
     def validate(): ValidatedNel[String, CreateAccountHeader] = {
       val versionCheck = validationFromBoolean(header.version)(versionRegex(_).matches(), v ⇒ s"version has incorrect format: $v")
-      val clientCodeCheck = validationFromBoolean(header.clientCode)(clientCodeRegex(_).matches(), c ⇒ s"unknown client code $c")
+      val versionLengthCheck =
+        validationFromBoolean(header.version)(_.length <= 10, v ⇒ s"max length for version should be 10: $v")
 
-      (versionCheck |@| clientCodeCheck).map{ case _ ⇒ header }
+      val clientCodeCheck = validationFromBoolean(header.clientCode)(clientCodeRegex(_).matches(), c ⇒ s"unknown client code $c")
+      val clientCodeLengthCheck =
+        validationFromBoolean(header.clientCode)(_.length <= 20, v ⇒ s"max length for clientCode should be 20: $v")
+
+      (versionCheck |@| versionLengthCheck |@| clientCodeCheck |@| clientCodeLengthCheck).map { case _ ⇒ header }
     }
   }
 
