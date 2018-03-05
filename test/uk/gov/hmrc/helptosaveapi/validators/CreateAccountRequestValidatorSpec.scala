@@ -60,10 +60,27 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
 
         }
 
+        "has an invalid version length" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader.copy(version = "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1"),
+              validCreateAccountBody
+            )).isInvalid shouldBe true
+
+        }
+
         "has an invalid client code" in {
           validator.validateRequest(
             CreateAccountRequest(
               validCreateAccountHeader.copy(clientCode = "a"),
+              validCreateAccountBody
+            )).isInvalid shouldBe true
+        }
+
+        "has an invalid client code length" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader.copy(clientCode = "abcdefghijklmnopqrstuvwxyz"),
               validCreateAccountBody
             )).isInvalid shouldBe true
         }
