@@ -18,12 +18,17 @@ package uk.gov.hmrc.helptosaveapi.validators
 
 import java.util.regex.Matcher
 
-import cats.data.ValidatedNel
+import cats.instances.int._
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.instances.string._
+import cats.instances.char._
+import cats.syntax.CartesianBuilder
 import cats.syntax.cartesian._
 import cats.syntax.eq._
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
+
+import scala.annotation.tailrec
 
 class CreateAccountRequestValidator {
 
@@ -41,12 +46,17 @@ object CreateAccountRequestValidator {
 
     // checks the communication preference and registration channel - the rest of the body is validated downstream
     def validate(): ValidatedNel[String, CreateAccountBody] = {
+
+      val forenameCheck = forenameValidation(body.forename)
+
+      val surnameCheck = surnameValidation(body.surname)
+
       val communicationPreferenceCheck =
         validationFromBoolean(body.contactDetails.communicationPreference)(_ === "00", c ⇒ s"Unknown communication preference: $c")
 
       val registrationChannelCheck = validationFromBoolean(body.registrationChannel)(_ === "callCentre", r ⇒ s"Unknown registration channel: $r")
 
-      (communicationPreferenceCheck |@| registrationChannelCheck).map { case _ ⇒ body }
+      (forenameCheck |@| surnameCheck |@| communicationPreferenceCheck |@| registrationChannelCheck).map { case _ ⇒ body }
     }
   }
 
@@ -67,6 +77,100 @@ object CreateAccountRequestValidator {
       (versionCheck |@| versionLengthCheck |@| clientCodeCheck |@| clientCodeLengthCheck).map { case _ ⇒ header }
     }
   }
+
+  private def forenameValidation(name: String): ValidatedNel[String, String] = {
+    (commonNameChecks(name, "forename") |@| forenameNoApostrophe(name))
+      .map { case _ ⇒ name }
+  }
+
+  private def surnameValidation(name: String): ValidatedNel[String, String] = {
+    val lastCharacterNonSpecial = validatedFromBoolean(name)(!_.lastOption.exists(isSpecial(_)), s"surname ended with special character")
+    (commonNameChecks(name, "surname") |@| lastCharacterNonSpecial)
+      .map { case _ ⇒ name }
+  }
+
+  private val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
+
+  private def commonNameChecks(name: String, nameType: String): ValidatedNel[String, String] = {
+
+    val forbiddenSpecialCharacters = specialCharacters(name, allowedNameSpecialCharacters)
+    val firstCharacterNonSpecial = validatedFromBoolean(name)(!_.headOption.forall(c ⇒ isSpecial(c)), s"$nameType started with special character")
+    val consecutiveSpecialCharacters = validatedFromBoolean(name)(!containsNConsecutiveSpecialCharacters(_, 2),
+      s"$nameType contained consecutive special characters")
+    val specialCharacterCheck = validatedFromBoolean(forbiddenSpecialCharacters)(_.isEmpty,
+      s"$nameType contained invalid special characters")
+
+    (firstCharacterNonSpecial |@| consecutiveSpecialCharacters |@| specialCharacterCheck).map { case _ ⇒ name }
+  }
+
+  private def forenameNoApostrophe(name: String): ValidatedNel[String, String] = {
+    validatedFromBoolean(name)(!containAnApostrophe(_), "forename contains an apostrophe")
+  }
+
+  /**
+   * Return a list of distinct special characters contained in the given string. Special
+   * characters found which are contained in `ignore` are not returned
+   */
+  private def specialCharacters(s: String, ignore: List[Char] = List.empty[Char]): List[Char] =
+    s.replaceAllLiterally(" ", "").filter(isSpecial(_, ignore)).toList.distinct
+
+  /** Does the given string contain `n` or more consecutive special characters? */
+  private def containsNConsecutiveSpecialCharacters(s: String, n: Int): Boolean =
+    containsNConsecutive(s, n, isSpecial(_))
+
+  /** Does the given string contain an apostrophe? */
+  private def containAnApostrophe(s: String): Boolean =
+    s.contains("'")
+
+  /**
+   * Does the given string contains `n` consecutive characters which satisfy the given predicate?
+   * `n` should be one or greater.
+   */
+  private def containsNConsecutive(s:         String,
+                                   n:         Int,
+                                   predicate: Char ⇒ Boolean): Boolean = {
+      @tailrec
+      def loop(s:        List[Char],
+               previous: Char,
+               count:    Int): Boolean = s match {
+        case Nil ⇒
+          false
+        case head :: tail ⇒
+          if (predicate(head) && predicate(previous)) {
+            val newCount = count + 1
+            if (newCount + 1 === n) {
+              true
+            } else {
+              loop(tail, head, newCount)
+            }
+          } else {
+            loop(tail, head, 0)
+          }
+      }
+    if (n === 1) {
+      s.exists(predicate)
+    } else if (n > 1) {
+      s.toList match {
+        // only loop over strings that have length two or greater
+        case head :: tail ⇒ loop(tail, head, 0)
+        case _            ⇒ false
+      }
+    } else {
+      false
+    }
+  }
+
+  private def validatedFromBoolean[A](a: A)(isValid: A ⇒ Boolean, ifFalse: ⇒ String): ValidatedNel[String, A] =
+    if (isValid(a)) Validated.Valid(a) else Validated.Invalid(NonEmptyList.of(ifFalse))
+
+  /**
+   * The given [[Char]] is special if the following is true:
+   * - it is not a whitespace character
+   * - it is not alphanumeric
+   * - it is not contained in `ignore`
+   */
+  private def isSpecial(c: Char, ignore: List[Char] = List.empty[Char]): Boolean =
+    !(c === ' ' || c.isLetterOrDigit || ignore.contains(c))
 
 }
 
