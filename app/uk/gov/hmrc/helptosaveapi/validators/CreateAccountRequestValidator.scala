@@ -99,8 +99,9 @@ object CreateAccountRequestValidator {
       s"$nameType contained consecutive special characters")
     val specialCharacterCheck = validatedFromBoolean(forbiddenSpecialCharacters)(_.isEmpty,
       s"$nameType contained invalid special characters")
+    val noDigits = validatedFromBoolean(name)(!_.exists(c ⇒ c.isDigit), s"$name contained a digit")
 
-    (firstCharacterNonSpecial |@| consecutiveSpecialCharacters |@| specialCharacterCheck).map { case _ ⇒ name }
+    (firstCharacterNonSpecial |@| consecutiveSpecialCharacters |@| specialCharacterCheck |@| noDigits).map { case _ ⇒ name }
   }
 
   private def forenameNoApostrophe(name: String): ValidatedNel[String, String] = {
