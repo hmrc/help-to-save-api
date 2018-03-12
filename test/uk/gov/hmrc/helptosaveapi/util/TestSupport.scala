@@ -17,12 +17,15 @@
 package uk.gov.hmrc.helptosaveapi.util
 
 import akka.stream.Materializer
+import com.codahale.metrics.{Counter, Histogram, Timer, UniformReservoir}
+import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
 import org.scalamock.handlers.CallHandler6
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Writes
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
+import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.WithFakeApplication
 
@@ -39,6 +42,12 @@ class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeA
   val http: WSHttp = mock[WSHttp]
 
   val httpErrorHandler: HttpErrorHandler = mock[HttpErrorHandler]
+
+  val mockMetrics = new Metrics(stub[PlayMetrics]) {
+    override def timer(name: String): Timer = new Timer()
+
+    override def counter(name: String): Counter = new Counter()
+  }
 
   def mockPost[A](expectedUrl:  String,
                   expectedBody: A,

@@ -41,7 +41,7 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   val mockRequestValidator: CreateAccountRequestValidator = mock[CreateAccountRequestValidator]
 
-  val controller: HelpToSaveController = new HelpToSaveController(createAccountService) {
+  val controller: HelpToSaveController = new HelpToSaveController(createAccountService, mockMetrics) {
     override val httpHeaderValidator: APIHttpHeaderValidator = mockHttpHeaderValidator
     override val createAccountRequestValidator: CreateAccountRequestValidator = mockRequestValidator
   }
