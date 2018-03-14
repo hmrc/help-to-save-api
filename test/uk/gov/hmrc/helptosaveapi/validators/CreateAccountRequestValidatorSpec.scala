@@ -106,6 +106,14 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
             )).isInvalid shouldBe true
         }
 
+        "has a forename containing a special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(forename = "fo-ren&a.me")
+            )).isValid shouldBe true
+        }
+
         "has a forename starting with a special character" in {
           validator.validateRequest(
             CreateAccountRequest(
@@ -125,6 +133,30 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
           result.leftSideValue.toString shouldBe "Invalid(NonEmptyList(forename contains an apostrophe))"
         }
 
+        "has a forename with no more than one consecutive special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(forename = "fore--name")
+            )).isInvalid shouldBe true
+        }
+
+        "has a surname containing a special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "sur-n&ame")
+            )).isValid shouldBe true
+        }
+
+        "has a surname starting with a special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "-surname")
+            )).isInvalid shouldBe true
+        }
+
         "has a surname ending with a special character" in {
           val result = validator.validateRequest(
             CreateAccountRequest(
@@ -134,6 +166,22 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
 
           result.isInvalid shouldBe true
           result.leftSideValue.toString shouldBe "Invalid(NonEmptyList(surname ended with special character))"
+        }
+
+        "has a surname must be at least one letter" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "")
+            )).isInvalid shouldBe true
+        }
+
+        "has a surname with no more than one consecutive special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "sur--name")
+            )).isInvalid shouldBe true
         }
       }
 
