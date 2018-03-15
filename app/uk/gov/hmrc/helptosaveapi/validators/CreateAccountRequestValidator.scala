@@ -104,7 +104,7 @@ object CreateAccountRequestValidator {
   }
 
   private def forenameNoApostrophe(name: String): ValidatedNel[String, String] = {
-    validatedFromBoolean(name)(!containAnApostrophe(_), "forename contains an apostrophe")
+    validatedFromBoolean(name)(!_.contains('''), "forename contains an apostrophe")
   }
 
   /**
@@ -117,10 +117,6 @@ object CreateAccountRequestValidator {
   /** Does the given string contain `n` or more consecutive special characters? */
   private def containsNConsecutiveSpecialCharacters(s: String, n: Int): Boolean =
     containsNConsecutive(s, n, isSpecial(_))
-
-  /** Does the given string contain an apostrophe? */
-  private def containAnApostrophe(s: String): Boolean =
-    s.contains("'")
 
   /**
    * Does the given string contains `n` consecutive characters which satisfy the given predicate?

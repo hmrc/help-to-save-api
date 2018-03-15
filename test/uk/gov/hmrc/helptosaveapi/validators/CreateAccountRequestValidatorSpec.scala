@@ -130,7 +130,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
             ))
 
           result.isInvalid shouldBe true
-          result.leftSideValue.toString shouldBe "Invalid(NonEmptyList(forename contains an apostrophe))"
+          result shouldBe Invalid(NonEmptyList.of("forename contains an apostrophe"))
         }
 
         "has a forename with no more than one consecutive special character" in {
