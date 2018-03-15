@@ -19,7 +19,8 @@ package uk.gov.hmrc.helptosaveapi.validators
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
-import cats.data.Validated
+import cats.data.Validated.Invalid
+import cats.data.{NonEmptyList, Validated}
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody.ContactDetails
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
@@ -31,8 +32,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
   val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0.1.2.3", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
 
   val validCreateAccountBody: CreateAccountBody =
-    CreateAccountBody("", "", "", LocalDate.now(),
-                                  ContactDetails("", "", None, None, None, "", None, "00", Some("07841098765"), Some("test@gmail.com")), "callCentre"
+    CreateAccountBody("", "forename", "surname", LocalDate.now(),
+                                                 ContactDetails("", "", None, None, None, "", None, "00", Some("07841000000"), Some("test@gmail.com")), "callCentre"
     )
 
   val validCreateAccountRequest: CreateAccountRequest = CreateAccountRequest(
@@ -102,6 +103,84 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "comm"))
+            )).isInvalid shouldBe true
+        }
+
+        "has a forename containing a special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(forename = "fo-ren&a.me")
+            )).isValid shouldBe true
+        }
+
+        "has a forename starting with a special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(forename = "&forename")
+            )).isInvalid shouldBe true
+        }
+
+        "has a forename containing an apostrophe" in {
+          val result = validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(forename = "fore'name")
+            ))
+
+          result.isInvalid shouldBe true
+          result shouldBe Invalid(NonEmptyList.of("forename contains an apostrophe"))
+        }
+
+        "has a forename with no more than one consecutive special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(forename = "fore--name")
+            )).isInvalid shouldBe true
+        }
+
+        "has a surname containing a special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "sur-n&ame")
+            )).isValid shouldBe true
+        }
+
+        "has a surname starting with a special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "-surname")
+            )).isInvalid shouldBe true
+        }
+
+        "has a surname ending with a special character" in {
+          val result = validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "surname-")
+            ))
+
+          result.isInvalid shouldBe true
+          result.leftSideValue.toString shouldBe "Invalid(NonEmptyList(surname ended with special character))"
+        }
+
+        "has a surname must be at least one letter" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "")
+            )).isInvalid shouldBe true
+        }
+
+        "has a surname with no more than one consecutive special character" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "sur--name")
             )).isInvalid shouldBe true
         }
       }
