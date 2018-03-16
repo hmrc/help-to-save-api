@@ -20,12 +20,15 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import cats.data.Validated.Invalid
-import cats.data.{NonEmptyList, Validated}
+import cats.data.{NonEmptyList}
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody.ContactDetails
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
-class CreateAccountRequestValidatorSpec extends TestSupport {
+class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDrivenPropertyChecks {
+
+  import uk.gov.hmrc.helptosaveapi.validators.CreateAccountRequestValidator.allowedPhoneNumberSpecialCharacters
 
   val validator = new CreateAccountRequestValidator
 
@@ -43,83 +46,133 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
 
   "CreateAccountRequestValidator" must {
 
-    "mark as valid requests which are valid" in {
-      validator.validateRequest(validCreateAccountRequest) shouldBe Validated.Valid(validCreateAccountRequest)
+    "mark as valid requests" which {
+
+        def testIsValid(request: CreateAccountRequest): Unit =
+          validator.validateRequest(request).isValid shouldBe true
+
+      "are valid" in {
+        testIsValid(validCreateAccountRequest)
+      }
+
+      "has a forename containing a special character" in {
+        testIsValid(
+          CreateAccountRequest(
+            validCreateAccountHeader,
+            validCreateAccountBody.copy(forename = "fo-ren&a.me")
+          ))
+      }
+
+      "has a surname containing a special character" in {
+        testIsValid(
+          CreateAccountRequest(
+            validCreateAccountHeader,
+            validCreateAccountBody.copy(surname = "sur-n&ame")
+          ))
+      }
+
+      "has an empty phone number" in {
+        testIsValid(
+          CreateAccountRequest(
+            validCreateAccountHeader,
+            validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = None))
+          ))
+      }
+
+      "has an phone number with allowed special characters" in {
+        (allowedPhoneNumberSpecialCharacters ::: (0 to 9).toList).foreach{ c ⇒
+          testIsValid(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(c.toString)))
+            ))
+        }
+      }
 
     }
 
     "mark as invalid requests" which {
 
+        def testIsInvalid(request: CreateAccountRequest): Unit =
+          validator.validateRequest(request).isInvalid shouldBe true
+
+      "have a phone number" which {
+
+        "contains disallowed special characters" in {
+          forAll{ (c: Char) ⇒
+            whenever(!c.isDigit && !allowedPhoneNumberSpecialCharacters.contains(c)){
+              testIsInvalid(
+                CreateAccountRequest(
+                  validCreateAccountHeader,
+                  validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(c.toString)))
+                ))
+            }
+          }
+        }
+      }
+
       "have a header" which {
 
         "has an invalid version" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader.copy(version = "version"),
               validCreateAccountBody
-            )).isInvalid shouldBe true
+            ))
 
         }
 
         "has an invalid version length" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader.copy(version = "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1"),
               validCreateAccountBody
-            )).isInvalid shouldBe true
+            ))
 
         }
 
         "has an invalid client code" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader.copy(clientCode = "a"),
               validCreateAccountBody
-            )).isInvalid shouldBe true
+            ))
         }
 
         "has an invalid client code length" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader.copy(clientCode = "abcdefghijklmnopqrstuvwxyz"),
               validCreateAccountBody
-            )).isInvalid shouldBe true
+            ))
         }
       }
 
       "have a body" which {
 
         "has an invalid registration channel" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(registrationChannel = "channel")
-            )).isInvalid shouldBe true
+            ))
 
         }
 
         "has an invalid communication preference" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "comm"))
-            )).isInvalid shouldBe true
-        }
-
-        "has a forename containing a special character" in {
-          validator.validateRequest(
-            CreateAccountRequest(
-              validCreateAccountHeader,
-              validCreateAccountBody.copy(forename = "fo-ren&a.me")
-            )).isValid shouldBe true
+            ))
         }
 
         "has a forename starting with a special character" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(forename = "&forename")
-            )).isInvalid shouldBe true
+            ))
         }
 
         "has a forename containing an apostrophe" in {
@@ -134,27 +187,19 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
         }
 
         "has a forename with no more than one consecutive special character" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(forename = "fore--name")
-            )).isInvalid shouldBe true
-        }
-
-        "has a surname containing a special character" in {
-          validator.validateRequest(
-            CreateAccountRequest(
-              validCreateAccountHeader,
-              validCreateAccountBody.copy(surname = "sur-n&ame")
-            )).isValid shouldBe true
+            ))
         }
 
         "has a surname starting with a special character" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "-surname")
-            )).isInvalid shouldBe true
+            ))
         }
 
         "has a surname ending with a special character" in {
@@ -169,19 +214,19 @@ class CreateAccountRequestValidatorSpec extends TestSupport {
         }
 
         "has a surname must be at least one letter" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "")
-            )).isInvalid shouldBe true
+            ))
         }
 
         "has a surname with no more than one consecutive special character" in {
-          validator.validateRequest(
+          testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "sur--name")
-            )).isInvalid shouldBe true
+            ))
         }
       }
 
