@@ -92,12 +92,12 @@ object CreateAccountRequestValidator {
 
   private def phoneNumberValidation(phoneNumber: Option[String]): ValidatedNel[String, Option[String]] =
     validationFromBoolean(phoneNumber)(
-      _.forall(_.trim().exists(c ⇒ c.isDigit || allowedPhoneNumberSpecialCharacters.contains(c))),
+      _.forall(_.exists(c ⇒ c.isDigit || allowedPhoneNumberSpecialCharacters.contains(c))),
       _ ⇒ "phone number contained invalid characters")
 
   private[validators] val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
 
-  private[validators] val allowedPhoneNumberSpecialCharacters = List('(', ')', '-', '.', '+')
+  private[validators] val allowedPhoneNumberSpecialCharacters = List('(', ')', '-', '.', '+', ' ')
 
   private def commonNameChecks(name: String, nameType: String): ValidatedNel[String, String] = {
 
