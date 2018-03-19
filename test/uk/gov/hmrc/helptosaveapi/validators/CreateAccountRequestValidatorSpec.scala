@@ -32,7 +32,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
 
   val validator = new CreateAccountRequestValidator
 
-  val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0.1.2.3", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
+  val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
 
   val validCreateAccountBody: CreateAccountBody =
     CreateAccountBody("", "forename", "surname", LocalDate.now(),
@@ -135,7 +135,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
         "has an invalid version length" in {
           testIsInvalid(
             CreateAccountRequest(
-              validCreateAccountHeader.copy(version = "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1"),
+              validCreateAccountHeader.copy(version = "1.11111111111111111111111"),
               validCreateAccountBody
             ))
 
