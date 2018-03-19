@@ -22,7 +22,6 @@ import cats.instances.int._
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.instances.string._
 import cats.instances.char._
-import cats.syntax.CartesianBuilder
 import cats.syntax.cartesian._
 import cats.syntax.eq._
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
@@ -79,21 +78,33 @@ object CreateAccountRequestValidator {
     }
   }
 
-  private def forenameValidation(name: String): ValidatedNel[String, String] = {
-    (commonNameChecks(name, "forename") |@| forenameNoApostrophe(name))
-      .map { case _ ⇒ name }
-  }
+  private def forenameValidation(name: String): ValidatedNel[String, String] =
+    (commonNameChecks(name, "forename") |@| forenameNoApostrophe(name)).map { case _ ⇒ name }
 
   private def surnameValidation(name: String): ValidatedNel[String, String] = {
     val lastCharacterNonSpecial = validatedFromBoolean(name)(!_.lastOption.exists(isSpecial(_)), "surname ended with special character")
-    (commonNameChecks(name, "surname") |@| lastCharacterNonSpecial)
-      .map { case _ ⇒ name }
+    (commonNameChecks(name, "surname") |@| lastCharacterNonSpecial).map { case _ ⇒ name }
   }
 
-  private def phoneNumberValidation(phoneNumber: Option[String]): ValidatedNel[String, Option[String]] =
-    validationFromBoolean(phoneNumber)(
-      _.forall(_.exists(c ⇒ c.isDigit || allowedPhoneNumberSpecialCharacters.contains(c))),
-      _ ⇒ "phone number contained invalid characters")
+  private def phoneNumberValidation(phoneNumber: Option[String]): ValidatedNel[String, Option[String]] = {
+    val hasDigit =
+      validationFromBoolean(phoneNumber)(
+        _.forall(_.exists(_.isDigit)),
+        _ ⇒ "phone number did not contain any digits"
+      )
+
+    val specialCharacterCheck =
+      validationFromBoolean(phoneNumber)(
+        _.forall(specialCharacters(_, allowedPhoneNumberSpecialCharacters).isEmpty),
+        _ ⇒ "phone number contained invalid characters")
+
+    val letterCheck =
+      validationFromBoolean(phoneNumber)(
+        _.forall(!_.exists(_.isLetter)),
+        _ ⇒ "phone number contained letters")
+
+    (hasDigit |@| specialCharacterCheck |@| letterCheck).map{ case _ ⇒ phoneNumber }
+  }
 
   private[validators] val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
 

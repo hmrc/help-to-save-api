@@ -32,7 +32,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
 
   val validator = new CreateAccountRequestValidator
 
-  val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0.1.2.3", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
+  val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
 
   val validCreateAccountBody: CreateAccountBody =
     CreateAccountBody("", "forename", "surname", LocalDate.now(),
@@ -80,11 +80,11 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
       }
 
       "has an phone number with allowed special characters" in {
-        (allowedPhoneNumberSpecialCharacters ::: (0 to 9).toList).foreach{ c ⇒
+        allowedPhoneNumberSpecialCharacters.foreach{ c ⇒
           testIsValid(
             CreateAccountRequest(
               validCreateAccountHeader,
-              validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(c.toString)))
+              validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(s"1$c")))
             ))
         }
       }
@@ -98,13 +98,23 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
 
       "have a phone number" which {
 
-        "contains disallowed special characters" in {
+        "does not contain any digits" in {
+          allowedPhoneNumberSpecialCharacters.foreach{ c ⇒
+            testIsInvalid(
+              CreateAccountRequest(
+                validCreateAccountHeader,
+                validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(c.toString)))
+              ))
+          }
+        }
+
+        "contains disallowed characters" in {
           forAll{ (c: Char) ⇒
             whenever(!c.isDigit && !allowedPhoneNumberSpecialCharacters.contains(c)){
               testIsInvalid(
                 CreateAccountRequest(
                   validCreateAccountHeader,
-                  validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(c.toString)))
+                  validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(s"1$c")))
                 ))
             }
           }
@@ -125,7 +135,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
         "has an invalid version length" in {
           testIsInvalid(
             CreateAccountRequest(
-              validCreateAccountHeader.copy(version = "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1"),
+              validCreateAccountHeader.copy(version = "1.11111111111111111111111"),
               validCreateAccountBody
             ))
 
