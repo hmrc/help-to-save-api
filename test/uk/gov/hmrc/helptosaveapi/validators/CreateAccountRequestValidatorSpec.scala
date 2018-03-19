@@ -181,7 +181,6 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
               validCreateAccountHeader,
               validCreateAccountBody.copy(forename = "fore'name")
             ))
-
           result.isInvalid shouldBe true
           result shouldBe Invalid(NonEmptyList.of("forename contains an apostrophe"))
         }
@@ -227,6 +226,22 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "sur--name")
             ))
+        }
+
+        "has a forename containing a digit" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(forename = "fore123name")
+            )).isInvalid shouldBe true
+        }
+
+        "has a surname containing a digit" in {
+          validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              validCreateAccountBody.copy(surname = "surname123")
+            )).isInvalid shouldBe true
         }
       }
 
