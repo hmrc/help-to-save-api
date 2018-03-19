@@ -36,7 +36,6 @@ class CreateAccountRequestValidator {
 
   def validateRequest(request: CreateAccountRequest): ValidatedNel[String, CreateAccountRequest] = {
     (request.header.validate() |@| request.body.validate()).map(CreateAccountRequest(_, _))
-
   }
 }
 
@@ -56,7 +55,9 @@ object CreateAccountRequestValidator {
 
       val registrationChannelCheck = validationFromBoolean(body.registrationChannel)(_ === "callCentre", r ⇒ s"Unknown registration channel: $r")
 
-      (forenameCheck |@| surnameCheck |@| communicationPreferenceCheck |@| registrationChannelCheck).map { case _ ⇒ body }
+      (forenameCheck |@| surnameCheck |@|
+        communicationPreferenceCheck |@| registrationChannelCheck |@|
+        phoneNumberValidation(body.contactDetails.phoneNumber)).map { case _ ⇒ body }
     }
   }
 
@@ -84,12 +85,19 @@ object CreateAccountRequestValidator {
   }
 
   private def surnameValidation(name: String): ValidatedNel[String, String] = {
-    val lastCharacterNonSpecial = validatedFromBoolean(name)(!_.lastOption.exists(isSpecial(_)), s"surname ended with special character")
+    val lastCharacterNonSpecial = validatedFromBoolean(name)(!_.lastOption.exists(isSpecial(_)), "surname ended with special character")
     (commonNameChecks(name, "surname") |@| lastCharacterNonSpecial)
       .map { case _ ⇒ name }
   }
 
-  private val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
+  private def phoneNumberValidation(phoneNumber: Option[String]): ValidatedNel[String, Option[String]] =
+    validationFromBoolean(phoneNumber)(
+      _.forall(_.exists(c ⇒ c.isDigit || allowedPhoneNumberSpecialCharacters.contains(c))),
+      _ ⇒ "phone number contained invalid characters")
+
+  private[validators] val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
+
+  private[validators] val allowedPhoneNumberSpecialCharacters = List('(', ')', '-', '.', '+', ' ')
 
   private def commonNameChecks(name: String, nameType: String): ValidatedNel[String, String] = {
 
