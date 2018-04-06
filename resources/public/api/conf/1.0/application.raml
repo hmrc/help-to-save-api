@@ -114,3 +114,54 @@ uses:
             type: !include schemas/ErrorResponse.json
             description: Service unavailable http response
             example: !include examples/ServiceUnavailableErrorResponseExample.json
+
+/individuals/help-to-save/eligibility/[NINO]:
+  get:
+    description: Sends a request to check the eligibility of an applicant on behalf of the user, also checks if the applicant already has an account
+    is: [headers.acceptHeader]
+    securedBy: [ sec.x-application ]
+    headers:
+      authorization: bearer [SERVER-TOKEN]
+      gov-client-public-IP:
+        description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+      gov-client-public-port:
+        description: The port of the server making the API call
+      gov-client-device-ID:
+        description: This can be the MAC address of the network interface on the server making the API call
+      gov-client-user-ID:
+        description: The taxpayer's NINO (or other, more relevant tax identifier if this is not applicable)
+      gov-client-timezone:
+        description: The timezone of the server making the API call
+      gov-client-local-IP:
+        description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+      gov-client-user-agent:
+        example: Windows Server/2016 (Dell PowerEgde R6415)
+        description: The user agent of the server making the API call
+      gov-vendor-version:
+        description: The version of the software making the API call
+      gov-vendor-instance-ID:
+        example: app-server-1
+        description: An identifier to differentiate between the various server instances
+      gov-vendor-public-IP:
+        description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+    responses:
+          200:
+            body:
+              application/json:
+                type: !include schemas/HappyEligibilityResponse.json
+                description: 200 Ok http response
+                examples:
+                  - EligiblePositiveWTCandUC: !include examples/EligiblePositiveWTCAndUCEligibilityResponseExample.json
+                  - EligibleSufficientUC: !include examples/EligibleUCEligibilityResponseExample.json
+                  - EligiblePositiveWTC: !include examples/EligibleWTCEligibilityResponseExample.json
+                  - IneligibleWTCNotPositiveAndUCNotSufficient: !include examples/IneligibleWTCandUCEligibilityResponseExample.json
+                  - IneligibleNoWTCAndUCNotSufficient: !include examples/IneligibleUCIncomeInsufficientEligibilityResponseExample.json
+                  - IneligibleNotPositiveWTCAndNoUC: !include examples/IneligibleNotPositiveWTCAndNoUCEligibilityResponseExample.json
+                  - IneligibleNoWTCNoUC: !include examples/IneligibleNoWTCNoUCEligibilityResponseExample.json
+                  - AccountAlreadyExists: !include examples/AccountExistsEligibilityResponseExample.json
+          4xx/5xx:
+            body:
+              application/json:
+                type: !include schemas/ErrorEligibilityResponse.json
+                description: 4xx/5xx error http response
+                example: !include examples/ErrorEligibilityResponseExample.json

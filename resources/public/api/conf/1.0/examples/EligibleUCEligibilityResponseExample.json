@@ -1,0 +1,8 @@
+{
+  "eligibility": {
+  "isEligible": true,
+  "hasWTC": false,
+  "hasUC": true
+},
+"accountExists": false
+}
