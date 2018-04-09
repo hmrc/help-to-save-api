@@ -151,14 +151,14 @@ uses:
                 type: !include schemas/HappyEligibilityResponse.json
                 description: 200 Ok http response
                 examples:
-                  - EligiblePositiveWTCandUC: !include examples/EligiblePositiveWTCAndUCEligibilityResponseExample.json
-                  - EligibleSufficientUC: !include examples/EligibleUCEligibilityResponseExample.json
-                  - EligiblePositiveWTC: !include examples/EligibleWTCEligibilityResponseExample.json
-                  - IneligibleWTCNotPositiveAndUCNotSufficient: !include examples/IneligibleWTCandUCEligibilityResponseExample.json
-                  - IneligibleNoWTCAndUCNotSufficient: !include examples/IneligibleUCIncomeInsufficientEligibilityResponseExample.json
-                  - IneligibleNotPositiveWTCAndNoUC: !include examples/IneligibleNotPositiveWTCAndNoUCEligibilityResponseExample.json
-                  - IneligibleNoWTCNoUC: !include examples/IneligibleNoWTCNoUCEligibilityResponseExample.json
-                  - AccountAlreadyExists: !include examples/AccountExistsEligibilityResponseExample.json
+                  EligiblePositiveWTCandUC: !include examples/EligiblePositiveWTCAndUCEligibilityResponseExample.json
+                  EligibleSufficientUC: !include examples/EligibleUCEligibilityResponseExample.json
+                  EligiblePositiveWTC: !include examples/EligibleWTCEligibilityResponseExample.json
+                  IneligibleWTCNotPositiveAndUCNotSufficient: !include examples/IneligibleWTCandUCEligibilityResponseExample.json
+                  IneligibleNoWTCAndUCNotSufficient: !include examples/IneligibleUCIncomeInsufficientEligibilityResponseExample.json
+                  IneligibleNotPositiveWTCAndNoUC: !include examples/IneligibleNotPositiveWTCAndNoUCEligibilityResponseExample.json
+                  IneligibleNoWTCNoUC: !include examples/IneligibleNoWTCNoUCEligibilityResponseExample.json
+                  AccountAlreadyExists: !include examples/AccountExistsEligibilityResponseExample.json
           4xx/5xx:
             body:
               application/json:
