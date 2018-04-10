@@ -145,23 +145,51 @@ uses:
       gov-vendor-public-IP:
         description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
     responses:
-          200:
-            body:
-              application/json:
-                type: !include schemas/HappyEligibilityResponse.json
-                description: 200 Ok http response
-                examples:
-                  EligiblePositiveWTCandUC: !include examples/EligiblePositiveWTCAndUCEligibilityResponseExample.json
-                  EligibleSufficientUC: !include examples/EligibleUCEligibilityResponseExample.json
-                  EligiblePositiveWTC: !include examples/EligibleWTCEligibilityResponseExample.json
-                  IneligibleWTCNotPositiveAndUCNotSufficient: !include examples/IneligibleWTCandUCEligibilityResponseExample.json
-                  IneligibleNoWTCAndUCNotSufficient: !include examples/IneligibleUCIncomeInsufficientEligibilityResponseExample.json
-                  IneligibleNotPositiveWTCAndNoUC: !include examples/IneligibleNotPositiveWTCAndNoUCEligibilityResponseExample.json
-                  IneligibleNoWTCNoUC: !include examples/IneligibleNoWTCNoUCEligibilityResponseExample.json
-                  AccountAlreadyExists: !include examples/AccountExistsEligibilityResponseExample.json
-          4xx/5xx:
-            body:
-              application/json:
-                type: !include schemas/ErrorEligibilityResponse.json
-                description: 4xx/5xx error http response
-                example: !include examples/ErrorEligibilityResponseExample.json
+      200:
+        body:
+          application/json:
+            type: !include schemas/HappyEligibilityResponse.json
+            examples:
+              example-1:
+                description: Applicant is Eligible with Positive WTC and UC
+                value: !include examples/EligiblePositiveWTCAndUCEligibilityResponseExample.json
+              example-2:
+                description: Applicant is Eligible with Sufficient UC
+                value: !include examples/EligibleUCEligibilityResponseExample.json
+              example-3:
+                description: Applicant is Eligible with Positive WTC
+                value: !include examples/EligibleWTCEligibilityResponseExample.json
+              example-4:
+                description: Applicant is Ineligible due to WTC not positive and UC is not sufficient
+                value: !include examples/IneligibleWTCandUCEligibilityResponseExample.json
+              example-5:
+                description: Applicant is Ineligible due to no WTC and UC is not sufficient
+                value: !include examples/IneligibleUCIncomeInsufficientEligibilityResponseExample.json
+              example-6:
+                description: Applicant is Ineligible due to WTC not positive and no UC
+                value: !include examples/IneligibleNotPositiveWTCAndNoUCEligibilityResponseExample.json
+              example-7:
+                description: Applicant is Ineligible due to no WTC and no UC
+                value: !include examples/IneligibleNoWTCNoUCEligibilityResponseExample.json
+              example-8:
+                description: Applicant already has an account
+                value: !include examples/AccountExistsEligibilityResponseExample.json
+      4xx/5xx:
+        body:
+          application/json:
+            type: !include schemas/ErrorEligibilityResponse.json
+            description: 4xx/5xx error http response
+            example: !include examples/ErrorEligibilityResponseExample.json
+      xxx:
+        body:
+          application/json:
+            examples:
+              invalid-json-response-1:
+                description: Json returns with WTC and UC both false but Eligible is true
+                value: !include examples/InvalidResponseNoWTCNoUCButEligible.json
+              invalid-json-response-2:
+                description: Json returns with Account Exists set to false
+                value: !include examples/InvalidResponseAccountExistsFalse.json
+              invalid-json-response-3:
+                description: Json returns with Account Exists field along with other fields
+                value: !include examples/InvalidResponseAccountExistsWithEligibility.json
