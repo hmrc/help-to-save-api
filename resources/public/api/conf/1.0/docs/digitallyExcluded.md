@@ -1,2 +1,2 @@
-In the json payloads sent from digitally excluded callers, the communicationPreference field must be set to "00" and registrationChannel
-must be set to "callCentre".
+In the json payloads sent from digitally excluded callers to the POST create account end point, the communicationPreference
+field must be set to "00" and registrationChannel must be set to "callCentre".

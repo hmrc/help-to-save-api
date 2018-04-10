@@ -1,5 +1,5 @@
-This section highlights API internal handling of diacritic (accented) chars. The following Diacritic handling rules only
-target the forename & surname.  Address & Telephone fields are accepted as-is.
+This section highlights API internal handling of diacritic (accented) chars when the POST create account end point is triggered.
+The following Diacritic handling rules only target the forename & surname.  Address & Telephone fields are accepted as-is.
 
 In this API diacritic characters will be converted to the undecorated underlying chracter. For example, a manual conversion of
 ‘Höben’ normally converts to ‘Hoeben’, but the conversion within the API will be to ‘o’ not ‘oe’, i.e ‘Hoben’.  As such, it could
