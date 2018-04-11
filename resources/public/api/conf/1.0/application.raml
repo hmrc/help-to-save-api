@@ -9,24 +9,17 @@ documentation:
    content: !include docs/overview.md
  - title: Versioning
    content: !include docs/versioning.md
- - title: Parameters
-   content: !include docs/parameters.md
  - title: E2E Live Support Journey Analysis
    content: !include docs/liveSupport.md
- - title: Errors
-   content: !include docs/errors.md
  - title: Timeouts
    content: !include docs/timeouts.md
- - title: Data Transformations
-   content: !include docs/dataTransformations.md
  - title: Access to the API
    content: !include docs/access.md
- - title: Diacritics and Legal Considerations
-   content: !include docs/diacritics.md
  - title: Security Matters
    content: !include docs/security.md
- - title: Digitally Excluded Callers
-   content: !include docs/digitallyExcluded.md
+
+ - title: Post Create Account end point
+   content: !include docs/postCreateAccount.md
 
 mediaType: [ application/json, application/hal+json ]
 
@@ -114,3 +107,82 @@ uses:
             type: !include schemas/ErrorResponse.json
             description: Service unavailable http response
             example: !include examples/ServiceUnavailableErrorResponseExample.json
+
+/individuals/help-to-save/eligibility/[NINO]:
+  get:
+    description: Sends a request to check the eligibility of an applicant on behalf of the user, also checks if the applicant already has an account
+    is: [headers.acceptHeader]
+    securedBy: [ sec.x-application ]
+    headers:
+      authorization: bearer [SERVER-TOKEN]
+      gov-client-public-IP:
+        description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+      gov-client-public-port:
+        description: The port of the server making the API call
+      gov-client-device-ID:
+        description: This can be the MAC address of the network interface on the server making the API call
+      gov-client-user-ID:
+        description: The taxpayer's NINO (or other, more relevant tax identifier if this is not applicable)
+      gov-client-timezone:
+        description: The timezone of the server making the API call
+      gov-client-local-IP:
+        description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+      gov-client-user-agent:
+        example: Windows Server/2016 (Dell PowerEgde R6415)
+        description: The user agent of the server making the API call
+      gov-vendor-version:
+        description: The version of the software making the API call
+      gov-vendor-instance-ID:
+        example: app-server-1
+        description: An identifier to differentiate between the various server instances
+      gov-vendor-public-IP:
+        description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+    responses:
+      200:
+        body:
+          application/json:
+            type: !include schemas/HappyEligibilityResponse.json
+            examples:
+              example-1:
+                description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit and in receipt of UC and their household income is sufficient
+                value: !include examples/EligiblePositiveWTCAndUCEligibilityResponseExample.json
+              example-2:
+                description: The person is eligible for Help to Save as they are in receipt of UC and their household income is sufficient
+                value: !include examples/EligibleUCEligibilityResponseExample.json
+              example-3:
+                description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit
+                value: !include examples/EligibleWTCEligibilityResponseExample.json
+              example-4:
+                description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and in receipt of UC but their household income is insufficient
+                value: !include examples/IneligibleWTCandUCEligibilityResponseExample.json
+              example-5:
+                description: The person is ineligible for Help to Save as they are not entitled to WTC and are in receipt of UC but their household income is insufficient
+                value: !include examples/IneligibleUCIncomeInsufficientEligibilityResponseExample.json
+              example-6:
+                description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and they are not in receipt of UC
+                value: !include examples/IneligibleNotPositiveWTCAndNoUCEligibilityResponseExample.json
+              example-7:
+                description: The person is ineligible for Help to Save as they are not entitled to WTC and not in receipt of UC
+                value: !include examples/IneligibleNoWTCNoUCEligibilityResponseExample.json
+              example-8:
+                description: The person already has a Help to Save account
+                value: !include examples/AccountExistsEligibilityResponseExample.json
+      4xx/5xx:
+        body:
+          application/json:
+            type: !include schemas/ErrorEligibilityResponse.json
+            description: 4xx/5xx error http response
+            example: !include examples/ErrorEligibilityResponseExample.json
+      xxx:
+        body:
+          application/json:
+            examples:
+              invalid-json-response-1:
+                description: The combination of “hasWTC” and “hasUC” both being false with an eligible response is not possible
+                value: !include examples/InvalidResponseNoWTCNoUCButEligible.json
+              invalid-json-response-2:
+                description: If an account does not already exists there will always be an accompanying object describing the eligibility result
+                value: !include examples/InvalidResponseAccountExistsFalse.json
+              invalid-json-response-3:
+                description: If an account already exists there will never be an accompanying “eligibility” object
+                value: !include examples/InvalidResponseAccountExistsWithEligibility.json

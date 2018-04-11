@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for Ok Help to Save eligibility check response",
+  "type":"object",
+  "properties":{
+    "eligibility": {
+      "type":"object",
+      "properties":{
+        "isEligible": {
+          "type":"boolean"
+        },
+        "hasWTC": {
+          "type":"boolean"
+        },
+        "hasUC": {
+          "type":"boolean"
+        }
+      },
+      "required": [
+        "isEligible",
+        "hasWTC",
+        "hasUC"
+      ]
+    },
+    "accountExists": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "accountExists"
+  ]
+}
