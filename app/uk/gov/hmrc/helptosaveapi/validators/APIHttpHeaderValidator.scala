@@ -80,6 +80,12 @@ object APIHttpHeaderValidator {
   private[helptosaveapi] val expectedTxmHeaders: List[String] = List(
     "Gov-Client-User-ID",
     "Gov-Client-Timezone",
+    "Gov-Client-Public-IP",
+    "Gov-Client-Public-Port",
+    "Gov-Client-Device-ID",
+    "Gov-Client-Local-IP",
+    "Gov-Client-User-Agent",
+    "Gov-Vendor-Public-IP",
     "Gov-Vendor-Version",
     "Gov-Vendor-Instance-ID"
   )
