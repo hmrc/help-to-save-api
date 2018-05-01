@@ -54,7 +54,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
       val nino = "AE123456C"
       val correlationId = UUID.randomUUID()
-      val eligibilityUrl = s"http://localhost:7001/help-to-save/api/check-eligibility/$nino"
+      val eligibilityUrl = s"http://localhost:7001/help-to-save/api/eligibility-check/$nino"
       val headers = Map("X-CorrelationId" -> correlationId.toString)
 
         def eligibilityJson(resultCode: Int, reasonCode: Int) =
