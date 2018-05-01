@@ -43,7 +43,7 @@ class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeA
   val http: WSHttp = mock[WSHttp]
 
   val httpErrorHandler: HttpErrorHandler = mock[HttpErrorHandler]
-  
+
   implicit lazy val metrics: Metrics = fakeApplication.injector.instanceOf[Metrics]
 
   implicit lazy val logMessageTransformer: LogMessageTransformer = fakeApplication.injector.instanceOf[LogMessageTransformer]

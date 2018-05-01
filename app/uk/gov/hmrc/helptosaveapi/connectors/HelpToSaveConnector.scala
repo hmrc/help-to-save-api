@@ -58,7 +58,7 @@ class HelpToSaveConnectorImpl @Inject() (config:            Configuration,
 
   val createAccountUrl: String = s"$htsBBaseUrl/create-de-account"
 
-  def eligibilityCheckUrl(nino: String): String = s"$htsBBaseUrl/api/check-eligibility/$nino"
+  def eligibilityCheckUrl(nino: String): String = s"$htsBBaseUrl/api/eligibility-check/$nino"
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
