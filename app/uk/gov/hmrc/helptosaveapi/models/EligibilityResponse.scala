@@ -22,11 +22,12 @@ sealed trait EligibilityResponse
 
 object EligibilityResponse {
 
+  implicit val apiEligibilityResponseWrites: Writes[ApiEligibilityResponse] = Json.writes[ApiEligibilityResponse]
+
   implicit val writes: Writes[EligibilityResponse] = new Writes[EligibilityResponse] {
     override def writes(response: EligibilityResponse): JsValue = {
       response match {
         case a: ApiEligibilityResponse ⇒
-          implicit val apiEligibilityResponseWrites: Writes[ApiEligibilityResponse] = Json.writes[ApiEligibilityResponse]
           Json.toJson(a)
         case b: AccountAlreadyExists ⇒
           Json.parse("""{"accountExists": true}""")

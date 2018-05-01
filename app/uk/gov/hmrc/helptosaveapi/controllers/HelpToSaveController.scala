@@ -25,7 +25,8 @@ import cats.syntax.show._
 import com.codahale.metrics.Timer
 import com.google.inject.Inject
 import play.api.Configuration
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.libs.json.Json.toJson
+import play.api.libs.json.{JsError, JsSuccess}
 import play.api.mvc._
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
@@ -75,7 +76,7 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
     httpHeaderValidator.validateHeaderForEligibilityCheck {
       e ⇒
         metrics.apiEligibilityCallErrorCounter.inc()
-        BadRequest(Json.toJson(EligibilityCheckErrorResponse(BAD_REQUEST, s"Invalid HTTP headers in request: $e")))
+        BadRequest(toJson(EligibilityCheckErrorResponse("400", s"Invalid HTTP headers in request: $e")))
           .withHeaders(correlationIdHeaderName -> correlationId.toString)
     }.async { implicit request ⇒
       val resultF = if (ninoRegex(nino).matches()) {
@@ -87,14 +88,14 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
                 e ⇒ {
                   logger.warn(s"unexpected error during eligibility check error: $e")
                   metrics.apiEligibilityCallErrorCounter.inc()
-                  InternalServerError(Json.toJson(EligibilityCheckErrorResponse(INTERNAL_SERVER_ERROR, "Server Error")))
+                  InternalServerError(toJson(EligibilityCheckErrorResponse("500", "Server Error")))
                 },
-                elgb ⇒ Ok(Json.toJson(elgb))
+                elgb ⇒ Ok(toJson(elgb))
               )
           }
       } else {
         metrics.apiEligibilityCallErrorCounter.inc()
-        toFuture(BadRequest(Json.toJson(EligibilityCheckErrorResponse(BAD_REQUEST, "NINO doesn't match the regex"))))
+        toFuture(BadRequest(toJson(EligibilityCheckErrorResponse("400", "NINO doesn't match the regex"))))
       }
 
       resultF.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))

@@ -18,7 +18,7 @@ package uk.gov.hmrc.helptosaveapi.models
 
 import play.api.libs.json.{Format, Json}
 
-case class EligibilityCheckErrorResponse(code: Int, message: String)
+case class EligibilityCheckErrorResponse(code: String, message: String)
 
 object EligibilityCheckErrorResponse {
   implicit val eligibilityCheckErrorResponseFormat: Format[EligibilityCheckErrorResponse] = Json.format[EligibilityCheckErrorResponse]
