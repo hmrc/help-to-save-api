@@ -25,7 +25,6 @@ import play.api.http.Status.OK
 import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.EligibilityCheckResponse
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
-import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
@@ -46,7 +45,6 @@ trait HelpToSaveConnector {
 @Singleton
 class HelpToSaveConnectorImpl @Inject() (config:            Configuration,
                                          http:              WSHttp,
-                                         metrics:           Metrics,
                                          pagerDutyAlerting: PagerDutyAlerting)(implicit transformer: LogMessageTransformer)
   extends HelpToSaveConnector with Logging {
 
@@ -69,20 +67,14 @@ class HelpToSaveConnectorImpl @Inject() (config:            Configuration,
   override def checkEligibility(nino:          String,
                                 correlationId: UUID)(implicit hc: HeaderCarrier,
                                                      ec: ExecutionContext): Future[Either[String, EligibilityResponse]] = {
-    val timerContext = metrics.apiEligibilityCallTimer.time()
     http.get(eligibilityCheckUrl(nino), Map(correlationIdHeaderName -> correlationId.toString))
       .map {
         response ⇒
-          val time = timerContext.stop()
-
           response.status match {
             case OK ⇒
-              val result = {
-                response.parseJson[EligibilityCheckResponse].flatMap(toApiEligibility)
-              }
+              val result = response.parseJson[EligibilityCheckResponse].flatMap(toApiEligibility)
               result.fold({
                 e ⇒
-                  metrics.apiEligibilityCallErrorCounter.inc()
                   logger.warn(s"Could not parse JSON response from eligibility check, received 200 (OK): $e", nino)
                   pagerDutyAlerting.alert("Could not parse JSON in eligibility check response")
               }, _ ⇒
@@ -92,16 +84,13 @@ class HelpToSaveConnectorImpl @Inject() (config:            Configuration,
 
             case other: Int ⇒
               logger.warn(s"Call to check eligibility unsuccessful. Received unexpected status $other", nino)
-              metrics.apiEligibilityCallErrorCounter.inc()
               pagerDutyAlerting.alert("Received unexpected http status in response to eligibility check")
               Left(s"Received unexpected status $other")
 
           }
       }.recover {
         case e ⇒
-          val time = timerContext.stop()
           pagerDutyAlerting.alert("Failed to make call to check eligibility")
-          metrics.apiEligibilityCallErrorCounter.inc()
           Left(s"Call to check eligibility unsuccessful: ${e.getMessage}")
       }
   }

@@ -29,7 +29,7 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
-import uk.gov.hmrc.helptosaveapi.models.{CreateAccountRequest, ErrorResponse}
+import uk.gov.hmrc.helptosaveapi.models.{CreateAccountErrorResponse, CreateAccountRequest, EligibilityCheckErrorResponse}
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveapi.util.{Logging, WithMdcExecutionContext, toFuture}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator}
@@ -52,7 +52,7 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
     httpHeaderValidator.validateHeaderForCreateAccount {
       e ⇒
         updateCreateAccountErrorMetrics(timer)
-        BadRequest(ErrorResponse("Invalid HTTP headers in request", e).toJson())
+        BadRequest(CreateAccountErrorResponse("Invalid HTTP headers in request", e).toJson())
     }
       .async { implicit request ⇒
         validateCreateAccountRequest(request, timer) {
@@ -70,27 +70,31 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
   }
 
   def checkEligibility(nino: String): Action[AnyContent] = {
-
+    val timer = metrics.apiEligibilityCallTimer.time()
     val correlationId = UUID.randomUUID()
     httpHeaderValidator.validateHeaderForEligibilityCheck {
       e ⇒
         metrics.apiEligibilityCallErrorCounter.inc()
-        BadRequest(ErrorResponse("Invalid HTTP headers in request", e).toJson()).withHeaders(correlationIdHeaderName -> correlationId.toString)
+        BadRequest(Json.toJson(EligibilityCheckErrorResponse(BAD_REQUEST, s"Invalid HTTP headers in request: $e")))
+          .withHeaders(correlationIdHeaderName -> correlationId.toString)
     }.async { implicit request ⇒
       val resultF = if (ninoRegex(nino).matches()) {
         helpToSaveConnector.checkEligibility(nino, correlationId)
           .map {
-            _.fold(
-              e ⇒ {
-                logger.warn(s"unexpected error during eligibility check error: $e")
-                InternalServerError
-              },
-              elgb ⇒ Ok(Json.toJson(elgb))
-            )
+            r ⇒
+              val _ = timer.stop()
+              r.fold(
+                e ⇒ {
+                  logger.warn(s"unexpected error during eligibility check error: $e")
+                  metrics.apiEligibilityCallErrorCounter.inc()
+                  InternalServerError(Json.toJson(EligibilityCheckErrorResponse(INTERNAL_SERVER_ERROR, "Server Error")))
+                },
+                elgb ⇒ Ok(Json.toJson(elgb))
+              )
           }
       } else {
         metrics.apiEligibilityCallErrorCounter.inc()
-        toFuture(BadRequest(ErrorResponse("Invalid NINO in request", "").toJson()))
+        toFuture(BadRequest(Json.toJson(EligibilityCheckErrorResponse(BAD_REQUEST, "NINO doesn't match the regex"))))
       }
 
       resultF.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
@@ -108,7 +112,7 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
               updateCreateAccountErrorMetrics(timer)
               val errorString = s"[${errors.toList.mkString("; ")}]"
               logger.warn(s"Error when validating request: $errorString")
-              BadRequest(ErrorResponse("Invalid JSON body in request", errorString).toJson())
+              BadRequest(CreateAccountErrorResponse("Invalid JSON body in request", errorString).toJson())
             },
             f
           )
@@ -117,12 +121,12 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
         updateCreateAccountErrorMetrics(timer)
         val errorString = error.prettyPrint()
         logger.warn(s"Could not parse JSON in request body: $errorString")
-        BadRequest(ErrorResponse("Could not parse JSON in request", errorString).toJson())
+        BadRequest(CreateAccountErrorResponse("Could not parse JSON in request", errorString).toJson())
 
       case None ⇒
         updateCreateAccountErrorMetrics(timer)
         logger.warn("No JSON body found in request")
-        BadRequest(ErrorResponse("No JSON found in request body", "").toJson())
+        BadRequest(CreateAccountErrorResponse("No JSON found in request body", "").toJson())
     }
 
   @inline

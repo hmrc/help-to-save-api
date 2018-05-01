@@ -24,27 +24,23 @@ object EligibilityResponse {
 
   implicit val writes: Writes[EligibilityResponse] = new Writes[EligibilityResponse] {
     override def writes(response: EligibilityResponse): JsValue = {
-
-      val json = response match {
+      response match {
         case a: ApiEligibilityResponse ⇒
-          s"""{"eligibility":
-             |  { "isEligible": ${a.eligibility.isEligible},
-             |    "hasWTC": ${a.eligibility.hasWTC},
-             |    "hasUC": ${a.eligibility.hasUC}
-             |  },
-             |  "accountExists":  ${a.accountExists}
-             | }""".stripMargin
+          implicit val apiEligibilityResponseWrites: Writes[ApiEligibilityResponse] = Json.writes[ApiEligibilityResponse]
+          Json.toJson(a)
         case b: AccountAlreadyExists ⇒
-          s"""{"accountExists": ${b.accountExists}}"""
+          Json.parse("""{"accountExists": true}""")
       }
-
-      Json.parse(json)
     }
   }
 }
 
 case class ApiEligibilityResponse(eligibility: Eligibility, accountExists: Boolean) extends EligibilityResponse
 
-case class AccountAlreadyExists(accountExists: Boolean = true) extends EligibilityResponse
+case class AccountAlreadyExists() extends EligibilityResponse
 
 case class Eligibility(isEligible: Boolean, hasWTC: Boolean, hasUC: Boolean)
+
+object Eligibility {
+  implicit val eligibilityWrites: Writes[Eligibility] = Json.writes[Eligibility]
+}

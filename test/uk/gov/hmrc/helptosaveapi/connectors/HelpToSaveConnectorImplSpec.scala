@@ -30,7 +30,7 @@ import uk.gov.hmrc.http.HttpResponse
 // scalastyle:off magic.number
 class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with GeneratorDrivenPropertyChecks with EitherValues {
 
-  val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, http, metrics, mockPagerDuty)
+  val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, http, mockPagerDuty)
 
   "The HelpToSaveConnectorImpl" when {
 

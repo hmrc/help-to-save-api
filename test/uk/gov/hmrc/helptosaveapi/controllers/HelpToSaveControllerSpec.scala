@@ -165,6 +165,16 @@ class HelpToSaveControllerSpec extends TestSupport {
         mockEligibilityCheckHeaderValidator(passingHeaderValidatorResponse)
         val result = controller.checkEligibility("badNinO123")(FakeRequest())
         status(result) shouldBe BAD_REQUEST
+        contentAsString(result) shouldBe """{"code":400,"message":"NINO doesn't match the regex"}"""
+        headers(result).exists(_._1 === "X-CorrelationId")
+      }
+
+      "handle server errors during eligibility check" in {
+        mockEligibilityCheckHeaderValidator(passingHeaderValidatorResponse)
+        mockEligibilityCheck(nino)(Left("internal server error"))
+        val result = controller.checkEligibility(nino)(FakeRequest())
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+        contentAsString(result) shouldBe """{"code":500,"message":"Server Error"}"""
         headers(result).exists(_._1 === "X-CorrelationId")
       }
     }
