@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi
+package uk.gov.hmrc.helptosaveapi.util
 
-import scala.concurrent.Future
-import scala.util.matching.Regex
+import org.scalamock.scalatest.MockFactory
 
-package object util {
+trait MockPagerDuty { this: MockFactory ⇒
 
-  implicit def toFuture[A](a: A): Future[A] = Future.successful(a)
+  val mockPagerDuty: PagerDutyAlerting = mock[PagerDutyAlerting]
 
-  private val ninoRegex: Regex = """[A-Za-z]{2}[0-9]{6}[A-Za-z]{1}""".r
-
-  def maskNino(original: String): String = {
-    Option(original) match {
-      case Some(text) ⇒ ninoRegex.replaceAllIn(text, "<NINO>")
-      case None       ⇒ original
-    }
-  }
+  def mockPagerDutyAlert(expectedMessage: String): Unit =
+    (mockPagerDuty.alert(_: String))
+      .expects(expectedMessage)
+      .returning(())
 
 }

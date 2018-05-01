@@ -25,18 +25,19 @@ import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.ws.WSPost
+import uk.gov.hmrc.play.http.ws.{WSGet, WSPost}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[WSHttpExtension])
-trait WSHttp extends HttpPost with WSPost {
+trait WSHttp extends HttpPost with WSPost with HttpGet with WSGet {
+
+  def get(url: String, headers: Map[String, String] = Map.empty[String, String])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
   def post[A](url:     String,
               body:    A,
               headers: Map[String, String] = Map.empty[String, String]
   )(implicit w: Writes[A], hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
-
 }
 
 @Singleton
@@ -56,6 +57,12 @@ class WSHttpExtension @Inject() (val auditConnector:       AuditConnector,
   override def appName: String = getString("appName")
 
   override def mapErrors(httpMethod: String, url: String, f: Future[HttpResponse])(implicit ec: ExecutionContext): Future[HttpResponse] = f
+
+  /**
+   * Returns a [[Future[HttpResponse]] without throwing exceptions if the status us not `2xx`. Needed
+   * to replace [[GET]] method provided by the hmrc library which will throw exceptions in such cases.
+   */
+  def get(url: String, headers: Map[String, String] = Map.empty[String, String])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = super.GET(url)(httpReads, hc, ec)
 
   def post[A](url:     String,
               body:    A,

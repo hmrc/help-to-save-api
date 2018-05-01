@@ -16,16 +16,20 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
+import java.util.UUID
+import java.util.regex.Matcher
+
 import cats.instances.int._
-import cats.syntax.show._
 import cats.syntax.eq._
+import cats.syntax.show._
 import com.codahale.metrics.Timer
 import com.google.inject.Inject
-import play.api.libs.json.{JsError, JsSuccess}
+import play.api.Configuration
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
+import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountRequest, ErrorResponse}
-import uk.gov.hmrc.helptosaveapi.services.CreateAccountService
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveapi.util.{Logging, WithMdcExecutionContext, toFuture}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator}
@@ -33,41 +37,75 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
 import scala.concurrent.Future
 
-class HelpToSaveController @Inject() (createAccountService: CreateAccountService, metrics: Metrics)
+class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, metrics: Metrics)(implicit config: Configuration)
   extends BaseController with Logging with WithMdcExecutionContext {
+
+  val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
   val httpHeaderValidator: APIHttpHeaderValidator = new APIHttpHeaderValidator
 
   val createAccountRequestValidator: CreateAccountRequestValidator = new CreateAccountRequestValidator
 
   def createAccount(): Action[AnyContent] = {
-    val timer = metrics.apiCallTimer.time()
+    val timer = metrics.apiCreateAccountCallTimer.time()
 
-    httpHeaderValidator.validateHeader{
+    httpHeaderValidator.validateHeaderForCreateAccount {
       e ⇒
-        updateErrorMetrics(timer)
+        updateCreateAccountErrorMetrics(timer)
         BadRequest(ErrorResponse("Invalid HTTP headers in request", e).toJson())
     }
       .async { implicit request ⇒
-        validateRequest(request, timer) {
+        validateCreateAccountRequest(request, timer) {
           case CreateAccountRequest(header, body) ⇒
             logger.info(s"Create Account Request has been made with headers: ${header.show}")
-            createAccountService.createAccount(body, header.requestCorrelationId).map { response ⇒
+            helpToSaveConnector.createAccount(body, header.requestCorrelationId).map { response ⇒
               val _ = timer.stop()
-              if (response.status =!= CREATED | response.status =!= CONFLICT) { metrics.apiCallErrorCounter.inc() }
+              if (response.status =!= CREATED | response.status =!= CONFLICT) {
+                metrics.apiCreateAccountCallErrorCounter.inc()
+              }
               Option(response.body).fold[Result](Status(response.status))(Status(response.status)(_))
             }
         }
       }
   }
 
-  private def validateRequest(request: Request[AnyContent], timer: Timer.Context)(f: CreateAccountRequest ⇒ Future[Result]): Future[Result] =
+  def checkEligibility(nino: String): Action[AnyContent] = {
+
+    val correlationId = UUID.randomUUID()
+    httpHeaderValidator.validateHeaderForEligibilityCheck {
+      e ⇒
+        metrics.apiEligibilityCallErrorCounter.inc()
+        BadRequest(ErrorResponse("Invalid HTTP headers in request", e).toJson()).withHeaders(correlationIdHeaderName -> correlationId.toString)
+    }.async { implicit request ⇒
+      val resultF = if (ninoRegex(nino).matches()) {
+        helpToSaveConnector.checkEligibility(nino, correlationId)
+          .map {
+            _.fold(
+              e ⇒ {
+                logger.warn(s"unexpected error during eligibility check error: $e")
+                InternalServerError
+              },
+              elgb ⇒ Ok(Json.toJson(elgb))
+            )
+          }
+      } else {
+        metrics.apiEligibilityCallErrorCounter.inc()
+        toFuture(BadRequest(ErrorResponse("Invalid NINO in request", "").toJson()))
+      }
+
+      resultF.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
+    }
+  }
+
+  private val ninoRegex: String ⇒ Matcher = "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?$".r.pattern.matcher _
+
+  private def validateCreateAccountRequest(request: Request[AnyContent], timer: Timer.Context)(f: CreateAccountRequest ⇒ Future[Result]): Future[Result] =
     request.body.asJson.map(_.validate[CreateAccountRequest]) match {
       case Some(JsSuccess(createAccountRequest, _)) ⇒
         createAccountRequestValidator.validateRequest(createAccountRequest)
           .fold(
             { errors ⇒
-              updateErrorMetrics(timer)
+              updateCreateAccountErrorMetrics(timer)
               val errorString = s"[${errors.toList.mkString("; ")}]"
               logger.warn(s"Error when validating request: $errorString")
               BadRequest(ErrorResponse("Invalid JSON body in request", errorString).toJson())
@@ -76,21 +114,21 @@ class HelpToSaveController @Inject() (createAccountService: CreateAccountService
           )
 
       case Some(error: JsError) ⇒
-        updateErrorMetrics(timer)
+        updateCreateAccountErrorMetrics(timer)
         val errorString = error.prettyPrint()
         logger.warn(s"Could not parse JSON in request body: $errorString")
         BadRequest(ErrorResponse("Could not parse JSON in request", errorString).toJson())
 
       case None ⇒
-        updateErrorMetrics(timer)
+        updateCreateAccountErrorMetrics(timer)
         logger.warn("No JSON body found in request")
         BadRequest(ErrorResponse("No JSON found in request body", "").toJson())
     }
 
   @inline
-  private def updateErrorMetrics(timer: Timer.Context): Unit = {
+  private def updateCreateAccountErrorMetrics(timer: Timer.Context): Unit = {
     val _ = timer.stop()
-    metrics.apiCallErrorCounter.inc()
+    metrics.apiCreateAccountCallErrorCounter.inc()
   }
 
 }
