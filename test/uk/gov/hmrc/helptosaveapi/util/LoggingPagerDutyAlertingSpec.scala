@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.models
+package uk.gov.hmrc.helptosaveapi.util
 
-import play.api.libs.json.{Format, JsValue, Json}
+class LoggingPagerDutyAlertingSpec extends TestSupport {
 
-case class ErrorResponse(errorMessageId: String, errorMessage: String, errorDetails: String)
+  val alerting = new LoggingPagerDutyAlerting
 
-object ErrorResponse {
+  "LoggingPagerDutyAlerting" must {
 
-  def apply(errorMessage: String, errorDetails: String): ErrorResponse =
-    ErrorResponse("", errorMessage, errorDetails)
+    "alert messages as expected in " in {
 
-  implicit val format: Format[ErrorResponse] = Json.format[ErrorResponse]
+      alerting.alert("unexpected error ") shouldBe (())
 
-  implicit class ErrorResponseOps(val errorResponse: ErrorResponse) extends AnyVal {
-    def toJson(): JsValue = format.writes(errorResponse)
+    }
   }
 
 }

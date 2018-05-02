@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi
+package uk.gov.hmrc.helptosaveapi.models
 
-import scala.concurrent.Future
-import scala.util.matching.Regex
+import play.api.libs.json.{Format, Json}
 
-package object util {
+case class EligibilityCheckErrorResponse(code: String, message: String)
 
-  implicit def toFuture[A](a: A): Future[A] = Future.successful(a)
-
-  private val ninoRegex: Regex = """[A-Za-z]{2}[0-9]{6}[A-Za-z]{1}""".r
-
-  def maskNino(original: String): String = {
-    Option(original) match {
-      case Some(text) ⇒ ninoRegex.replaceAllIn(text, "<NINO>")
-      case None       ⇒ original
-    }
-  }
-
+object EligibilityCheckErrorResponse {
+  implicit val eligibilityCheckErrorResponseFormat: Format[EligibilityCheckErrorResponse] = Json.format[EligibilityCheckErrorResponse]
 }

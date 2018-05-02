@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi
+package uk.gov.hmrc.helptosaveapi.util
 
-import scala.concurrent.Future
-import scala.util.matching.Regex
+import scala.util.{Failure, Success, Try}
 
-package object util {
+object TryOps {
+  implicit def foldOps[A](t: Try[A]): TryOps[A] = new TryOps[A](t)
+}
 
-  implicit def toFuture[A](a: A): Future[A] = Future.successful(a)
+class TryOps[A](val t: Try[A]) extends AnyVal {
 
-  private val ninoRegex: Regex = """[A-Za-z]{2}[0-9]{6}[A-Za-z]{1}""".r
-
-  def maskNino(original: String): String = {
-    Option(original) match {
-      case Some(text) ⇒ ninoRegex.replaceAllIn(text, "<NINO>")
-      case None       ⇒ original
-    }
+  def fold[B](f: Throwable ⇒ B, g: A ⇒ B): B = t match {
+    case Failure(e) ⇒ f(e)
+    case Success(s) ⇒ g(s)
   }
 
 }

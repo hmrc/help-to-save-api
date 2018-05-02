@@ -23,54 +23,37 @@ import cats.syntax.cartesian._
 import cats.syntax.eq._
 import cats.syntax.traverse._
 import play.api.http.{ContentTypes, HeaderNames}
-import play.api.mvc.{ActionBuilder, Headers, Request, Result}
-import uk.gov.hmrc.helptosaveapi.util.{Logging, toFuture}
+import play.api.mvc.{Headers, Request}
+import uk.gov.hmrc.helptosaveapi.util.Logging
 import uk.gov.hmrc.helptosaveapi.util.Validation._
-
-import scala.concurrent.Future
 
 class APIHttpHeaderValidator extends Logging {
 
   import uk.gov.hmrc.helptosaveapi.validators.APIHttpHeaderValidator._
 
-  def validateHeader(errorResponse: ErrorDescription ⇒ Result): ActionBuilder[Request] = new ActionBuilder[Request] {
+  def contentTypeCheck(implicit request: Request[_]): ValidatedNel[String, Option[String]] = validationFromBoolean(request.contentType)(
+    _.contains(ContentTypes.JSON),
+    contentType ⇒ s"content type was not JSON: ${contentType.getOrElse("")}")
 
-    def invokeBlock[A](request: Request[A],
-                       block:   Request[A] ⇒ Future[Result]): Future[Result] =
-      validateHttpHeaders(request).fold(
-        { e ⇒
-          val errorString = s"[${e.toList.mkString(",")}]"
-          logger.warn(s"Could not validate headers: $errorString")
-          errorResponse(errorString)
-        },
-        block
+  def acceptCheck(implicit request: Request[_]): ValidatedNel[String, Headers] = validationFromBoolean(request.headers)(
+    _.get(HeaderNames.ACCEPT).exists(_ === expectedAcceptType),
+    _ ⇒ s"accept did not contain expected mime type '$expectedAcceptType'")
+
+  def txmHeadersCheck(implicit request: Request[_]): ValidatedNel[String, List[String]] = {
+    val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(expectedKey ⇒
+      validationFromBoolean(expectedKey)(
+        request.headers.get(_).isDefined,
+        _ ⇒ s"Could not find header '$expectedKey'"
       )
+    )
+    listOfValidations.traverse[Validation, String](identity)
   }
 
-  private def validateHttpHeaders[A](request: Request[A]): ValidatedNel[String, Request[A]] = {
-    val headers = request.headers
+  def validateHttpHeadersForCreateAccount[A](implicit request: Request[A]): ValidatedNel[String, Request[A]] =
+    (contentTypeCheck |@| acceptCheck |@| txmHeadersCheck).map { case _ ⇒ request }
 
-    val contentTypeCheck: ValidatedNel[String, Option[String]] = validationFromBoolean(request.contentType)(
-      _.contains(ContentTypes.JSON),
-      contentType ⇒ s"content type was not JSON: ${contentType.getOrElse("")}")
-
-    val acceptCheck: ValidatedNel[String, Headers] = validationFromBoolean(headers)(
-      _.get(HeaderNames.ACCEPT).exists(_ === expectedAcceptType),
-      _ ⇒ s"accept did not contain expected mime type '$expectedAcceptType'")
-
-    val txmHeadersCheck: ValidatedNel[String, List[String]] = {
-      val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(expectedKey ⇒
-        validationFromBoolean(expectedKey)(
-          headers.get(_).isDefined,
-          _ ⇒ s"Could not find header '$expectedKey'"
-        )
-      )
-      listOfValidations.traverse[Validation, String](identity)
-    }
-
-    (contentTypeCheck |@| acceptCheck |@| txmHeadersCheck).map{ case _ ⇒ request }
-  }
-
+  def validateHttpHeadersForEligibilityCheck[A](implicit request: Request[A]): ValidatedNel[String, Request[A]] =
+    (acceptCheck |@| txmHeadersCheck).map { case _ ⇒ request }
 }
 
 object APIHttpHeaderValidator {

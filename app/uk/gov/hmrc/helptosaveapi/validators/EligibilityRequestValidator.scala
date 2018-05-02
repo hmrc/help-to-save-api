@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi
+package uk.gov.hmrc.helptosaveapi.validators
 
-import scala.concurrent.Future
-import scala.util.matching.Regex
+import java.util.regex.Matcher
 
-package object util {
+import cats.data.ValidatedNel
+import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
 
-  implicit def toFuture[A](a: A): Future[A] = Future.successful(a)
+class EligibilityRequestValidator {
 
-  private val ninoRegex: Regex = """[A-Za-z]{2}[0-9]{6}[A-Za-z]{1}""".r
+  private val ninoRegex: String ⇒ Matcher = "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?$".r.pattern.matcher _
 
-  def maskNino(original: String): String = {
-    Option(original) match {
-      case Some(text) ⇒ ninoRegex.replaceAllIn(text, "<NINO>")
-      case None       ⇒ original
-    }
+  def validateNino(nino: String): ValidatedNel[String, String] = {
+    validationFromBoolean[String](nino)(_ ⇒ ninoRegex(nino).matches(), _ ⇒ "NINO doesn't match the regex")
   }
 
 }

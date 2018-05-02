@@ -17,11 +17,10 @@
 package uk.gov.hmrc.helptosaveapi.util
 
 import akka.stream.Materializer
-import com.codahale.metrics.{Counter, Histogram, Timer, UniformReservoir}
-import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
 import org.scalamock.handlers.CallHandler6
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
+import play.api.Configuration
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Writes
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
@@ -33,21 +32,21 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeApplication {
 
-  implicit lazy val materialiser: Materializer = fakeApplication.materializer
+  implicit lazy val materializer: Materializer = fakeApplication.materializer
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
 
+  implicit lazy val config: Configuration = fakeApplication.injector.instanceOf[Configuration]
+
   val http: WSHttp = mock[WSHttp]
 
   val httpErrorHandler: HttpErrorHandler = mock[HttpErrorHandler]
 
-  val mockMetrics = new Metrics(stub[PlayMetrics]) {
-    override def timer(name: String): Timer = new Timer()
+  implicit lazy val metrics: Metrics = fakeApplication.injector.instanceOf[Metrics]
 
-    override def counter(name: String): Counter = new Counter()
-  }
+  implicit lazy val logMessageTransformer: LogMessageTransformer = fakeApplication.injector.instanceOf[LogMessageTransformer]
 
   def mockPost[A](expectedUrl:  String,
                   expectedBody: A,
@@ -56,4 +55,9 @@ class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeA
       .expects(expectedUrl, expectedBody, headers, *, *, *)
       .returning(response.fold(Future.failed[HttpResponse](new Exception("")))(Future.successful))
 
+  def mockGet[A](expectedUrl: String,
+                 headers:     Map[String, String])(response: Option[HttpResponse]) =
+    (http.get(_: String, _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedUrl, headers, *, *)
+      .returning(response.fold(Future.failed[HttpResponse](new Exception("")))(Future.successful))
 }
