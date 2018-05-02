@@ -23,43 +23,13 @@ import cats.syntax.cartesian._
 import cats.syntax.eq._
 import cats.syntax.traverse._
 import play.api.http.{ContentTypes, HeaderNames}
-import play.api.mvc.{ActionBuilder, Headers, Request, Result}
+import play.api.mvc.{Headers, Request}
+import uk.gov.hmrc.helptosaveapi.util.Logging
 import uk.gov.hmrc.helptosaveapi.util.Validation._
-import uk.gov.hmrc.helptosaveapi.util.{Logging, toFuture}
-
-import scala.concurrent.Future
 
 class APIHttpHeaderValidator extends Logging {
 
   import uk.gov.hmrc.helptosaveapi.validators.APIHttpHeaderValidator._
-
-  def validateHeaderForCreateAccount(errorResponse: ErrorDescription ⇒ Result): ActionBuilder[Request] = new ActionBuilder[Request] {
-
-    def invokeBlock[A](request: Request[A],
-                       block:   Request[A] ⇒ Future[Result]): Future[Result] =
-      validateHttpHeadersForCreateAccount(request).fold(
-        { e ⇒
-          val errorString = s"[${e.toList.mkString(",")}]"
-          logger.warn(s"Could not validate headers: $errorString")
-          errorResponse(errorString)
-        },
-        block
-      )
-  }
-
-  def validateHeaderForEligibilityCheck(errorResponse: ErrorDescription ⇒ Result): ActionBuilder[Request] = new ActionBuilder[Request] {
-
-    def invokeBlock[A](request: Request[A],
-                       block:   Request[A] ⇒ Future[Result]): Future[Result] =
-      validateHttpHeadersForEligibilityCheck(request).fold(
-        { e ⇒
-          val errorString = s"[${e.toList.mkString(",")}]"
-          logger.warn(s"Could not validate headers: $errorString")
-          errorResponse(errorString)
-        },
-        block
-      )
-  }
 
   def contentTypeCheck(implicit request: Request[_]): ValidatedNel[String, Option[String]] = validationFromBoolean(request.contentType)(
     _.contains(ContentTypes.JSON),
@@ -79,10 +49,10 @@ class APIHttpHeaderValidator extends Logging {
     listOfValidations.traverse[Validation, String](identity)
   }
 
-  private def validateHttpHeadersForCreateAccount[A](implicit request: Request[A]): ValidatedNel[String, Request[A]] =
+  def validateHttpHeadersForCreateAccount[A](implicit request: Request[A]): ValidatedNel[String, Request[A]] =
     (contentTypeCheck |@| acceptCheck |@| txmHeadersCheck).map { case _ ⇒ request }
 
-  private def validateHttpHeadersForEligibilityCheck[A](implicit request: Request[A]): ValidatedNel[String, Request[A]] =
+  def validateHttpHeadersForEligibilityCheck[A](implicit request: Request[A]): ValidatedNel[String, Request[A]] =
     (acceptCheck |@| txmHeadersCheck).map { case _ ⇒ request }
 }
 
