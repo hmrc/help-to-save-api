@@ -150,7 +150,7 @@ class HelpToSaveControllerSpec extends TestSupport {
         mockEligibilityCheckHeaderValidator(Invalid(NonEmptyList[String]("accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json'", Nil)))
         val result = controller.checkEligibility(nino)(FakeRequest())
         status(result) shouldBe BAD_REQUEST
-        headers(result).exists(_._1 === "X-CorrelationId")
+        headers(result).keys should contain("X-Correlation-ID")
       }
 
       "handle invalid ninos passed in the request url" in {
