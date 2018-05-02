@@ -67,7 +67,8 @@ class HelpToSaveConnectorImpl @Inject() (config:            Configuration,
   override def checkEligibility(nino:          String,
                                 correlationId: UUID)(implicit hc: HeaderCarrier,
                                                      ec: ExecutionContext): Future[Either[String, EligibilityResponse]] = {
-    http.get(eligibilityCheckUrl(nino), Map(correlationIdHeaderName -> correlationId.toString))
+    val correlationIdHeader = correlationIdHeaderName -> correlationId.toString
+    http.get(eligibilityCheckUrl(nino), Map(correlationIdHeader))
       .map {
         response ⇒
           response.status match {
@@ -75,15 +76,14 @@ class HelpToSaveConnectorImpl @Inject() (config:            Configuration,
               val result = response.parseJson[EligibilityCheckResponse].flatMap(toApiEligibility)
               result.fold({
                 e ⇒
-                  logger.warn(s"Could not parse JSON response from eligibility check, received 200 (OK): $e", nino)
+                  logger.warn(s"Could not parse JSON response from eligibility check, received 200 (OK): $e", nino, correlationIdHeader)
                   pagerDutyAlerting.alert("Could not parse JSON in eligibility check response")
               }, _ ⇒
-                logger.info(s"Call to check eligibility successful, received 200 (OK)", nino)
+                logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
               )
               result
 
             case other: Int ⇒
-              logger.warn(s"Call to check eligibility unsuccessful. Received unexpected status $other", nino)
               pagerDutyAlerting.alert("Received unexpected http status in response to eligibility check")
               Left(s"Received unexpected status $other")
 

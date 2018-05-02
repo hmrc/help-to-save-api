@@ -41,7 +41,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
         implicit val correlationIdArb: Arbitrary[UUID] = Arbitrary(Gen.uuid)
 
         forAll { (body: CreateAccountBody, correlationId: UUID, status: Int, response: String) ⇒
-          mockPost("http://localhost:7001/help-to-save/create-de-account", body, Map("X-CorrelationId" -> correlationId.toString))(Some(HttpResponse(status, Some(JsString(response)))))
+          mockPost("http://localhost:7001/help-to-save/create-de-account", body, Map("X-Correlation-ID" -> correlationId.toString))(Some(HttpResponse(status, Some(JsString(response)))))
           val result = await(connector.createAccount(body, correlationId))
           result.status shouldBe status
           result.json shouldBe JsString(response)
@@ -55,7 +55,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
       val nino = "AE123456C"
       val correlationId = UUID.randomUUID()
       val eligibilityUrl = s"http://localhost:7001/help-to-save/api/eligibility-check/$nino"
-      val headers = Map("X-CorrelationId" -> correlationId.toString)
+      val headers = Map("X-Correlation-ID" -> correlationId.toString)
 
         def eligibilityJson(resultCode: Int, reasonCode: Int) =
           s"""{

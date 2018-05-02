@@ -151,14 +151,7 @@ class HelpToSaveControllerSpec extends TestSupport {
         val result = controller.checkEligibility(nino)(FakeRequest())
         status(result) shouldBe OK
         contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":false,"hasUC":true},"accountExists":false}"""
-        headers(result).exists(_._1 === "X-CorrelationId")
-      }
-
-      "handle when the request contains invalid headers" in {
-        mockEligibilityCheckHeaderValidator(headerValidatorResponse(BadRequest))
-        val result = controller.checkEligibility(nino)(FakeRequest())
-        status(result) shouldBe BAD_REQUEST
-        headers(result).exists(_._1 === "X-CorrelationId")
+        headers(result).keys should contain("X-Correlation-ID")
       }
 
       "handle invalid ninos passed in the request url" in {
@@ -166,7 +159,7 @@ class HelpToSaveControllerSpec extends TestSupport {
         val result = controller.checkEligibility("badNinO123")(FakeRequest())
         status(result) shouldBe BAD_REQUEST
         contentAsString(result) shouldBe """{"code":"400","message":"NINO doesn't match the regex"}"""
-        headers(result).exists(_._1 === "X-CorrelationId")
+        headers(result).keys should contain("X-Correlation-ID")
       }
 
       "handle server errors during eligibility check" in {
@@ -175,7 +168,7 @@ class HelpToSaveControllerSpec extends TestSupport {
         val result = controller.checkEligibility(nino)(FakeRequest())
         status(result) shouldBe INTERNAL_SERVER_ERROR
         contentAsString(result) shouldBe """{"code":"500","message":"Server Error"}"""
-        headers(result).exists(_._1 === "X-CorrelationId")
+        headers(result).keys should contain("X-Correlation-ID")
       }
     }
   }

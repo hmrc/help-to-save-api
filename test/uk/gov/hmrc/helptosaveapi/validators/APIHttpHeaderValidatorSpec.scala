@@ -52,37 +52,10 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
         ): _*
       )
 
-      "allow requests with valid headers" in {
-        result(validRequestHeaders) shouldBe Ok
-      }
-
-      "flag as invalid requests" which {
-
-        "do not have content type JSON" in {
-          result(validRequestHeaders.updated(HeaderNames.CONTENT_TYPE, ContentTypes.HTML)) shouldBe BadRequest
-        }
-
-        "do not have 'application/vnd.hmrc.1.0+json' in the accept header" in {
-          result(validRequestHeaders.updated(HeaderNames.ACCEPT, "invalid")) shouldBe BadRequest
-          result(validRequestHeaders.updated(HeaderNames.ACCEPT, "application/vnd.hmrc.1.0+jsonx")) shouldBe BadRequest
-          result(validRequestHeaders - HeaderNames.ACCEPT) shouldBe BadRequest
-
-        }
-
-        "does not have all the expected TxM headers" in {
-          (1 to APIHttpHeaderValidator.expectedTxmHeaders.size).foreach { size ⇒
-            APIHttpHeaderValidator.expectedTxmHeaders.combinations(size).foreach { headers ⇒
-              result(validRequestHeaders -- headers) shouldBe BadRequest
-            }
-          }
-        }
-      }
-
+      behave like testCommon(validRequestHeaders, result, true)
     }
 
     "handling eligibility requests" must {
-        def result(headers: Map[String, String]): Result =
-          await(eligibilityCheckAction(requestWithHeaders(headers)).run())
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ → "value") ++ List(
@@ -90,28 +63,44 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
         ): _*
       )
 
-      "allow requests with valid headers" in {
-        result(validRequestHeaders) shouldBe Ok
-      }
+        def result(headers: Map[String, String]): Result =
+          await(eligibilityCheckAction(requestWithHeaders(headers)).run())
 
-      "flag as invalid requests" which {
+      behave like testCommon(validRequestHeaders, result, false)
+    }
 
-        "do not have 'application/vnd.hmrc.1.0+json' in the accept header" in {
-          result(validRequestHeaders.updated(HeaderNames.ACCEPT, "invalid")) shouldBe BadRequest
-          result(validRequestHeaders.updated(HeaderNames.ACCEPT, "application/vnd.hmrc.1.0+jsonx")) shouldBe BadRequest
-          result(validRequestHeaders - HeaderNames.ACCEPT) shouldBe BadRequest
+      def testCommon(validRequestHeaders: Map[String, String],
+                     result:              Map[String, String] ⇒ Result,
+                     checkContentType:    Boolean): Unit = {
 
+        "allow requests with valid headers" in {
+          result(validRequestHeaders) shouldBe Ok
         }
 
-        "does not have all the expected TxM headers" in {
-          (1 to APIHttpHeaderValidator.expectedTxmHeaders.size).foreach { size ⇒
-            APIHttpHeaderValidator.expectedTxmHeaders.combinations(size).foreach { headers ⇒
-              result(validRequestHeaders -- headers) shouldBe BadRequest
+        "flag as invalid requests" which {
+
+          if (checkContentType) {
+            "do not have content type JSON" in {
+              result(validRequestHeaders.updated(HeaderNames.CONTENT_TYPE, ContentTypes.HTML)) shouldBe BadRequest
+            }
+          }
+
+          "do not have 'application/vnd.hmrc.1.0+json' in the accept header" in {
+            result(validRequestHeaders.updated(HeaderNames.ACCEPT, "invalid")) shouldBe BadRequest
+            result(validRequestHeaders.updated(HeaderNames.ACCEPT, "application/vnd.hmrc.1.0+jsonx")) shouldBe BadRequest
+            result(validRequestHeaders - HeaderNames.ACCEPT) shouldBe BadRequest
+
+          }
+
+          "does not have all the expected TxM headers" in {
+            (1 to APIHttpHeaderValidator.expectedTxmHeaders.size).foreach { size ⇒
+              APIHttpHeaderValidator.expectedTxmHeaders.combinations(size).foreach { headers ⇒
+                result(validRequestHeaders -- headers) shouldBe BadRequest
+              }
             }
           }
         }
       }
-    }
   }
 
 }

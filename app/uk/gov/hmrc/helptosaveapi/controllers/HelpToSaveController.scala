@@ -32,13 +32,15 @@ import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountErrorResponse, CreateAccountRequest, EligibilityCheckErrorResponse}
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
-import uk.gov.hmrc.helptosaveapi.util.{Logging, WithMdcExecutionContext, toFuture}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, WithMdcExecutionContext, toFuture}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
 
 import scala.concurrent.Future
 
-class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, metrics: Metrics)(implicit config: Configuration)
+class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector,
+                                      metrics:             Metrics)(implicit config: Configuration, logMessageTransformer: LogMessageTransformer)
   extends BaseController with Logging with WithMdcExecutionContext {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
@@ -73,11 +75,12 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
   def checkEligibility(nino: String): Action[AnyContent] = {
     val timer = metrics.apiEligibilityCallTimer.time()
     val correlationId = UUID.randomUUID()
+    val correlationIdHeader = correlationIdHeaderName -> correlationId.toString
     httpHeaderValidator.validateHeaderForEligibilityCheck {
       e ⇒
         metrics.apiEligibilityCallErrorCounter.inc()
         BadRequest(toJson(EligibilityCheckErrorResponse("400", s"Invalid HTTP headers in request: $e")))
-          .withHeaders(correlationIdHeaderName -> correlationId.toString)
+          .withHeaders(correlationIdHeader)
     }.async { implicit request ⇒
       val resultF = if (ninoRegex(nino).matches()) {
         helpToSaveConnector.checkEligibility(nino, correlationId)
@@ -86,7 +89,7 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
               val _ = timer.stop()
               r.fold(
                 e ⇒ {
-                  logger.warn(s"unexpected error during eligibility check error: $e")
+                  logger.warn(s"unexpected error during eligibility check error: $e", nino, correlationIdHeader)
                   metrics.apiEligibilityCallErrorCounter.inc()
                   InternalServerError(toJson(EligibilityCheckErrorResponse("500", "Server Error")))
                 },
@@ -98,7 +101,7 @@ class HelpToSaveController @Inject() (helpToSaveConnector: HelpToSaveConnector, 
         toFuture(BadRequest(toJson(EligibilityCheckErrorResponse("400", "NINO doesn't match the regex"))))
       }
 
-      resultF.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
+      resultF.map(_.withHeaders(correlationIdHeader))
     }
   }
 
