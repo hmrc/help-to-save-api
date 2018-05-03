@@ -30,7 +30,7 @@ import play.api.mvc.{AnyContent, Request}
 import play.mvc.Http.Status
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
-import uk.gov.hmrc.helptosaveapi.models.{CreateAccountErrorResponse, CreateAccountRequest, EligibilityCheckErrorResponse, _}
+import uk.gov.hmrc.helptosaveapi.models.{CreateAccountRequest, _}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCheckResponse
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
@@ -44,8 +44,8 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[HelpToSaveApiServiceImpl])
 trait HelpToSaveApiService {
 
-  type CreateAccountResponseType = Future[Either[ErrorResponse, Unit]]
-  type CheckEligibilityResponseType = Future[Either[ErrorResponse, EligibilityResponse]]
+  type CreateAccountResponseType = Future[Either[CreateAccountError, Unit]]
+  type CheckEligibilityResponseType = Future[Either[EligibilityCheckError, EligibilityResponse]]
 
   def createAccount(request: Request[AnyContent])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType
 
@@ -78,7 +78,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
       case CreateAccountRequest(header, body) ⇒
         val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
         logger.info(s"Create Account Request has been made with headers: ${header.show}")
-        helpToSaveConnector.createAccount(body, header.requestCorrelationId).map[Either[ErrorResponse, Unit]] { response ⇒
+        helpToSaveConnector.createAccount(body, header.requestCorrelationId).map[Either[CreateAccountError, Unit]] { response ⇒
           val _ = timer.stop()
           response.status match {
             case Status.CREATED ⇒
@@ -89,7 +89,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
               metrics.apiCreateAccountCallErrorCounter.inc()
               logger.warn(s"Received unexpected http status in response to create account, status=$other", body.nino, correlationIdHeader)
               pagerDutyAlerting.alert("Received unexpected http status in response to create account")
-              Left(InternalServerErrorResponse())
+              Left(CreateAccountInternalServerError())
           }
         }.recover {
           case e ⇒
@@ -97,7 +97,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
             metrics.apiCreateAccountCallErrorCounter.inc()
             logger.warn(s"Received unexpected error during create account, error=$e", body.nino, correlationIdHeader)
             pagerDutyAlerting.alert("Failed to make call to createAccount")
-            Left(InternalServerErrorResponse())
+            Left(CreateAccountInternalServerError())
         }
     }
   }
@@ -124,19 +124,19 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                   }, _ ⇒
                     logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
                   )
-                  result.leftMap(e ⇒ InternalServerErrorResponse())
+                  result.leftMap(e ⇒ EligibilityCheckInternalServerError())
 
                 case other: Int ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
                   pagerDutyAlerting.alert("Received unexpected http status in response to eligibility check")
-                  Left(InternalServerErrorResponse())
+                  Left(EligibilityCheckInternalServerError())
 
               }
           }.recover {
             case e ⇒
               metrics.apiEligibilityCallErrorCounter.inc()
               pagerDutyAlerting.alert("Failed to make call to check eligibility")
-              Left(InternalServerErrorResponse())
+              Left(EligibilityCheckInternalServerError())
           }
     }
   }
@@ -151,7 +151,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
               updateCreateAccountErrorMetrics(timer)
               val errorString = s"[${errors.toList.mkString("; ")}]"
               logger.warn(s"Error when validating request: $errorString")
-              toFuture(Left(CreateAccountErrorResponse("invalid request for CreateAccount", errorString)))
+              toFuture(Left(CreateAccountBadRequestError("invalid request for CreateAccount", errorString)))
             },
             f
           )
@@ -160,12 +160,12 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
         updateCreateAccountErrorMetrics(timer)
         val errorString = error.prettyPrint()
         logger.warn(s"Could not parse JSON in request body: $errorString")
-        Left(CreateAccountErrorResponse("Could not parse JSON in request", errorString))
+        Left(CreateAccountBadRequestError("Could not parse JSON in request", errorString))
 
       case None ⇒
         updateCreateAccountErrorMetrics(timer)
         logger.warn("No JSON body found in request")
-        Left(CreateAccountErrorResponse("No JSON found in request body", ""))
+        Left(CreateAccountBadRequestError("No JSON found in request body", ""))
     }
 
   private def validateCheckEligibilityRequest(nino:                String,
@@ -178,7 +178,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
           logger.warn(s"Could not validate headers: [${e.toList.mkString(",")}]", nino, correlationIdHeader)
           val _ = timer.stop()
           metrics.apiEligibilityCallErrorCounter.inc()
-          Left(EligibilityCheckErrorResponse("400", s"invalid request for CheckEligibility: $e"))
+          Left(EligibilityCheckBadRequestError("400", s"invalid request for CheckEligibility: $e"))
         }, {
           f
         }

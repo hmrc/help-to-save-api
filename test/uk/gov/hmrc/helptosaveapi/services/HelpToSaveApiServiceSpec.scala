@@ -111,7 +111,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         val result = await(service.createAccount(fakeRequestWithBody))
-        result shouldBe Left(InternalServerErrorResponse())
+        result shouldBe Left(CreateAccountInternalServerError())
       }
 
       "handle unexpected server errors during createAccount" in {
@@ -124,7 +124,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         val result = await(service.createAccount(fakeRequestWithBody))
-        result shouldBe Left(InternalServerErrorResponse())
+        result shouldBe Left(CreateAccountInternalServerError())
       }
 
       "return BadRequest for requests with invalid http headers" in {
@@ -135,11 +135,11 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         val result = await(service.createAccount(fakeRequestWithBody))
 
-        result shouldBe Left(CreateAccountErrorResponse("invalid request for CreateAccount", "[content type was not JSON: text/html]"))
+        result shouldBe Left(CreateAccountBadRequestError("invalid request for CreateAccount", "[content type was not JSON: text/html]"))
       }
 
       "there is no JSON in the request" in {
-        await(service.createAccount(fakeRequest)) shouldBe Left(CreateAccountErrorResponse("No JSON found in request body", ""))
+        await(service.createAccount(fakeRequest)) shouldBe Left(CreateAccountBadRequestError("No JSON found in request body", ""))
       }
 
       "the JSON in the request cannot be parsed" in {
@@ -149,7 +149,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
               |{ "key" : "value" }
             """.stripMargin)))
 
-        await(result) shouldBe Left(CreateAccountErrorResponse("Could not parse JSON in request", "/header: [error.path.missing]; /body: [error.path.missing]"))
+        await(result) shouldBe Left(CreateAccountBadRequestError("Could not parse JSON in request", "/header: [error.path.missing]; /body: [error.path.missing]"))
       }
     }
 
@@ -184,7 +184,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
 
         val result = await(service.checkEligibility(nino, correlationId))
-        result shouldBe Left(EligibilityCheckErrorResponse("400", "invalid request for CheckEligibility: NonEmptyList(accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json')"))
+        result shouldBe Left(EligibilityCheckBadRequestError("400", "invalid request for CheckEligibility: NonEmptyList(accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json')"))
       }
 
       "handle when the request contains invalid nino" in {
@@ -192,7 +192,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         mockEligibilityCheckRequestValidator(nino)(Invalid(NonEmptyList[String]("NINO doesn't match the regex", Nil)))
 
         val result = await(service.checkEligibility(nino, correlationId))
-        result shouldBe Left(EligibilityCheckErrorResponse("400", "invalid request for CheckEligibility: NonEmptyList(NINO doesn't match the regex)"))
+        result shouldBe Left(EligibilityCheckBadRequestError("400", "invalid request for CheckEligibility: NonEmptyList(NINO doesn't match the regex)"))
       }
 
       "handle server errors during eligibility check" in {
@@ -203,7 +203,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         val result = await(service.checkEligibility(nino, correlationId))
 
-        result shouldBe Left(InternalServerErrorResponse())
+        result shouldBe Left(EligibilityCheckInternalServerError())
       }
 
       "transform user Eligible response from help to save BE as expected" in {
@@ -231,7 +231,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           mockPagerDutyAlert("Failed to make call to check eligibility")
 
           val result = await(service.checkEligibility(nino, correlationId))
-          result shouldBe Left(InternalServerErrorResponse())
+          result shouldBe Left(EligibilityCheckInternalServerError())
         }
       }
 

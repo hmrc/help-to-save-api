@@ -35,10 +35,10 @@ class HelpToSaveControllerSpec extends TestSupport {
 
   val controller: HelpToSaveController = new HelpToSaveController(apiService)
 
-  def mockCreateAccount(request: Request[AnyContent])(response: Either[ErrorResponse, Unit]): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CreateAccountResponseType] =
+  def mockCreateAccount(request: Request[AnyContent])(response: Either[CreateAccountError, Unit]): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CreateAccountResponseType] =
     (apiService.createAccount(_: Request[AnyContent])(_: HeaderCarrier, _: ExecutionContext)).expects(request, *, *).returning(toFuture(response))
 
-  def mockEligibilityCheck(nino: String)(request: Request[AnyContent])(response: Either[ErrorResponse, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CheckEligibilityResponseType] =
+  def mockEligibilityCheck(nino: String)(request: Request[AnyContent])(response: Either[EligibilityCheckError, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CheckEligibilityResponseType] =
     (apiService.checkEligibility(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext)).expects(nino, *, *, *, *).returning(toFuture(response))
 
   "The CreateAccountController" when {
@@ -54,7 +54,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "handle invalid createAccount requests and return BadRequest" in {
-        mockCreateAccount(fakeRequest)(Left(CreateAccountErrorResponse("invalid request", "")))
+        mockCreateAccount(fakeRequest)(Left(CreateAccountBadRequestError("invalid request", "")))
         val result = controller.createAccount()(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
@@ -62,7 +62,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "handle unexpected internal server error and return InternalServerError" in {
-        mockCreateAccount(fakeRequest)(Left(InternalServerErrorResponse()))
+        mockCreateAccount(fakeRequest)(Left(CreateAccountInternalServerError()))
         val result = controller.createAccount()(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
@@ -82,7 +82,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "handle invalid requests and return BadRequest" in {
-        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckErrorResponse("400", "invalid request")))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckBadRequestError("400", "invalid request")))
         val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
@@ -91,11 +91,11 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "handle unexpected internal server error and return InternalServerError" in {
-        mockEligibilityCheck(nino)(fakeRequest)(Left(InternalServerErrorResponse()))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckInternalServerError()))
         val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
-        contentAsString(result) shouldBe """{"errorMessageId":"","errorMessage":"server error","errorDetails":""}"""
+        contentAsString(result) shouldBe """{"code":"500","message":"server error"}"""
         headers(result).keys should contain("X-Correlation-ID")
       }
     }

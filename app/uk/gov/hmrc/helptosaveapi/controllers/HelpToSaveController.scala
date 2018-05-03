@@ -22,24 +22,25 @@ import com.google.inject.Inject
 import play.api.Configuration
 import play.api.libs.json.Json._
 import play.api.mvc._
-import uk.gov.hmrc.helptosaveapi.models.CreateAccountErrorResponse.CreateAccountErrorResponseOps
-import uk.gov.hmrc.helptosaveapi.models.InternalServerErrorResponse.InternalServerErrorResponseOps
-import uk.gov.hmrc.helptosaveapi.models.{CreateAccountErrorResponse, EligibilityCheckErrorResponse, InternalServerErrorResponse}
+import uk.gov.hmrc.helptosaveapi.models.CreateAccountBadRequestError.CreateAccountBadRequestErrorOps
+import uk.gov.hmrc.helptosaveapi.models.CreateAccountInternalServerError.CreateAccountInternalServerErrorOps
+import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.util.WithMdcExecutionContext
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
-class HelpToSaveController @Inject() (helpToSaveApiService: HelpToSaveApiService)(implicit config: Configuration) extends BaseController with WithMdcExecutionContext {
+class HelpToSaveController @Inject() (helpToSaveApiService: HelpToSaveApiService)(implicit config: Configuration)
+  extends BaseController with WithMdcExecutionContext {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
   def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
 
     helpToSaveApiService.createAccount(request).map {
-      case Left(a: CreateAccountErrorResponse) ⇒
+      case Left(a: CreateAccountBadRequestError) ⇒
         BadRequest(a.toJson())
 
-      case Left(b: InternalServerErrorResponse) ⇒
+      case Left(b: CreateAccountInternalServerError) ⇒
         InternalServerError(b.toJson())
 
       case Right(_) ⇒ Created
@@ -49,10 +50,10 @@ class HelpToSaveController @Inject() (helpToSaveApiService: HelpToSaveApiService
   def checkEligibility(nino: String): Action[AnyContent] = Action.async { implicit request ⇒
     val correlationId = UUID.randomUUID()
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
-      case Left(a: EligibilityCheckErrorResponse) ⇒
+      case Left(a: EligibilityCheckBadRequestError) ⇒
         BadRequest(a.toJson())
 
-      case Left(b: InternalServerErrorResponse) ⇒
+      case Left(b: EligibilityCheckInternalServerError) ⇒
         InternalServerError(b.toJson())
 
       case Right(response) ⇒ Ok(toJson(response))
