@@ -20,27 +20,27 @@ import play.api.libs.json.{Format, JsValue, Json}
 
 sealed trait EligibilityCheckError
 
-case class EligibilityCheckBadRequestError(code: String, message: String) extends EligibilityCheckError
+case class EligibilityCheckValidationError(code: String, message: String) extends EligibilityCheckError
 
-object EligibilityCheckBadRequestError {
-  implicit val format: Format[EligibilityCheckBadRequestError] = Json.format[EligibilityCheckBadRequestError]
+object EligibilityCheckValidationError {
+  implicit val format: Format[EligibilityCheckValidationError] = Json.format[EligibilityCheckValidationError]
 
-  implicit class EligibilityCheckBadRequestErrorOps(val errorResponse: EligibilityCheckBadRequestError) extends AnyVal {
+  implicit class EligibilityCheckValidationErrorOps(val errorResponse: EligibilityCheckValidationError) extends AnyVal {
     def toJson(): JsValue = format.writes(errorResponse)
   }
 
 }
 
-case class EligibilityCheckInternalServerError(code: String, message: String) extends EligibilityCheckError
+case class EligibilityCheckBackendError(code: String, message: String) extends EligibilityCheckError
 
-object EligibilityCheckInternalServerError {
+object EligibilityCheckBackendError {
 
-  def apply(): EligibilityCheckInternalServerError =
-    EligibilityCheckInternalServerError("500", "server error")
+  def apply(): EligibilityCheckBackendError =
+    EligibilityCheckBackendError("500", "server error")
 
-  implicit val format: Format[EligibilityCheckInternalServerError] = Json.format[EligibilityCheckInternalServerError]
+  implicit val format: Format[EligibilityCheckBackendError] = Json.format[EligibilityCheckBackendError]
 
-  implicit class EligibilityCheckInternalServerErrorOps(val errorResponse: EligibilityCheckInternalServerError) extends AnyVal {
+  implicit class EligibilityCheckBackendServerErrorOps(val errorResponse: EligibilityCheckBackendError) extends AnyVal {
     def toJson(): JsValue = format.writes(errorResponse)
   }
 

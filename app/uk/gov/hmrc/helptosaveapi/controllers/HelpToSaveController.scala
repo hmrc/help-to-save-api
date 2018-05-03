@@ -22,8 +22,8 @@ import com.google.inject.Inject
 import play.api.Configuration
 import play.api.libs.json.Json._
 import play.api.mvc._
-import uk.gov.hmrc.helptosaveapi.models.CreateAccountBadRequestError.CreateAccountBadRequestErrorOps
-import uk.gov.hmrc.helptosaveapi.models.CreateAccountInternalServerError.CreateAccountInternalServerErrorOps
+import uk.gov.hmrc.helptosaveapi.models.CreateAccountValidationError.CreateAccountValidationErrorOps
+import uk.gov.hmrc.helptosaveapi.models.CreateAccountBackendError.CreateAccountBackendErrorOps
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.util.WithMdcExecutionContext
@@ -37,10 +37,10 @@ class HelpToSaveController @Inject() (helpToSaveApiService: HelpToSaveApiService
   def createAccount(): Action[AnyContent] = Action.async { implicit request ⇒
 
     helpToSaveApiService.createAccount(request).map {
-      case Left(a: CreateAccountBadRequestError) ⇒
+      case Left(a: CreateAccountValidationError) ⇒
         BadRequest(a.toJson())
 
-      case Left(b: CreateAccountInternalServerError) ⇒
+      case Left(b: CreateAccountBackendError) ⇒
         InternalServerError(b.toJson())
 
       case Right(_) ⇒ Created
@@ -50,10 +50,10 @@ class HelpToSaveController @Inject() (helpToSaveApiService: HelpToSaveApiService
   def checkEligibility(nino: String): Action[AnyContent] = Action.async { implicit request ⇒
     val correlationId = UUID.randomUUID()
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
-      case Left(a: EligibilityCheckBadRequestError) ⇒
+      case Left(a: EligibilityCheckValidationError) ⇒
         BadRequest(a.toJson())
 
-      case Left(b: EligibilityCheckInternalServerError) ⇒
+      case Left(b: EligibilityCheckBackendError) ⇒
         InternalServerError(b.toJson())
 
       case Right(response) ⇒ Ok(toJson(response))

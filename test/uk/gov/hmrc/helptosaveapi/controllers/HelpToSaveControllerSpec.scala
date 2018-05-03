@@ -54,7 +54,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "handle invalid createAccount requests and return BadRequest" in {
-        mockCreateAccount(fakeRequest)(Left(CreateAccountBadRequestError("invalid request", "")))
+        mockCreateAccount(fakeRequest)(Left(CreateAccountValidationError("invalid request", "")))
         val result = controller.createAccount()(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
@@ -62,7 +62,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "handle unexpected internal server error and return InternalServerError" in {
-        mockCreateAccount(fakeRequest)(Left(CreateAccountInternalServerError()))
+        mockCreateAccount(fakeRequest)(Left(CreateAccountBackendError()))
         val result = controller.createAccount()(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
@@ -82,7 +82,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "handle invalid requests and return BadRequest" in {
-        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckBadRequestError("400", "invalid request")))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckValidationError("400", "invalid request")))
         val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
@@ -91,7 +91,7 @@ class HelpToSaveControllerSpec extends TestSupport {
       }
 
       "handle unexpected internal server error and return InternalServerError" in {
-        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckInternalServerError()))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckBackendError()))
         val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR

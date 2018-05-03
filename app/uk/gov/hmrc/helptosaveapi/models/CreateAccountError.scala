@@ -20,31 +20,31 @@ import play.api.libs.json.{Format, JsValue, Json}
 
 sealed trait CreateAccountError
 
-case class CreateAccountBadRequestError(errorMessageId: String, errorMessage: String, errorDetails: String) extends CreateAccountError
+case class CreateAccountValidationError(errorMessageId: String, errorMessage: String, errorDetails: String) extends CreateAccountError
 
-object CreateAccountBadRequestError {
+object CreateAccountValidationError {
 
-  def apply(errorMessage: String, errorDetails: String): CreateAccountBadRequestError =
-    CreateAccountBadRequestError("", errorMessage, errorDetails)
+  def apply(errorMessage: String, errorDetails: String): CreateAccountValidationError =
+    CreateAccountValidationError("", errorMessage, errorDetails)
 
-  implicit val format: Format[CreateAccountBadRequestError] = Json.format[CreateAccountBadRequestError]
+  implicit val format: Format[CreateAccountValidationError] = Json.format[CreateAccountValidationError]
 
-  implicit class CreateAccountBadRequestErrorOps(val errorResponse: CreateAccountBadRequestError) extends AnyVal {
+  implicit class CreateAccountValidationErrorOps(val errorResponse: CreateAccountValidationError) extends AnyVal {
     def toJson(): JsValue = format.writes(errorResponse)
   }
 
 }
 
-case class CreateAccountInternalServerError(errorMessageId: String, errorMessage: String, errorDetails: String) extends CreateAccountError
+case class CreateAccountBackendError(errorMessageId: String, errorMessage: String, errorDetails: String) extends CreateAccountError
 
-object CreateAccountInternalServerError {
+object CreateAccountBackendError {
 
-  def apply(): CreateAccountInternalServerError =
-    CreateAccountInternalServerError("", "server error", "")
+  def apply(): CreateAccountBackendError =
+    CreateAccountBackendError("", "server error", "")
 
-  implicit val format: Format[CreateAccountInternalServerError] = Json.format[CreateAccountInternalServerError]
+  implicit val format: Format[CreateAccountBackendError] = Json.format[CreateAccountBackendError]
 
-  implicit class CreateAccountInternalServerErrorOps(val errorResponse: CreateAccountInternalServerError) extends AnyVal {
+  implicit class CreateAccountBackendErrorOps(val errorResponse: CreateAccountBackendError) extends AnyVal {
     def toJson(): JsValue = format.writes(errorResponse)
   }
 
