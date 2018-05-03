@@ -18,16 +18,16 @@ package uk.gov.hmrc.helptosaveapi.models
 
 import play.api.libs.json.{Format, JsValue, Json}
 
-case class CreateAccountErrorResponse(errorMessageId: String, errorMessage: String, errorDetails: String) extends ErrorResponse
+case class InternalServerErrorResponse(errorMessageId: String, errorMessage: String, errorDetails: String) extends ErrorResponse
 
-object CreateAccountErrorResponse {
+object InternalServerErrorResponse {
 
-  def apply(errorMessage: String, errorDetails: String): CreateAccountErrorResponse =
-    CreateAccountErrorResponse("", errorMessage, errorDetails)
+  def apply(): InternalServerErrorResponse =
+    InternalServerErrorResponse("", "server error", "")
 
-  implicit val format: Format[CreateAccountErrorResponse] = Json.format[CreateAccountErrorResponse]
+  implicit val format: Format[InternalServerErrorResponse] = Json.format[InternalServerErrorResponse]
 
-  implicit class CreateAccountErrorResponseOps(val errorResponse: CreateAccountErrorResponse) extends AnyVal {
+  implicit class InternalServerErrorResponseOps(val errorResponse: InternalServerErrorResponse) extends AnyVal {
     def toJson(): JsValue = format.writes(errorResponse)
   }
 

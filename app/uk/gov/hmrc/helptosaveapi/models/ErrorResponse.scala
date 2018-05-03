@@ -16,19 +16,4 @@
 
 package uk.gov.hmrc.helptosaveapi.models
 
-import play.api.libs.json.{Format, JsValue, Json}
-
-case class CreateAccountErrorResponse(errorMessageId: String, errorMessage: String, errorDetails: String) extends ErrorResponse
-
-object CreateAccountErrorResponse {
-
-  def apply(errorMessage: String, errorDetails: String): CreateAccountErrorResponse =
-    CreateAccountErrorResponse("", errorMessage, errorDetails)
-
-  implicit val format: Format[CreateAccountErrorResponse] = Json.format[CreateAccountErrorResponse]
-
-  implicit class CreateAccountErrorResponseOps(val errorResponse: CreateAccountErrorResponse) extends AnyVal {
-    def toJson(): JsValue = format.writes(errorResponse)
-  }
-
-}
+trait ErrorResponse

@@ -30,7 +30,7 @@ import uk.gov.hmrc.http.HttpResponse
 // scalastyle:off magic.number
 class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with GeneratorDrivenPropertyChecks with EitherValues {
 
-  val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, http, mockPagerDuty)
+  val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, http)
 
   "The HelpToSaveConnectorImpl" when {
 
@@ -57,68 +57,16 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
       val eligibilityUrl = s"http://localhost:7001/help-to-save/api/eligibility-check/$nino"
       val headers = Map("X-Correlation-ID" -> correlationId.toString)
 
-        def eligibilityJson(resultCode: Int, reasonCode: Int) =
-          s"""{
-           |"result": "eligible",
-           |"resultCode": $resultCode,
-           |"reason": "receiving UC",
-           |"reasonCode": $reasonCode
-            }
-          """.stripMargin
+      val eligibilityJson = """{"result": "eligible","resultCode": 1,"reason": "receiving UC","reasonCode": 5}"""
+      val json = Json.parse(eligibilityJson)
 
-        def test(eligibilityJson: String, apiResponse: EligibilityResponse) = {
-          mockGet(eligibilityUrl, headers)(Some(HttpResponse(200, Some(Json.parse(eligibilityJson)))))
-          val result = await(connector.checkEligibility(nino, correlationId))
-          result.right.value shouldBe apiResponse
-        }
+      "call correct url and return the response as is" in {
 
-      "handle user eligible response from help to save BE" in {
-        test(eligibilityJson(1, 6), ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = false, hasUC = true), false))
-        test(eligibilityJson(1, 7), ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = false), false))
-        test(eligibilityJson(1, 8), ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = true), false))
-      }
-
-      "handle user InEligible response from help to save BE " in {
-        test(eligibilityJson(2, 3), ApiEligibilityResponse(Eligibility(isEligible = false, hasWTC = true, hasUC = false), false))
-        test(eligibilityJson(2, 4), ApiEligibilityResponse(Eligibility(isEligible = false, hasWTC = true, hasUC = true), false))
-        test(eligibilityJson(2, 5), ApiEligibilityResponse(Eligibility(isEligible = false, hasWTC = false, hasUC = true), false))
-        test(eligibilityJson(2, 9), ApiEligibilityResponse(Eligibility(isEligible = false, hasWTC = false, hasUC = false), false))
-      }
-
-      "handle AccountAlreadyExists response from help to save BE" in {
-        test(eligibilityJson(3, 1), AccountAlreadyExists())
-      }
-
-      "handle invalid combination from help to save BE" in {
-        mockGet(eligibilityUrl, headers)(Some(HttpResponse(200, Some(Json.parse(eligibilityJson(999, 1111))))))
-        mockPagerDutyAlert("Could not parse JSON in eligibility check response")
+        mockGet(eligibilityUrl, headers)(Some(HttpResponse(200, Some(json))))
         val result = await(connector.checkEligibility(nino, correlationId))
-        result.isLeft shouldBe true
-      }
-
-      "handle json parsing errors" in {
-        val invalidEligibilityJson =
-          """{
-            |"resultCode": 1,
-            |"reason": "receiving UC",
-            |"reasonCode": 6
-            }
-          """.stripMargin
-
-        mockGet(eligibilityUrl, headers)(Some(HttpResponse(200, Some(Json.parse(invalidEligibilityJson)))))
-        mockPagerDutyAlert("Could not parse JSON in eligibility check response")
-        val result = await(connector.checkEligibility(nino, correlationId))
-        result.isLeft shouldBe true
-      }
-
-      "handle error responses from help-to-save BE" in {
-        mockGet(eligibilityUrl, headers)(Some(HttpResponse(500, None)))
-        mockPagerDutyAlert("Received unexpected http status in response to eligibility check")
-        val result = await(connector.checkEligibility(nino, correlationId))
-        result.isLeft shouldBe true
+        result.status shouldBe 200
+        result.json shouldBe json
       }
     }
-
   }
-
 }
