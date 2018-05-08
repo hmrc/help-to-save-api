@@ -4,7 +4,7 @@
 @(access: String => APIAccess)
 {
   "api": {
-      "name":"Help To Save API",
+      "name":"Help To Save",
       "description":"Savings scheme for working people on low income",
       "context":"individuals/help-to-save",
       "isTestSupport": false,
