@@ -10,23 +10,26 @@ import wartremover.{Wart, Warts, wartremoverErrors, wartremoverExcluded}
 
 val appName = "help-to-save-api"
 
-lazy val appDependencies: Seq[ModuleID] = dependencies ++ testDependencies()
-lazy val plugins: Seq[Plugins] = Seq.empty
-lazy val playSettings: Seq[Setting[_]] = Seq.empty
-
 val dependencies = Seq(
   ws,
-  "org.typelevel" %% "cats" % "0.9.0",
+  "org.typelevel" %% "cats-core" % "1.1.0",
   "uk.gov.hmrc" %% "bootstrap-play-25" % "1.4.0",
   "com.github.kxbmap" %% "configs" % "0.4.4"
 )
 
-def testDependencies(scope: String = "test,it") = Seq(
-  "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
-  "org.scalatest" %% "scalatest" % "3.0.4" % scope,
-  "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-  "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % scope
+val testDependencies = Seq(
+  "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % "test",
+  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
+  "com.typesafe.play" %% "play-test" % PlayVersion.current % "test",
+  "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
+  "uk.gov.hmrc" %% "stub-data-generator" % "0.5.3" % "test"
 )
+
+lazy val appDependencies: Seq[ModuleID] = dependencies ++ testDependencies
+lazy val plugins: Seq[Plugins] = Seq.empty
+lazy val playSettings: Seq[Setting[_]] = Seq.empty
+
+
 
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
