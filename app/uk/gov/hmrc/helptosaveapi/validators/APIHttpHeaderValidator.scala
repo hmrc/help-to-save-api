@@ -19,27 +19,27 @@ package uk.gov.hmrc.helptosaveapi.validators
 import cats.data.ValidatedNel
 import cats.instances.list._
 import cats.instances.string._
-import cats.syntax.cartesian._
+import cats.syntax.apply._
 import cats.syntax.eq._
 import cats.syntax.traverse._
 import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc.{Headers, Request}
-import uk.gov.hmrc.helptosaveapi.util.Logging
+import uk.gov.hmrc.helptosaveapi.util.{Logging, ValidatedOrErrorString}
 import uk.gov.hmrc.helptosaveapi.util.Validation._
 
 class APIHttpHeaderValidator extends Logging {
 
   import uk.gov.hmrc.helptosaveapi.validators.APIHttpHeaderValidator._
 
-  def contentTypeCheck(implicit request: Request[_]): ValidatedNel[String, Option[String]] = validationFromBoolean(request.contentType)(
+  def contentTypeCheck(implicit request: Request[_]): ValidatedOrErrorString[Option[String]] = validationFromBoolean(request.contentType)(
     _.contains(ContentTypes.JSON),
     contentType ⇒ s"content type was not JSON: ${contentType.getOrElse("")}")
 
-  def acceptCheck(implicit request: Request[_]): ValidatedNel[String, Headers] = validationFromBoolean(request.headers)(
+  def acceptCheck(implicit request: Request[_]): ValidatedOrErrorString[Headers] = validationFromBoolean(request.headers)(
     _.get(HeaderNames.ACCEPT).exists(_ === expectedAcceptType),
     _ ⇒ s"accept did not contain expected mime type '$expectedAcceptType'")
 
-  def txmHeadersCheck(implicit request: Request[_]): ValidatedNel[String, List[String]] = {
+  def txmHeadersCheck(implicit request: Request[_]): ValidatedOrErrorString[List[String]] = {
     val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(expectedKey ⇒
       validationFromBoolean(expectedKey)(
         request.headers.get(_).isDefined,
@@ -49,16 +49,14 @@ class APIHttpHeaderValidator extends Logging {
     listOfValidations.traverse[Validation, String](identity)
   }
 
-  def validateHttpHeadersForCreateAccount[A](implicit request: Request[A]): ValidatedNel[String, Request[A]] =
-    (contentTypeCheck |@| acceptCheck |@| txmHeadersCheck).map { case _ ⇒ request }
+  def validateHttpHeadersForCreateAccount[A](implicit request: Request[A]): ValidatedOrErrorString[Request[A]] =
+    (contentTypeCheck, acceptCheck, txmHeadersCheck).mapN { case _ ⇒ request }
 
-  def validateHttpHeadersForEligibilityCheck[A](implicit request: Request[A]): ValidatedNel[String, Request[A]] =
-    (acceptCheck |@| txmHeadersCheck).map { case _ ⇒ request }
+  def validateHttpHeadersForEligibilityCheck[A](implicit request: Request[A]): ValidatedOrErrorString[Request[A]] =
+    (acceptCheck, txmHeadersCheck).mapN { case _ ⇒ request }
 }
 
 object APIHttpHeaderValidator {
-
-  type ErrorDescription = String
 
   private[helptosaveapi] val expectedTxmHeaders: List[String] = List(
     "Gov-Client-User-ID",

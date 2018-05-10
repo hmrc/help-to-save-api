@@ -16,12 +16,16 @@
 
 package uk.gov.hmrc.helptosaveapi
 
+import cats.data.ValidatedNel
+
 import scala.concurrent.Future
 import scala.util.matching.Regex
 
 package object util {
 
   implicit def toFuture[A](a: A): Future[A] = Future.successful(a)
+
+  type ValidatedOrErrorString[A] = ValidatedNel[String, A]
 
   private val ninoRegex: Regex = """[A-Za-z]{2}[0-9]{6}[A-Za-z]{1}""".r
 

@@ -22,9 +22,10 @@ import cats.instances.int._
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.instances.string._
 import cats.instances.char._
-import cats.syntax.cartesian._
+import cats.syntax.apply._
 import cats.syntax.eq._
 import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
+import uk.gov.hmrc.helptosaveapi.util.ValidatedOrErrorString
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
 
 import scala.annotation.tailrec
@@ -33,8 +34,8 @@ class CreateAccountRequestValidator {
 
   import uk.gov.hmrc.helptosaveapi.validators.CreateAccountRequestValidator._
 
-  def validateRequest(request: CreateAccountRequest): ValidatedNel[String, CreateAccountRequest] = {
-    (request.header.validate() |@| request.body.validate()).map(CreateAccountRequest(_, _))
+  def validateRequest(request: CreateAccountRequest): ValidatedOrErrorString[CreateAccountRequest] = {
+    (request.header.validate(), request.body.validate()).mapN(CreateAccountRequest(_, _))
   }
 }
 
@@ -43,20 +44,21 @@ object CreateAccountRequestValidator {
   implicit class CreateAccountBodyOps(val body: CreateAccountBody) extends AnyVal {
 
     // checks the communication preference and registration channel - the rest of the body is validated downstream
-    def validate(): ValidatedNel[String, CreateAccountBody] = {
+    def validate(): ValidatedOrErrorString[CreateAccountBody] = {
 
-      val forenameCheck = forenameValidation(body.forename)
+      val forenameCheck: ValidatedOrErrorString[String] = forenameValidation(body.forename)
 
-      val surnameCheck = surnameValidation(body.surname)
+      val surnameCheck: ValidatedOrErrorString[String] = surnameValidation(body.surname)
 
-      val communicationPreferenceCheck =
+      val communicationPreferenceCheck: ValidatedOrErrorString[String] =
         validationFromBoolean(body.contactDetails.communicationPreference)(_ === "00", c ⇒ s"Unknown communication preference: $c")
 
-      val registrationChannelCheck = validationFromBoolean(body.registrationChannel)(_ === "callCentre", r ⇒ s"Unknown registration channel: $r")
+      val registrationChannelCheck: ValidatedOrErrorString[String] =
+        validationFromBoolean(body.registrationChannel)(_ === "callCentre", r ⇒ s"Unknown registration channel: $r")
 
-      (forenameCheck |@| surnameCheck |@|
-        communicationPreferenceCheck |@| registrationChannelCheck |@|
-        phoneNumberValidation(body.contactDetails.phoneNumber)).map { case _ ⇒ body }
+      (forenameCheck, surnameCheck,
+        communicationPreferenceCheck, registrationChannelCheck,
+        phoneNumberValidation(body.contactDetails.phoneNumber)).mapN { case _ ⇒ body }
     }
   }
 
@@ -65,65 +67,79 @@ object CreateAccountRequestValidator {
   private val clientCodeRegex: String ⇒ Matcher = "^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$".r.pattern.matcher _
 
   implicit class CreateAccountHeaderOps(val header: CreateAccountHeader) extends AnyVal {
-    def validate(): ValidatedNel[String, CreateAccountHeader] = {
-      val versionCheck = validationFromBoolean(header.version)(versionRegex(_).matches(), v ⇒ s"version has incorrect format: $v")
-      val versionLengthCheck =
+    def validate(): ValidatedOrErrorString[CreateAccountHeader] = {
+      val versionCheck: ValidatedOrErrorString[String] =
+        validationFromBoolean(header.version)(versionRegex(_).matches(), v ⇒ s"version has incorrect format: $v")
+
+      val versionLengthCheck: ValidatedOrErrorString[String] =
         validationFromBoolean(header.version)(_.length <= 10, v ⇒ s"max length for version should be 10: $v")
 
-      val clientCodeCheck = validationFromBoolean(header.clientCode)(clientCodeRegex(_).matches(), c ⇒ s"unknown client code $c")
-      val clientCodeLengthCheck =
+      val clientCodeCheck: ValidatedOrErrorString[String] =
+        validationFromBoolean(header.clientCode)(clientCodeRegex(_).matches(), c ⇒ s"unknown client code $c")
+
+      val clientCodeLengthCheck: ValidatedOrErrorString[String] =
         validationFromBoolean(header.clientCode)(_.length <= 20, v ⇒ s"max length for clientCode should be 20: $v")
 
-      (versionCheck |@| versionLengthCheck |@| clientCodeCheck |@| clientCodeLengthCheck).map { case _ ⇒ header }
+      (versionCheck, versionLengthCheck, clientCodeCheck, clientCodeLengthCheck).mapN { case _ ⇒ header }
     }
   }
 
   private def forenameValidation(name: String): ValidatedNel[String, String] =
-    (commonNameChecks(name, "forename") |@| forenameNoApostrophe(name)).map { case _ ⇒ name }
+    (commonNameChecks(name, "forename"), forenameNoApostrophe(name)).mapN { case _ ⇒ name }
 
   private def surnameValidation(name: String): ValidatedNel[String, String] = {
-    val lastCharacterNonSpecial = validatedFromBoolean(name)(!_.lastOption.exists(isSpecial(_)), "surname ended with special character")
-    (commonNameChecks(name, "surname") |@| lastCharacterNonSpecial).map { case _ ⇒ name }
+    val lastCharacterNonSpecial: ValidatedOrErrorString[String] =
+      validatedFromBoolean(name)(!_.lastOption.exists(isSpecial(_)), "surname ended with special character")
+
+    (commonNameChecks(name, "surname"), lastCharacterNonSpecial).mapN { case _ ⇒ name }
   }
 
-  private def phoneNumberValidation(phoneNumber: Option[String]): ValidatedNel[String, Option[String]] = {
-    val hasDigit =
+  private def phoneNumberValidation(phoneNumber: Option[String]): ValidatedOrErrorString[Option[String]] = {
+    val hasDigit: ValidatedOrErrorString[Option[String]] =
       validationFromBoolean(phoneNumber)(
         _.forall(_.exists(_.isDigit)),
         _ ⇒ "phone number did not contain any digits"
       )
 
-    val specialCharacterCheck =
+    val specialCharacterCheck: ValidatedOrErrorString[Option[String]] =
       validationFromBoolean(phoneNumber)(
         _.forall(specialCharacters(_, allowedPhoneNumberSpecialCharacters).isEmpty),
         _ ⇒ "phone number contained invalid characters")
 
-    val letterCheck =
+    val letterCheck: ValidatedOrErrorString[Option[String]] =
       validationFromBoolean(phoneNumber)(
         _.forall(!_.exists(_.isLetter)),
         _ ⇒ "phone number contained letters")
 
-    (hasDigit |@| specialCharacterCheck |@| letterCheck).map{ case _ ⇒ phoneNumber }
+    (hasDigit, specialCharacterCheck, letterCheck).mapN{ case _ ⇒ phoneNumber }
   }
 
   private[validators] val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
 
   private[validators] val allowedPhoneNumberSpecialCharacters = List('(', ')', '-', '.', '+', ' ')
 
-  private def commonNameChecks(name: String, nameType: String): ValidatedNel[String, String] = {
+  private def commonNameChecks(name: String, nameType: String): ValidatedOrErrorString[String] = {
 
     val forbiddenSpecialCharacters = specialCharacters(name, allowedNameSpecialCharacters)
-    val firstCharacterNonSpecial = validatedFromBoolean(name)(!_.headOption.forall(c ⇒ isSpecial(c)), s"$nameType started with special character")
-    val consecutiveSpecialCharacters = validatedFromBoolean(name)(!containsNConsecutiveSpecialCharacters(_, 2),
-      s"$nameType contained consecutive special characters")
-    val specialCharacterCheck = validatedFromBoolean(forbiddenSpecialCharacters)(_.isEmpty,
-      s"$nameType contained invalid special characters")
-    val noDigits = validatedFromBoolean(name)(!_.exists(c ⇒ c.isDigit), s"$nameType contained a digit")
 
-    (firstCharacterNonSpecial |@| consecutiveSpecialCharacters |@| specialCharacterCheck |@| noDigits).map { case _ ⇒ name }
+    val firstCharacterNonSpecial: ValidatedOrErrorString[String] =
+      validatedFromBoolean(name)(!_.headOption.forall(c ⇒ isSpecial(c)), s"$nameType started with special character")
+
+    val consecutiveSpecialCharacters: ValidatedOrErrorString[String] =
+      validatedFromBoolean(name)(!containsNConsecutiveSpecialCharacters(_, 2),
+        s"$nameType contained consecutive special characters")
+
+    val specialCharacterCheck: ValidatedOrErrorString[List[Char]] =
+      validatedFromBoolean(forbiddenSpecialCharacters)(_.isEmpty,
+        s"$nameType contained invalid special characters")
+
+    val noDigits: ValidatedOrErrorString[String] =
+      validatedFromBoolean(name)(!_.exists(c ⇒ c.isDigit), s"$nameType contained a digit")
+
+    (firstCharacterNonSpecial, consecutiveSpecialCharacters, specialCharacterCheck, noDigits).mapN { case _ ⇒ name }
   }
 
-  private def forenameNoApostrophe(name: String): ValidatedNel[String, String] = {
+  private def forenameNoApostrophe(name: String): ValidatedOrErrorString[String] = {
     validatedFromBoolean(name)(!_.contains('''), "forename contains an apostrophe")
   }
 

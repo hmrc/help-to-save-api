@@ -18,7 +18,7 @@ package uk.gov.hmrc.helptosaveapi.services
 
 import java.util.UUID
 
-import cats.syntax.cartesian._
+import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.show._
 import com.codahale.metrics.Timer
@@ -141,11 +141,12 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     }
   }
 
-  private def validateCreateAccountRequest(request: Request[AnyContent], timer: Timer.Context)(f: CreateAccountRequest ⇒ CreateAccountResponseType): CreateAccountResponseType =
+  private def validateCreateAccountRequest(request: Request[AnyContent],
+                                           timer:   Timer.Context)(f: CreateAccountRequest ⇒ CreateAccountResponseType): CreateAccountResponseType =
     request.body.asJson.map(_.validate[CreateAccountRequest]) match {
       case Some(JsSuccess(createAccountRequest, _)) ⇒
-        (httpHeaderValidator.validateHttpHeadersForCreateAccount(request) |@| createAccountRequestValidator.validateRequest(createAccountRequest))
-          .map { case (a, b) ⇒ b }
+        (httpHeaderValidator.validateHttpHeadersForCreateAccount(request), createAccountRequestValidator.validateRequest(createAccountRequest))
+          .mapN { case (_, b) ⇒ b }
           .fold(
             { errors ⇒
               updateCreateAccountErrorMetrics(timer)
@@ -171,8 +172,8 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
   private def validateCheckEligibilityRequest(nino:                String,
                                               correlationIdHeader: (String, String),
                                               timer:               Timer.Context)(f: String ⇒ CheckEligibilityResponseType)(implicit request: Request[_]): CheckEligibilityResponseType = {
-    (httpHeaderValidator.validateHttpHeadersForEligibilityCheck |@| eligibilityRequestValidator.validateNino(nino))
-      .map { case (a, b) ⇒ b }
+    (httpHeaderValidator.validateHttpHeadersForEligibilityCheck, eligibilityRequestValidator.validateNino(nino))
+      .mapN { case (_, b) ⇒ b }
       .fold(
         e ⇒ {
           logger.warn(s"Could not validate headers: [${e.toList.mkString(",")}]", nino, correlationIdHeader)
