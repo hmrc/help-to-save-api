@@ -36,7 +36,7 @@ class EligibilityRequestValidatorSpec extends TestSupport {
       }
 
       "return with errors if the nino doesnt confirm to regex" in {
-        validator.validateNino(badNino) shouldBe Invalid(NonEmptyList("NINO doesn't match the regex", Nil))
+        validator.validateNino(badNino) shouldBe Invalid(NonEmptyList("NINO doesn't match the regex: ^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?$", Nil))
       }
     }
   }

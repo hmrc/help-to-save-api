@@ -23,10 +23,12 @@ import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
 
 class EligibilityRequestValidator {
 
-  private val ninoRegex: String ⇒ Matcher = "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?$".r.pattern.matcher _
+  private val ninoRegex: String = "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?$"
+
+  private val pattern: String ⇒ Matcher = ninoRegex.r.pattern.matcher _
 
   def validateNino(nino: String): ValidatedOrErrorString[String] = {
-    validationFromBoolean[String](nino)(_ ⇒ ninoRegex(nino).matches(), _ ⇒ "NINO doesn't match the regex")
+    validationFromBoolean[String](nino)(_ ⇒ pattern(nino).matches(), _ ⇒ s"NINO doesn't match the regex: $ninoRegex")
   }
 
 }

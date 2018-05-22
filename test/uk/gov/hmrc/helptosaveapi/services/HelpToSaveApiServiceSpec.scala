@@ -184,7 +184,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
 
         val result = await(service.checkEligibility(nino, correlationId))
-        result shouldBe Left(EligibilityCheckValidationError("400", "invalid request for CheckEligibility: NonEmptyList(accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json')"))
+        result shouldBe Left(EligibilityCheckValidationError("400", "accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json'"))
       }
 
       "handle when the request contains invalid nino" in {
@@ -192,7 +192,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         mockEligibilityCheckRequestValidator(nino)(Invalid(NonEmptyList[String]("NINO doesn't match the regex", Nil)))
 
         val result = await(service.checkEligibility(nino, correlationId))
-        result shouldBe Left(EligibilityCheckValidationError("400", "invalid request for CheckEligibility: NonEmptyList(NINO doesn't match the regex)"))
+        result shouldBe Left(EligibilityCheckValidationError("400", "NINO doesn't match the regex"))
       }
 
       "handle server errors during eligibility check" in {
