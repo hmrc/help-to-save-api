@@ -176,10 +176,11 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
       .mapN { case (_, b) ⇒ b }
       .fold(
         e ⇒ {
-          logger.warn(s"Could not validate headers: [${e.toList.mkString(",")}]", nino, correlationIdHeader)
+          val error = e.toList.mkString(",")
+          logger.warn(s"Could not validate headers: [$error]", nino, correlationIdHeader)
           val _ = timer.stop()
           metrics.apiEligibilityCallErrorCounter.inc()
-          Left(EligibilityCheckValidationError("400", s"invalid request for CheckEligibility: $e"))
+          Left(EligibilityCheckValidationError("400", error))
         }, {
           f
         }
