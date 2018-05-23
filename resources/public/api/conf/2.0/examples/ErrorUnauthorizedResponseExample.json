@@ -1,0 +1,8 @@
+{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "The request was not authenticated",
+    "errorDetail": "Unauthenticated request"
+  }
+}
