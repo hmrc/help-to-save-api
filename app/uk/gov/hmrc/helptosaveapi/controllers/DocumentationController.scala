@@ -38,8 +38,10 @@ class DocumentationController @Inject() (httpErrorHandler: HttpErrorHandler, con
 
   val access: Version ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
+  val versionEnabled: Version ⇒ Boolean = version ⇒ configuration.underlying.getBoolean(s"api.access.version-$version.enabled")
+
   def definition(): Action[AnyContent] = ActionWithMdc {
-    Ok(txt.definition(access)).as("application/json")
+    Ok(txt.definition(access, versionEnabled)).as("application/json")
   }
 
   def raml(version: String, file: String): Action[AnyContent] =

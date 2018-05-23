@@ -1,0 +1,221 @@
+#%RAML 1.0
+title: Help To Save
+version: 2.0
+protocols: [ HTTPS ]
+baseUri: https://api.service.hmrc.gov.uk/
+
+documentation:
+ - title: Overview
+   content: !include docs/overview.md
+ - title: Versioning
+   content: !include docs/versioning.md
+ - title: E2E Live Support Journey Analysis
+   content: !include docs/liveSupport.md
+ - title: Timeouts
+   content: !include docs/timeouts.md
+ - title: Access to the API
+   content: !include docs/access.md
+ - title: Security Matters
+   content: !include docs/security.md
+ - title: Post Create Account end point
+   content: !include docs/postCreateAccount.md
+ - title: Get Eligibility Check end point
+   content: !include docs/getEligibilityCheck.md
+
+mediaType: [ application/json, application/hal+json ]
+
+uses:
+  sec: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/securitySchemes.raml
+  headers: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/headers.raml
+  annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
+  types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
+
+/individuals:
+  /help-to-save:
+    /account:
+      post:
+        description: Sends a request to create an account on behalf of the user, noting the value fields below are all example values with the exception of fields Accept and Content-Type which should be presented as quoted string values as shown. For further information on field formats and examples, please see https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide, noting the timezone should be a UTC offset as outlined in the righthand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
+        is: [headers.acceptHeader, headers.contentHeader]
+        securedBy: [ sec.x-application ]
+        headers:
+          Authorization:
+            description: bearer [SERVER-TOKEN]
+          Gov-Client-Public-IP:
+            description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+          Gov-Client-Public-port:
+            description: The port of the server making the API call
+          Gov-Client-Device-ID:
+            description: This can be the MAC address of the network interface on the server making the API call
+          Gov-Client-User-ID:
+           description: The NINO of the person for which the eligibility check is being performed
+          Gov-Client-Timezone:
+           description: The timezone of the server making the API call
+          Gov-Client-Local-IP:
+           description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+          Gov-Client-User-Agent:
+           example: Windows Server/2016 (Dell PowerEdge R6415)
+           description: The operating system and hardware description of the server making the API call
+          Gov-Vendor-Version:
+           description: The version of the software making the API call
+          Gov-Vendor-Instance-ID:
+           example: app-server-1
+           description: An identifier to differentiate between the various server instances
+          Gov-Vendor-Public-IP:
+           description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+        body:
+          application/json:
+            type: !include schemas/CreateAccount.json
+            example: !include schemas/CreateAccountExample.json
+        responses:
+          201:
+            description: The Help to Save account has been created successfully
+          400:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Bad request http response
+                example: !include examples/ErrorResponseExample.json
+          401:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Unauthorized http response
+                example: !include examples/ErrorUnauthorizedResponseExample.json
+          403:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Forbidden http response
+                example: !include examples/ErrorForbiddenResponseExample.json
+          404:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Not found http response
+                example: !include examples/ErrorNotFoundResponseExample.json
+          405:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Method not allowed http response
+                example: !include examples/ErrorMethodNotAllowedResponseExample.json
+          409:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Conflict http response
+                example: !include examples/ErrorConflictResponseExample.json
+          500:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Internal server error response
+                example: !include examples/InternalServerErrorResponseExample.json
+          502:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Bad gateway http repsonse
+                example: !include examples/BadGatewayErrorResponseExample.json
+          503:
+            body:
+              application/json:
+                type: !include schemas/ErrorResponse.json
+                description: Service unavailable http response
+                example: !include examples/ServiceUnavailableErrorResponseExample.json
+
+    /eligibility:
+      /{nino}:
+        uriParameters:
+                nino:
+                  description: The National Insurance Number for the individual. It must match the regex "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?$"
+                  type: string
+                  example: "AB123456C"
+        get:
+          description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
+          is: [headers.acceptHeader]
+          securedBy: [ sec.x-application ]
+          headers:
+            Authorization:
+              description: bearer [SERVER-TOKEN]
+            Gov-Client-Public-IP:
+              description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+            Gov-Client-Public-port:
+              description: The port of the server making the API call
+            Gov-Client-Device-ID:
+              description: This can be the MAC address of the network interface on the server making the API call
+            Gov-Client-User-ID:
+              description: The NINO of the person for which the eligibility check is being performed
+            Gov-Client-Timezone:
+              description: The timezone of the server making the API call
+            Gov-Client-Local-IP:
+              description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+            Gov-Client-User-Agent:
+              example: Windows Server/2016 (Dell PowerEdge R6415)
+              description: The operating system and hardware description of the server making the API call
+            Gov-Vendor-Version:
+              description: The version of the software making the API call
+            Gov-Vendor-Instance-ID:
+              example: app-server-1
+              description: An identifier to differentiate between the various server instances
+            Gov-Vendor-Public-IP:
+              description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+          responses:
+            200:
+              headers:
+                X-Correlation-ID:
+                 description: An id used for debugging purposes
+              body:
+                application/json:
+                  type: !include schemas/HappyEligibilityResponse.json
+                  examples:
+                    example-1:
+                      description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit and in receipt of UC and their household income is sufficient
+                      value: !include examples/EligiblePositiveWTCAndUCEligibilityResponseExample.json
+                    example-2:
+                      description: The person is eligible for Help to Save as they are in receipt of UC and their household income is sufficient
+                      value: !include examples/EligibleUCEligibilityResponseExample.json
+                    example-3:
+                      description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit
+                      value: !include examples/EligibleWTCEligibilityResponseExample.json
+                    example-4:
+                      description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and in receipt of UC but their household income is insufficient
+                      value: !include examples/IneligibleWTCandUCEligibilityResponseExample.json
+                    example-5:
+                      description: The person is ineligible for Help to Save as they are not entitled to WTC and are in receipt of UC but their household income is insufficient
+                      value: !include examples/IneligibleUCIncomeInsufficientEligibilityResponseExample.json
+                    example-6:
+                      description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and they are not in receipt of UC
+                      value: !include examples/IneligibleNotPositiveWTCAndNoUCEligibilityResponseExample.json
+                    example-7:
+                      description: The person is ineligible for Help to Save as they are not entitled to WTC and not in receipt of UC
+                      value: !include examples/IneligibleNoWTCNoUCEligibilityResponseExample.json
+                    example-8:
+                      description: The person already has a Help to Save account
+                      value: !include examples/AccountExistsEligibilityResponseExample.json
+            400:
+              headers:
+                X-Correlation-ID:
+                 description: An id used for debugging purposes
+              body:
+                application/json:
+                  type: !include schemas/ErrorEligibilityResponse.json
+                  description: The NINO in the request was not of the expected format or the expected headers were not present
+                  example: !include examples/EligibilityResponseExample_400.json
+            401:
+              description: The server token may be missing from the request
+            403:
+              description: Request has been made with HTTP or the server token’s application is not subscribed to this API
+            404:
+              description: The endpoint requested could not be found - perhaps the backend systems are down
+            500:
+              headers:
+                X-Correlation-ID:
+                 description: An id used for debugging purposes
+              body:
+                application/json:
+                 type: !include schemas/ErrorEligibilityResponse.json
+                 description: There was a backend error while trying to check eligibility
+                 example: !include examples/EligibilityResponseExample_500.json
+            502:
+              description: The API platform may be down

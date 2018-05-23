@@ -34,7 +34,11 @@ class DocumentationControllerSpec extends TestSupport {
 
   val configuration: Configuration = Configuration(
     "api.access.version-1.0.type" → access,
-    "api.access.version-1.0.whitelistedApplicationIds" → whiteList
+    "api.access.version-1.0.whitelistedApplicationIds" → whiteList,
+    "api.access.version-1.0.enabled" → true,
+    "api.access.version-2.0.type" → access,
+    "api.access.version-2.0.whitelistedApplicationIds" → whiteList,
+    "api.access.version-2.0.enabled" → false
   )
   val controller = new DocumentationController(httpErrorHandler, configuration)
 
@@ -46,7 +50,7 @@ class DocumentationControllerSpec extends TestSupport {
 
       status(result) shouldBe OK
       contentAsJson(result) shouldBe Json.parse(
-        uk.gov.hmrc.helptosaveapi.views.txt.definition(apiAccess).body
+        uk.gov.hmrc.helptosaveapi.views.txt.definition(apiAccess, _ === "1.0").body
       )
     }
   }

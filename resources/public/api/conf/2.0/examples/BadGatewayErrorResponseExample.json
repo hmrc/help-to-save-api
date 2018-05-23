@@ -1,0 +1,8 @@
+{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "Server received an invalid response from the upstream server while trying to fulfil the request",
+    "errorDetail": "Bad gateway"
+  }
+}

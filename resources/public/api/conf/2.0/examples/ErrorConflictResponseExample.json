@@ -1,0 +1,8 @@
+{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "Account already exists, no changes have been made",
+    "errorDetail": "Conflict - account already exists"
+  }
+}
