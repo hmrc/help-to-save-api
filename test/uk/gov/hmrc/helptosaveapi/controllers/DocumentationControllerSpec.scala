@@ -50,7 +50,7 @@ class DocumentationControllerSpec extends TestSupport {
 
       status(result) shouldBe OK
       contentAsJson(result) shouldBe Json.parse(
-        uk.gov.hmrc.helptosaveapi.views.txt.definition(apiAccess, _ ⇒ true).body
+        uk.gov.hmrc.helptosaveapi.views.txt.definition(apiAccess, _ === "1.0").body
       )
     }
   }
