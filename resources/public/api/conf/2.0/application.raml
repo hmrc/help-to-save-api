@@ -164,7 +164,7 @@ uses:
             200:
               headers:
                 X-Correlation-ID:
-                 description: An id used for debugging purposes
+                 description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
               body:
                 application/json:
                   type: !include schemas/HappyEligibilityResponse.json
@@ -196,18 +196,39 @@ uses:
             400:
               headers:
                 X-Correlation-ID:
-                 description: An id used for debugging purposes
+                 description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
               body:
                 application/json:
                   type: !include schemas/ErrorEligibilityResponse.json
                   description: The NINO in the request was not of the expected format or the expected headers were not present
                   example: !include examples/EligibilityResponseExample_400.json
             401:
-              description: The server token may be missing from the request
+              headers:
+                X-Correlation-ID:
+                 description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+              body:
+                application/json:
+                  type: !include schemas/ErrorEligibilityResponse.json
+                  description: The server token may be missing from the request
+                  example: !include examples/EligibilityResponseExample_401.json
             403:
-              description: Request has been made with HTTP or the server token’s application is not subscribed to this API
+              headers:
+                X-Correlation-ID:
+                 description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+              body:
+                application/json:
+                  type: !include schemas/ErrorEligibilityResponse.json
+                  description: Request has been made with HTTP or the server token’s application is not subscribed to this API
+                  example: !include examples/EligibilityResponseExample_403.json
             404:
-              description: The endpoint requested could not be found - perhaps the backend systems are down
+              headers:
+                X-Correlation-ID:
+                 description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+              body:
+                application/json:
+                  type: !include schemas/ErrorEligibilityResponse.json
+                  description: The endpoint requested could not be found - perhaps the backend systems are down
+                  example: !include examples/EligibilityResponseExample_404.json
             500:
               headers:
                 X-Correlation-ID:
@@ -218,4 +239,11 @@ uses:
                  description: There was a backend error while trying to check eligibility
                  example: !include examples/EligibilityResponseExample_500.json
             502:
-              description: The API platform may be down
+              headers:
+                X-Correlation-ID:
+                 description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+              body:
+                application/json:
+                  type: !include schemas/ErrorEligibilityResponse.json
+                  description: The API platform may be down
+                  example: !include examples/EligibilityResponseExample_502.json
