@@ -51,7 +51,7 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ → "value") ++ List(
-          HeaderNames.ACCEPT → "application/vnd.hmrc.1.0+json"
+          HeaderNames.ACCEPT → "application/vnd.hmrc.2.0+json"
         ): _*
       )
 
@@ -78,15 +78,17 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
             }
           }
 
-          "do not have 'application/vnd.hmrc.1.0+json' in the accept header" in {
+          "do not have expected accept header" in {
+
+            val errorString = "accept did not contain one of expected mime types: 'application/vnd.hmrc.1.0+json, application/vnd.hmrc.2.0+json'"
             result(headers.updated(HeaderNames.ACCEPT, "invalid")) shouldBe
-              Invalid(NonEmptyList[String]("accept did not contain expected mime type 'application/vnd.hmrc.1.0+json'", Nil))
+              Invalid(NonEmptyList[String](errorString, Nil))
 
             result(headers.updated(HeaderNames.ACCEPT, "application/vnd.hmrc.1.0+jsonx")) shouldBe
-              Invalid(NonEmptyList[String]("accept did not contain expected mime type 'application/vnd.hmrc.1.0+json'", Nil))
+              Invalid(NonEmptyList[String](errorString, Nil))
 
             result(headers - HeaderNames.ACCEPT) shouldBe
-              Invalid(NonEmptyList[String]("accept did not contain expected mime type 'application/vnd.hmrc.1.0+json'", Nil))
+              Invalid(NonEmptyList[String](errorString, Nil))
           }
 
           "does not have all the expected TxM headers" in {
