@@ -1,4 +1,0 @@
-{
-  "code": "403",
-  "message": "Request has been made with HTTP or the server token’s application is not subscribed to this API"
-}

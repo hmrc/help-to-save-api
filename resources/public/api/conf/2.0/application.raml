@@ -36,7 +36,7 @@ uses:
       post:
         description: Sends a request to create an account on behalf of the user, noting the value fields below are all example values with the exception of fields Accept and Content-Type which should be presented as quoted string values as shown. For further information on field formats and examples, please see https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide, noting the timezone should be a UTC offset as outlined in the righthand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
         is: [headers.acceptHeader, headers.contentHeader]
-        securedBy: [ sec.x-application ]
+        securedBy: [sec.oauth_2_0:{scopes:["write:help-to-save"]}]
         headers:
           Authorization:
             description: bearer [SERVER-TOKEN]
@@ -78,15 +78,15 @@ uses:
           401:
             body:
               application/json:
-                type: !include schemas/ErrorResponse.json
+                type: !include schemas/OAuthError.json
                 description: Unauthorized http response
-                example: !include examples/ErrorUnauthorizedResponseExample.json
+                example: !include examples/TokenExpiredExample.json
           403:
             body:
               application/json:
-                type: !include schemas/ErrorResponse.json
-                description: Forbidden http response
-                example: !include examples/ErrorForbiddenResponseExample.json
+                type: !include schemas/OAuthError.json
+                description: Bad OAuth request (wrong consumer key, bad nonce, expired timestamp...)
+                example: !include examples/ForbiddenExample.json
           404:
             body:
               application/json:
@@ -134,7 +134,7 @@ uses:
         get:
           description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
           is: [headers.acceptHeader]
-          securedBy: [ sec.x-application ]
+          securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
           headers:
             Authorization:
               description: bearer [SERVER-TOKEN]
@@ -208,18 +208,18 @@ uses:
                  description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
               body:
                 application/json:
-                  type: !include schemas/ErrorEligibilityResponse.json
-                  description: The server token may be missing from the request
-                  example: !include examples/EligibilityResponseExample_401.json
+                  type: !include schemas/OAuthError.json
+                  description: Unauthorized http response
+                  example: !include examples/TokenExpiredExample.json
             403:
               headers:
                 X-Correlation-ID:
                  description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
               body:
                 application/json:
-                  type: !include schemas/ErrorEligibilityResponse.json
-                  description: Request has been made with HTTP or the server token’s application is not subscribed to this API
-                  example: !include examples/EligibilityResponseExample_403.json
+                  type: !include schemas/OAuthError.json
+                  description: Bad OAuth request (wrong consumer key, bad nonce, expired timestamp...)
+                  example: !include examples/ForbiddenExample.json
             404:
               headers:
                 X-Correlation-ID:
