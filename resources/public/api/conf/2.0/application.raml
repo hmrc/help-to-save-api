@@ -36,6 +36,7 @@ uses:
       post:
         description: Sends a request to create an account on behalf of the user, noting the value fields below are all example values with the exception of fields Accept and Content-Type which should be presented as quoted string values as shown. For further information on field formats and examples, please see https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide, noting the timezone should be a UTC offset as outlined in the righthand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
         is: [headers.acceptHeader, headers.contentHeader]
+        (annotations.scope): "write:help-to-save"
         securedBy: [sec.oauth_2_0:{scopes:["write:help-to-save"]}]
         headers:
           Authorization:
@@ -134,6 +135,7 @@ uses:
         get:
           description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
           is: [headers.acceptHeader]
+          (annotations.scope): "read:help-to-save"
           securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
           headers:
             Authorization:
