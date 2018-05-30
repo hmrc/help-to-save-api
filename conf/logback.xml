@@ -53,7 +53,7 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="uk.gov.hmrc.audit.handler.DatastreamHandler" level="WARN"/>
+    <logger name="uk.gov.hmrc.audit.handler" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="FILE"/>
