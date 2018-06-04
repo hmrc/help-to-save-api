@@ -1,4 +1,4 @@
 {
-  "code": "403",
+  "code": "FORBIDDEN",
   "message": "Bad OAuth request"
 }

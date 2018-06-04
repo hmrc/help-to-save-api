@@ -1,4 +1,4 @@
 {
-  "code": "500",
+  "code": "SERVER_ERROR",
   "message": "server error"
 }

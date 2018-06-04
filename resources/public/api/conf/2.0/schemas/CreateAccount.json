@@ -28,7 +28,8 @@
         "requestCorrelationId": {
           "type": "string",
           "maxLength": 36,
-          "pattern": "^[0-9a-f-]+$"
+          "pattern": "^[0-9a-f-]+$",
+          "description": "If the help-to-save create account API is called after a call to this eligibility check API, the X-Correlation-ID value from the eligibility check response should be passed as the requestCorrelationId value in the request to the create account API."
         }
       }
     },

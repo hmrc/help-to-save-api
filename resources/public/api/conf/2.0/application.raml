@@ -40,7 +40,7 @@ uses:
         securedBy: [sec.oauth_2_0:{scopes:["write:help-to-save"]}]
         headers:
           Authorization:
-            description: bearer [SERVER-TOKEN]
+            description: Bearer [SERVER-TOKEN]
           Gov-Client-Public-IP:
             description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
           Gov-Client-Public-port:
@@ -48,7 +48,7 @@ uses:
           Gov-Client-Device-ID:
             description: This can be the MAC address of the network interface on the server making the API call
           Gov-Client-User-ID:
-           description: The NINO of the person for which the eligibility check is being performed
+           description: The NINO of the person whose account is to be created
           Gov-Client-Timezone:
            description: The timezone of the server making the API call
           Gov-Client-Local-IP:
@@ -129,7 +129,7 @@ uses:
       /{nino}:
         uriParameters:
                 nino:
-                  description: The National Insurance Number for the individual. It must match the regex "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]?$"
+                  description: The National Insurance Number for the individual. It must match the regex "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z]\(D|F|I|O|Q|U|V)\)[A-Z]{2})[0-9]{6}[A-D]?$"
                   type: string
                   example: "AB123456C"
         get:
@@ -139,7 +139,7 @@ uses:
           securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
           headers:
             Authorization:
-              description: bearer [SERVER-TOKEN]
+              description: Bearer [SERVER-TOKEN]
             Gov-Client-Public-IP:
               description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
             Gov-Client-Public-port:

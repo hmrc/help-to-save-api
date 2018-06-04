@@ -1,4 +1,4 @@
 {
-  "code": "401",
+  "code": "MISSING_BEARER_TOKEN",
   "message": "Bad or expired token"
 }
