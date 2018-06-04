@@ -9,6 +9,85 @@ MDTP uses the Header and NS&I are passed the Body.
 For the POST create account end point 201 is the expected response and 409 is not really an error as it indicates that
 an account has already been created with the given details. Other 4xx and 5xx ranges indicates failure.
 
+In case of auth related errors which are triggered by API Platform (401 or 403), the error json schema contains two fields and looks like as below.
+
+<pre>
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for Help to Save Create Account error response",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    }
+  }
+}
+</pre>
+
+Example
+
+<pre>
+{
+  "code": "MISSING_BEARER_TOKEN",
+  "message": "Bad or expired token"
+}
+</pre>
+
+
+In case of errors triggered by Help to Save service (400, 404, 5xx), the error json schema contains three fields and looks like as below.
+
+<pre>
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for error response",
+  "type":"object",
+  "properties":{
+    "error": {
+      "type":"object",
+      "properties":{
+        "errorMessageId": {
+          "type":"string"
+        },
+        "errorMessage": {
+          "type":"string"
+        },
+        "errorDetail": {
+          "type":"string"
+        }
+
+      }
+    }
+  }
+}
+</pre>
+
+Example
+
+<pre>
+{ "error":
+  {
+    "errorMessageId": "ZYRA0712",
+    "errorMessage": "The first character cannot be a special character",
+    "errorDetail": "Field: surname"
+  }
+}
+</pre>
+
+<pre>
+{
+  "error":
+  {
+    "errorMessageId": "ZYRA0713",
+    "errorMessage": "Server received an invalid response from the upstream server while trying to fulfil the request",
+    "errorDetail": "Bad gateway"
+  }
+}
+</pre>
+
+
 #### Data Transformations
 
 ##### Data Transformations by HMRC:

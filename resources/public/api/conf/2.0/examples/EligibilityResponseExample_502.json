@@ -1,4 +1,4 @@
 {
-  "code": "502",
+  "code": "BAD_GATEWAY",
   "message": "The API platform may be down"
 }

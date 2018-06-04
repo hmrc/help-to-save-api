@@ -24,8 +24,65 @@ There are some combinations of parameters that are allowed by the JSON schema of
 &nbsp&nbsp“eligibility”   : { … },
 &nbsp&nbsp“accountExists” : true 
 }
-</pre> 
+</pre>
 
+#### Errors
+
+The error json schema in case of an error is as follows
+
+<pre>
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "JSON schema for Help to Save eligibility check error response",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    }
+  }
+}
+</pre>
+
+Examples:
+
+In case of auth related error(401):
+
+<pre>
+{
+ "code": "INVALID_AUTH",
+ "message": "Missing Bearer Token"
+}
+</pre>
+
+In case of OAuth related error(403):
+
+<pre>
+{
+ "code": "TOKEN_EXPIRED",
+ "message": "Token expired"
+}
+</pre>
+
+In case of server error(5xx):
+
+<pre>
+{
+ "code": "SERVER_ERROR",
+ "message": "Server Error"
+}
+</pre>
+
+In case of Bad Request(400):
+
+<pre>
+{
+ "code": "INVALID_NINO",
+ "message": "The NINO does not exist"
+}
+</pre>
 
 
 
