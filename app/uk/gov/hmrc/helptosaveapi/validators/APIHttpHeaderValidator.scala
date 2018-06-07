@@ -47,11 +47,13 @@ class APIHttpHeaderValidator extends Logging {
     listOfValidations.traverse[Validation, String](identity)
   }
 
-  def validateHttpHeadersForCreateAccount[A](implicit request: Request[A]): ValidatedOrErrorString[Request[A]] =
-    (contentTypeCheck, acceptCheck, txmHeadersCheck).mapN { case _ ⇒ request }
+  def validateHttpHeaders[A](contentTypeCk: Boolean)(implicit request: Request[A]): ValidatedOrErrorString[Request[A]] =
+    if (contentTypeCk) {
+      (contentTypeCheck, acceptCheck, txmHeadersCheck).mapN { case _ ⇒ request }
+    } else {
+      (acceptCheck, txmHeadersCheck).mapN { case _ ⇒ request }
+    }
 
-  def validateHttpHeadersForEligibilityCheck[A](implicit request: Request[A]): ValidatedOrErrorString[Request[A]] =
-    (acceptCheck, txmHeadersCheck).mapN { case _ ⇒ request }
 }
 
 object APIHttpHeaderValidator {

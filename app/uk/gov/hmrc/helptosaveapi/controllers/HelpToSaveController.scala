@@ -20,8 +20,10 @@ import java.util.UUID
 
 import cats.instances.string._
 import cats.syntax.eq._
+import cats.instances.future._
 import com.google.inject.Inject
 import play.api.Configuration
+import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -92,14 +94,36 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
   private def getEligibility(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
                                                                 hc: HeaderCarrier): Future[Result] = {
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
-      case Left(a: EligibilityCheckValidationError) ⇒
-        BadRequest(a.toJson())
+      case Left(a: ApiErrorValidationError) ⇒
+        BadRequest(Json.toJson(a))
 
-      case Left(b: EligibilityCheckBackendError) ⇒
-        InternalServerError(b.toJson())
+      case Left(b: ApiErrorBackendError) ⇒
+        InternalServerError(Json.toJson(b))
 
       case Right(response) ⇒ Ok(toJson(response))
     }
   }
+
+  def getAccount(): Action[AnyContent] = authorised { implicit request ⇒ (authNino, _) ⇒
+    authNino match {
+      case Some(nino) ⇒ {
+        val correlationId = UUID.randomUUID()
+        helpToSaveApiService.getAccount(nino, correlationId)
+          .map {
+            case Right(account) ⇒ Ok(Json.toJson(account))
+            case Left(error) ⇒ {
+              logger.warn(s"getAccount returned an error; $error")
+              InternalServerError(Json.toJson(error))
+            }
+          }
+      }
+      case None ⇒ {
+        logger.warn("There was no nino retrieved from auth")
+        Forbidden
+      }
+    }
+
+  }
+
 }
 

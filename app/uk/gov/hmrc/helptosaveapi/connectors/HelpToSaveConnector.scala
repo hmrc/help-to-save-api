@@ -22,7 +22,7 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.models._
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, Result}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,6 +33,8 @@ trait HelpToSaveConnector {
   def createAccount(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
   def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+
+  def getAccount(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
 }
 
@@ -51,6 +53,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   def eligibilityCheckUrl(nino: String): String = s"$htsBBaseUrl/api/eligibility-check/$nino"
 
+  def getAccountUrl: String = s"$htsBBaseUrl/account"
+
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
   override def createAccount(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
@@ -58,4 +62,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   override def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(eligibilityCheckUrl(nino), Map(correlationIdHeaderName -> correlationId.toString))
+
+  override def getAccount(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    http.get(getAccountUrl, Map(correlationIdHeaderName -> correlationId.toString))
+
 }

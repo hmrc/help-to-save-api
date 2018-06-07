@@ -18,6 +18,7 @@ package uk.gov.hmrc.helptosaveapi.services
 
 import java.util.UUID
 
+import cats.data.EitherT
 import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.show._
@@ -45,13 +46,18 @@ import scala.concurrent.{ExecutionContext, Future}
 trait HelpToSaveApiService {
 
   type CreateAccountResponseType = Future[Either[CreateAccountError, Unit]]
-  type CheckEligibilityResponseType = Future[Either[EligibilityCheckError, EligibilityResponse]]
+  type CheckEligibilityResponseType = Future[Either[ApiError, EligibilityResponse]]
+  type GetAccountResponseType = Future[Either[ApiError, Account]]
 
   def createAccount(request: Request[AnyContent])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType
 
   def checkEligibility(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
                                                           hc: HeaderCarrier,
                                                           ec: ExecutionContext): CheckEligibilityResponseType
+
+  def getAccount(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
+                                                    hc: HeaderCarrier,
+                                                    ec: ExecutionContext): GetAccountResponseType
 
 }
 
@@ -124,19 +130,38 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                   }, _ ⇒
                     logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
                   )
-                  result.leftMap(e ⇒ EligibilityCheckBackendError())
+                  result.leftMap(e ⇒ ApiErrorBackendError())
 
                 case other: Int ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
                   pagerDutyAlerting.alert("Received unexpected http status in response to eligibility check")
-                  Left(EligibilityCheckBackendError())
+                  Left(ApiErrorBackendError())
 
               }
           }.recover {
             case e ⇒
               metrics.apiEligibilityCallErrorCounter.inc()
               pagerDutyAlerting.alert("Failed to make call to check eligibility")
-              Left(EligibilityCheckBackendError())
+              Left(ApiErrorBackendError())
+          }
+    }
+  }
+
+  override def getAccount(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
+                                                             hc: HeaderCarrier,
+                                                             ec: ExecutionContext): GetAccountResponseType = {
+    validateGetAccountRequest {
+      () ⇒
+        helpToSaveConnector.getAccount(nino, correlationId)
+          .map {
+            response ⇒
+              response.status match {
+                case OK ⇒
+                  response.parseJson[HtsAccount].bimap(e ⇒ ApiErrorBackendError(), toAccount)
+                case other ⇒
+                  logger.info(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
+                  Left(ApiErrorBackendError())
+              }
           }
     }
   }
@@ -145,7 +170,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                                            timer:   Timer.Context)(f: CreateAccountRequest ⇒ CreateAccountResponseType): CreateAccountResponseType =
     request.body.asJson.map(_.validate[CreateAccountRequest]) match {
       case Some(JsSuccess(createAccountRequest, _)) ⇒
-        (httpHeaderValidator.validateHttpHeadersForCreateAccount(request), createAccountRequestValidator.validateRequest(createAccountRequest))
+        (httpHeaderValidator.validateHttpHeaders(true)(request), createAccountRequestValidator.validateRequest(createAccountRequest))
           .mapN { case (_, b) ⇒ b }
           .fold(
             { errors ⇒
@@ -172,7 +197,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
   private def validateCheckEligibilityRequest(nino:                String,
                                               correlationIdHeader: (String, String),
                                               timer:               Timer.Context)(f: String ⇒ CheckEligibilityResponseType)(implicit request: Request[_]): CheckEligibilityResponseType = {
-    (httpHeaderValidator.validateHttpHeadersForEligibilityCheck, eligibilityRequestValidator.validateNino(nino))
+    (httpHeaderValidator.validateHttpHeaders(false), eligibilityRequestValidator.validateNino(nino))
       .mapN { case (_, b) ⇒ b }
       .fold(
         e ⇒ {
@@ -180,10 +205,22 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
           logger.warn(s"Could not validate headers: [$error]", nino, correlationIdHeader)
           val _ = timer.stop()
           metrics.apiEligibilityCallErrorCounter.inc()
-          Left(EligibilityCheckValidationError("400", error))
+          Left(ApiErrorValidationError(error))
         }, {
           f
         }
+      )
+  }
+
+  private def validateGetAccountRequest(f: () ⇒ GetAccountResponseType)(implicit request: Request[_]): GetAccountResponseType = {
+    httpHeaderValidator.validateHttpHeaders(false).toEither
+      .fold[GetAccountResponseType](
+        e ⇒ {
+          val errors = s"[${e.toList.mkString("; ")}]"
+          logger.warn(s"Error when validating get account request, errors: $errors")
+          Left(ApiErrorValidationError(errors))
+        },
+        _ ⇒ f()
       )
   }
 
@@ -208,6 +245,10 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
       case (3, _) ⇒ Right(AccountAlreadyExists())
       case _      ⇒ Left(s"invalid combination for eligibility response. Response was '$r'")
     }
+
+  private def toAccount(account: HtsAccount): Account =
+    Account(account.accountNumber, account.canPayInThisMonth, account.isClosed)
+
 }
 
 object HelpToSaveApiServiceImpl {

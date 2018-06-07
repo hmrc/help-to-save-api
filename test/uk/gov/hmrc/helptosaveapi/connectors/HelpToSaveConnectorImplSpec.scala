@@ -34,6 +34,9 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
   "The HelpToSaveConnectorImpl" when {
 
+    val nino = "AE123456C"
+    val correlationId = UUID.randomUUID()
+
     "creating an account" must {
 
       "call the correct url and return the response as is" in {
@@ -52,8 +55,6 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
     "handling eligibility requests" must {
 
-      val nino = "AE123456C"
-      val correlationId = UUID.randomUUID()
       val eligibilityUrl = s"http://localhost:7001/help-to-save/api/eligibility-check/$nino"
       val headers = Map("X-Correlation-ID" -> correlationId.toString)
 
@@ -64,6 +65,45 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
         mockGet(eligibilityUrl, headers)(Some(HttpResponse(200, Some(json))))
         val result = await(connector.checkEligibility(nino, correlationId))
+        result.status shouldBe 200
+        result.json shouldBe json
+      }
+    }
+
+    "handling get account requests" must {
+
+      val getAccountUrl = "http://localhost:7001/help-to-save/account"
+      val headers = Map("X-Correlation-ID" → correlationId.toString)
+
+      val account =
+        s"""{
+           |"accountNumber":"1100000000001",
+           |"isClosed": false,
+           |"blocked": {
+           |  "unspecified": true
+           |},
+           |"balance": "100.00",
+           |"paidInThisMonth": "10.00",
+           |"canPayInThisMonth": "40.00",
+           |"maximumPaidInThisMonth": "50.00",
+           |"thisMonthEndDate": "2018-06-30",
+           |"bonusTerms": [ {
+           |  "bonusEstimate": "50.00",
+           |  "bonusPaid": "0.00",
+           |  "endDate": "2019-12-31",
+           |  "bonusPaidOnOrAfterDate": "2020-01-01"
+           |  }
+           |],
+           |"closureDate": "2022-01-01",
+           |"closingBalance": "100.00"
+          }""".stripMargin
+
+      val json = Json.parse(account)
+
+      "call the correct url and return the response as is" in {
+
+        mockGet(getAccountUrl, headers)(Some(HttpResponse(200, Some(json))))
+        val result = await(connector.getAccount(nino, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
       }

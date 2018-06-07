@@ -4,3 +4,5 @@ GET        /assets/*file        controllers.Assets.versioned(path="/public", fil
 POST       /account             @uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.createAccount
 
 GET        /eligibility/        @uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.checkEligibility(nino: Option[String])
+
+GET        /account             @uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.getAccount

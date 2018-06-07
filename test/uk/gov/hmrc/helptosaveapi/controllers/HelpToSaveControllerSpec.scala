@@ -22,11 +22,14 @@ import org.scalamock.handlers.{CallHandler3, CallHandler5}
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
-import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, toFuture}
+import uk.gov.hmrc.helptosaveapi.util.toFuture
+
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.helptosaveapi.util.AuthSupport
 
 import scala.concurrent.ExecutionContext
 
@@ -41,12 +44,19 @@ class HelpToSaveControllerSpec extends AuthSupport {
       .expects(request, *, *)
       .returning(toFuture(response))
 
-  def mockEligibilityCheck(nino: String)(request: Request[AnyContent])(response: Either[EligibilityCheckError, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CheckEligibilityResponseType] =
+  def mockEligibilityCheck(nino: String)(request: Request[AnyContent])(response: Either[ApiError, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CheckEligibilityResponseType] =
     (apiService.checkEligibility(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
       .expects(nino, *, *, *, *)
       .returning(toFuture(response))
 
+  def mockGetAccount(nino: String)(request: Request[AnyContent])(response: Either[ApiError, Account]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.GetAccountResponseType] =
+    (apiService.getAccount(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
+      .expects(nino, *, *, *, *)
+      .returning(toFuture(response))
+
   "The CreateAccountController" when {
+
+    val nino = "AE123456C"
 
     val fakeRequest = FakeRequest()
 
@@ -150,23 +160,49 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "handle invalid requests and return BadRequest" in {
         mockAuthResultWithSuccess()(retrievals)
-        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckValidationError("400", "invalid request")))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorValidationError("")))
         val result = controller.checkEligibility(Some(nino))(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
-        contentAsString(result) shouldBe """{"code":"400","message":"invalid request"}"""
+        contentAsString(result) shouldBe """{"code":"400","message":"Bad request, Could not validate headers: "}"""
         headers(result).keys should contain("X-Correlation-ID")
       }
 
       "handle unexpected internal server error during eligibility check and return 500" in {
         mockAuthResultWithSuccess()(retrievals)
-        mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckBackendError()))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorBackendError()))
 
         val result = controller.checkEligibility(Some(nino))(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
-        contentAsString(result) shouldBe """{"code":"500","message":"server error"}"""
+        contentAsString(result) shouldBe """{"code":"500","message":"Server error"}"""
         headers(result).keys should contain("X-Correlation-ID")
+      }
+    }
+
+    "handling getAccount requests" must {
+
+      "return a success response along with some json if getting the account is successful" in {
+        inSequence{
+          mockAuthResultWithSuccess()(retrievals)
+          mockGetAccount(nino)(fakeRequest)(Right(Account("1100000000001", 40.00, false)))
+        }
+
+        val result = controller.getAccount()(fakeRequest)
+
+        status(result) shouldBe OK
+        contentAsString(result) shouldBe """{"accountNumber":"1100000000001","headroom":40,"closed":false}"""
+      }
+
+      "return an Internal Server Error when getting an account is unsuccessful" in {
+        inSequence{
+          mockAuthResultWithSuccess()(retrievals)
+          mockGetAccount(nino)(fakeRequest)(Left(ApiErrorBackendError()))
+        }
+
+        val result = controller.getAccount()(fakeRequest)
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
       }
     }
   }
