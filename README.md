@@ -1,8 +1,19 @@
 # help-to-save-api
 
-[![Build Status](https://travis-ci.org/hmrc/help-to-save-api.svg)](https://travis-ci.org/hmrc/help-to-save-api) [ ![Download](https://api.bintray.com/packages/hmrc/releases/help-to-save-api/images/download.svg) ](https://bintray.com/hmrc/releases/help-to-save-api/_latestVersion)
+### Testing the RAML documentation locally
+o test locally run these with service manager:
+```
+API_DOCUMENTATION
+API_DOCUMENTATION_FRONTEND
+SERVICE_LOCATOR
+THIRD_PARTY_DEVELOPER_FRONTEND
+API_DEFINITION
+```
 
-This is a placeholder README.md for a new repository
+then start up `help-to-save-api` on port `7004`. Go to `http://0.0.0.0:9680/api-documentation/docs/api`
+and go to `PreviewRAML` on the left. In the box to enter the URL put in `http://0.0.0.0:7004/api/conf/1.0/application.raml`.
+If everything is OK you should see the api documentation. Otherwise, it should tell you what's wrong with the documentation
+
 
 ### License
 

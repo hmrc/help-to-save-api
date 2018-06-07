@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "A JSON schema to validate a Help To Save - Get Account JSON payload",
+  "type": "object",
+  "properties": {
+    "accountNumber": {
+      "type": "string",
+      "maxLength": 30,
+      "description": "The account number"
+    },
+    "headroom": {
+      "type": "number",
+      "description": "How much money can still be paid into the account in the current month"
+    },
+    "closed": {
+      "type": "boolean",
+      "description": "Whether or not the account is closed"
+    }
+  },
+  "required": [
+    "accountNumber",
+    "headroom",
+    "closed"
+  ]
+}
