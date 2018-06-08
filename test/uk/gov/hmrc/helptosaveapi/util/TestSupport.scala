@@ -26,11 +26,11 @@ import play.api.libs.json.Writes
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.test.WithFakeApplication
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TestSupport extends WordSpec with Matchers with MockFactory with WithFakeApplication {
+class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory with WithFakeApplication {
 
   implicit lazy val materializer: Materializer = fakeApplication.materializer
 
