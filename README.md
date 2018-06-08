@@ -1,13 +1,9 @@
 # help-to-save-api
 
 ### Testing the RAML documentation locally
-o test locally run these with service manager:
+To test the RAML documentation, run this command to use service manager to start the prerequisite microservices:
 ```
-API_DOCUMENTATION
-API_DOCUMENTATION_FRONTEND
-SERVICE_LOCATOR
-THIRD_PARTY_DEVELOPER_FRONTEND
-API_DEFINITION
+sm --start API_DOCUMENTATION API_DOCUMENTATION_FRONTEND SERVICE_LOCATOR THIRD_PARTY_DEVELOPER_FRONTEND API_DEFINITION -f
 ```
 
 then start up `help-to-save-api` on port `7004`. Go to `http://0.0.0.0:9680/api-documentation/docs/api`

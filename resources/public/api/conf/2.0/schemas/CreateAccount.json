@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema",
-  "description": "A JSON schema to validate a Help To Save - Create Account JSON payload",
+  "description": "A JSON schema to validate a Help To Save - Create or Update Account JSON payload",
   "type": "object",
   "additionalProperties": false,
-  "required": ["header", "body"],
+  "required": ["header"],
   "properties": {
     "header": {
       "type": "object",
@@ -36,7 +36,6 @@
     "body": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["nino", "forename", "surname", "dateOfBirth", "contactDetails", "registrationChannel"],
       "properties": {
         "nino": {
           "type": "string",
@@ -116,6 +115,18 @@
           "type": "string",
           "maxLength": 10,
           "pattern": "^online$|^callCentre$"
+        },
+        "bankDetails": {
+          "accountNumber": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8
+          },
+          "sortCode": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 6
+          }
         }
       }
     }
