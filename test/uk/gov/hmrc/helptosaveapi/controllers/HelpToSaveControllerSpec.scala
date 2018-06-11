@@ -22,28 +22,35 @@ import org.scalamock.handlers.{CallHandler3, CallHandler5}
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
-import uk.gov.hmrc.helptosaveapi.util.{TestSupport, toFuture}
+import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, toFuture}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
 
-class HelpToSaveControllerSpec extends TestSupport {
+class HelpToSaveControllerSpec extends AuthSupport {
 
   val apiService: HelpToSaveApiService = mock[HelpToSaveApiService]
 
-  val controller: HelpToSaveController = new HelpToSaveController(apiService)
+  val controller: HelpToSaveController = new HelpToSaveController(apiService, mockAuthConnector)
 
   def mockCreateAccount(request: Request[AnyContent])(response: Either[CreateAccountError, Unit]): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CreateAccountResponseType] =
-    (apiService.createAccount(_: Request[AnyContent])(_: HeaderCarrier, _: ExecutionContext)).expects(request, *, *).returning(toFuture(response))
+    (apiService.createAccount(_: Request[AnyContent])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(request, *, *)
+      .returning(toFuture(response))
 
   def mockEligibilityCheck(nino: String)(request: Request[AnyContent])(response: Either[EligibilityCheckError, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CheckEligibilityResponseType] =
-    (apiService.checkEligibility(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext)).expects(nino, *, *, *, *).returning(toFuture(response))
+    (apiService.checkEligibility(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
+      .expects(nino, *, *, *, *)
+      .returning(toFuture(response))
 
   "The CreateAccountController" when {
 
     val fakeRequest = FakeRequest()
+
+    val eligibilityResponse = Right(ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = true), false))
 
     "handling createAccount requests" must {
 
@@ -72,27 +79,90 @@ class HelpToSaveControllerSpec extends TestSupport {
 
     "handling checkEligibility requests" must {
 
-      val nino = "AE123456C"
+      "handle the case when nino from Auth exists but not in the url and providerType is GovernmentGateway" in {
+        mockAuthResultWithSuccess()(retrievals)
+        mockEligibilityCheck(nino)(fakeRequest)(eligibilityResponse)
 
-      "return a success response if the request is valid and eligibility check is successful " in {
-        mockEligibilityCheck(nino)(fakeRequest)(Right(ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = false, hasUC = true), false)))
-        val result = controller.checkEligibility(nino)(fakeRequest)
+        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+
         status(result) shouldBe OK
+        contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+        headers(result).keys should contain("X-Correlation-ID")
+      }
+
+      "handle the case when nino from Auth exists but not in the url and providerType is NOT GovernmentGateway" in {
+        mockAuthResultWithSuccess()(new ~(Some(nino), Credentials("123-id", "foo-bar")))
+
+        val result = controller.checkEligibility(None)(fakeRequest)
+
+        status(result) shouldBe FORBIDDEN
+        headers(result).keys should contain("X-Correlation-ID")
+      }
+
+      "handle the case when both ninos from Auth and from url exist and they are equal" in {
+        mockAuthResultWithSuccess()(retrievals)
+        mockEligibilityCheck(nino)(fakeRequest)(eligibilityResponse)
+
+        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+
+        status(result) shouldBe OK
+        contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+        headers(result).keys should contain("X-Correlation-ID")
+      }
+
+      "handle the case when both ninos from Auth and from url exist and they are NOT equal" in {
+        mockAuthResultWithSuccess()(retrievals)
+
+        val result = controller.checkEligibility(Some("LX123456D"))(fakeRequest)
+
+        status(result) shouldBe FORBIDDEN
+        headers(result).keys should contain("X-Correlation-ID")
+      }
+
+      "handle the case when both ninos from Auth and from url do NOT exist" in {
+        mockAuthResultWithSuccess()(new ~(None, Credentials("123-id", "foo-bar")))
+
+        val result = controller.checkEligibility(None)(fakeRequest)
+
+        status(result) shouldBe BAD_REQUEST
+        headers(result).keys should contain("X-Correlation-ID")
+      }
+
+      "handle the case when nino from Auth does NOT exist but exist in the url and the providerType is PrivilegedApplication" in {
+        mockAuthResultWithSuccess()(new ~(None, Credentials("123-id", "PrivilegedApplication")))
+        mockEligibilityCheck(nino)(fakeRequest)(eligibilityResponse)
+
+        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+
+        status(result) shouldBe OK
+        contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+        headers(result).keys should contain("X-Correlation-ID")
+      }
+
+      "handle the case when nino from Auth does NOT exist but exist in the url and the providerType is NOT PrivilegedApplication" in {
+        mockAuthResultWithSuccess()(new ~(None, Credentials("123-id", "foo-bar")))
+
+        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+
+        status(result) shouldBe FORBIDDEN
         headers(result).keys should contain("X-Correlation-ID")
       }
 
       "handle invalid requests and return BadRequest" in {
+        mockAuthResultWithSuccess()(retrievals)
         mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckValidationError("400", "invalid request")))
-        val result = controller.checkEligibility(nino)(fakeRequest)
+        val result = controller.checkEligibility(Some(nino))(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
         contentAsString(result) shouldBe """{"code":"400","message":"invalid request"}"""
         headers(result).keys should contain("X-Correlation-ID")
       }
 
-      "handle unexpected internal server error and return InternalServerError" in {
+      "handle unexpected internal server error during eligibility check and return 500" in {
+        mockAuthResultWithSuccess()(retrievals)
         mockEligibilityCheck(nino)(fakeRequest)(Left(EligibilityCheckBackendError()))
-        val result = controller.checkEligibility(nino)(fakeRequest)
+
+        val result = controller.checkEligibility(Some(nino))(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
         contentAsString(result) shouldBe """{"code":"500","message":"server error"}"""

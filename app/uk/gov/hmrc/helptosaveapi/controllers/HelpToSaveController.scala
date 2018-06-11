@@ -18,19 +18,26 @@ package uk.gov.hmrc.helptosaveapi.controllers
 
 import java.util.UUID
 
+import cats.instances.string._
+import cats.syntax.eq._
 import com.google.inject.Inject
 import play.api.Configuration
 import play.api.libs.json.Json._
 import play.api.mvc._
-import uk.gov.hmrc.helptosaveapi.models.CreateAccountValidationError.CreateAccountValidationErrorOps
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.helptosaveapi.auth.Auth
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountBackendError.CreateAccountBackendErrorOps
+import uk.gov.hmrc.helptosaveapi.models.CreateAccountValidationError.CreateAccountValidationErrorOps
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
-import uk.gov.hmrc.helptosaveapi.util.WithMdcExecutionContext
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.helptosaveapi.util.{WithMdcExecutionContext, toFuture}
+import uk.gov.hmrc.http.HeaderCarrier
 
-class HelpToSaveController @Inject() (helpToSaveApiService: HelpToSaveApiService)(implicit config: Configuration)
-  extends BaseController with WithMdcExecutionContext {
+import scala.concurrent.Future
+
+class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiService,
+                                      override val authConnector: AuthConnector)(implicit config: Configuration)
+  extends Auth(authConnector) with WithMdcExecutionContext {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
@@ -47,8 +54,43 @@ class HelpToSaveController @Inject() (helpToSaveApiService: HelpToSaveApiService
     }
   }
 
-  def checkEligibility(nino: String): Action[AnyContent] = Action.async { implicit request ⇒
+  def checkEligibility(requestNino: Option[String]): Action[AnyContent] = authorised { implicit request ⇒ (authNino, credentials) ⇒
     val correlationId = UUID.randomUUID()
+
+    val result: Future[Result] = (authNino, requestNino) match {
+      case (Some(retrievedNino), None) ⇒
+        if (credentials.providerType === "GovernmentGateway") {
+          getEligibility(retrievedNino, correlationId)
+        } else {
+          logger.warn("no nino exists in the api url, but nino from auth exists and providerType is not 'GovernmentGateway'")
+          toFuture(Forbidden)
+        }
+
+      case (Some(retrievedNino), Some(urlNino)) ⇒
+        if (retrievedNino === urlNino) {
+          getEligibility(retrievedNino, correlationId)
+        } else {
+          logger.warn("NINO from the api url doesn't match with auth retrieved nino")
+          toFuture(Forbidden)
+        }
+
+      case (None, None) ⇒
+        toFuture(BadRequest)
+
+      case (None, Some(urlNino)) ⇒
+        if (credentials.providerType === "PrivilegedApplication") {
+          getEligibility(urlNino, correlationId)
+        } else {
+          logger.warn("nino exists in the api url and nino successfully retrieved from auth but providerType is not 'PrivilegedApplication'")
+          toFuture(Forbidden)
+        }
+    }
+
+    result.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
+  }
+
+  private def getEligibility(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
+                                                                hc: HeaderCarrier): Future[Result] = {
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
       case Left(a: EligibilityCheckValidationError) ⇒
         BadRequest(a.toJson())
@@ -57,7 +99,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService: HelpToSaveApiService
         InternalServerError(b.toJson())
 
       case Right(response) ⇒ Ok(toJson(response))
-    }.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
+    }
   }
 }
 
