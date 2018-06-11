@@ -33,7 +33,7 @@ import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.util.{WithMdcExecutionContext, toFuture}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiService,
                                       override val authConnector: AuthConnector)(implicit config: Configuration)
@@ -81,7 +81,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
         if (credentials.providerType === "PrivilegedApplication") {
           getEligibility(urlNino, correlationId)
         } else {
-          logger.warn("nino exists in the api url and nino successfully retrieved from auth but providerType is not 'PrivilegedApplication'\n")
+          logger.warn("nino exists in the api url and nino successfully retrieved from auth but providerType is not 'PrivilegedApplication'")
           toFuture(Forbidden)
         }
     }

@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.helptosaveapi.util
 
-import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
 import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.http._
@@ -31,16 +32,18 @@ trait AuthSupport extends TestSupport {
 
   val retrievals = new ~(Some(nino), credentials)
 
+  val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
+
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   def mockAuthResultWithFail()(ex: Throwable): Unit =
     (mockAuthConnector.authorise(_: Predicate, _: Retrieval[Option[String] ~ Credentials])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(EmptyPredicate, *, *, *)
+      .expects(authProviders, *, *, *)
       .returning(Future.failed(ex))
 
   def mockAuthResultWithSuccess()(result: Option[String] ~ Credentials) =
     (mockAuthConnector.authorise(_: Predicate, _: Retrieval[Option[String] ~ Credentials])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(EmptyPredicate, Retrievals.nino and Retrievals.credentials, *, *)
+      .expects(authProviders, Retrievals.nino and Retrievals.credentials, *, *)
       .returning(Future.successful(result))
 
 }

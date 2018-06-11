@@ -17,7 +17,7 @@
 package uk.gov.hmrc.helptosaveapi.auth
 
 import play.api.mvc.{Action, AnyContent, Request, Result}
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
+import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrievals, ~}
 import uk.gov.hmrc.helptosaveapi.util.{Logging, WithMdcExecutionContext}
@@ -27,13 +27,13 @@ import scala.concurrent.Future
 
 class Auth(val authConnector: AuthConnector) extends BaseController with AuthorisedFunctions with Logging with WithMdcExecutionContext {
 
-  val AuthProvider: AuthProviders = AuthProviders(GovernmentGateway)
+  val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 
   type HtsAction = Request[AnyContent] ⇒ (Option[String], Credentials) ⇒ Future[Result]
 
   def authorised(action: HtsAction): Action[AnyContent] =
     Action.async { implicit request ⇒
-      authorised() //TODO: whats about CL200 requirement ?
+      authorised(authProviders)
         .retrieve(Retrievals.nino and Retrievals.credentials) {
           case mayBeNino ~ creds ⇒ action(request)(mayBeNino, creds)
         }.recover {
