@@ -10,8 +10,8 @@ THIRD_PARTY_DEVELOPER_FRONTEND
 API_DEFINITION
 ```
 
-then start up `help-to-save-api` on port `7004`. Go to `http://0.0.0.0:9680/api-documentation/docs/api`
-and go to `PreviewRAML` on the left. In the box to enter the URL put in `http://0.0.0.0:7004/api/conf/1.0/application.raml`.
+then start up `help-to-save-api` on port `7004`. Go to `http://127.0.0.1:9680/api-documentation/docs/api`
+and go to `PreviewRAML` on the left. In the box to enter the URL put in `http://127.0.0.1:7004/api/conf/1.0/application.raml`.
 If everything is OK you should see the api documentation. Otherwise, it should tell you what's wrong with the documentation
 
 
