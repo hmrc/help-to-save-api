@@ -58,7 +58,7 @@ class AuthSpec extends AuthSupport {
         "InvalidBearerToken" → Status.UNAUTHORIZED,
         "SessionRecordNotFound" → Status.UNAUTHORIZED,
         "IncorrectCredentialStrength" → Status.FORBIDDEN,
-        "unknown-blah" → Status.FORBIDDEN)
+        "unknown-blah" → Status.INTERNAL_SERVER_ERROR)
 
       exceptions.foreach {
         case (error, expectedStatus) ⇒

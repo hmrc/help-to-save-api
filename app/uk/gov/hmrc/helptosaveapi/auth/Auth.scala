@@ -46,6 +46,10 @@ class Auth(val authConnector: AuthConnector) extends BaseController with Authori
       logger.warn("no logged in session was found for api user")
       Unauthorized
 
+    case e: InternalError ⇒
+      logger.warn(s"Could not authenticate user due to internal error: ${e.reason}")
+      InternalServerError
+
     case ex: AuthorisationException ⇒
       logger.warn(s"could not authenticate api user, error: ${ex.reason}")
       Forbidden

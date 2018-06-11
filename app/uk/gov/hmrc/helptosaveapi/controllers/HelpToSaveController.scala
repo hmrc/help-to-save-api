@@ -81,7 +81,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
         if (credentials.providerType === "PrivilegedApplication") {
           getEligibility(urlNino, correlationId)
         } else {
-          logger.warn("nino exists in the api url, but providerType is not 'PrivilegedApplication'")
+          logger.warn("nino exists in the api url and nino successfully retrieved from auth but providerType is not 'PrivilegedApplication'\n")
           toFuture(Forbidden)
         }
     }
