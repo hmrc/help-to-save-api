@@ -1,7 +1,0 @@
-{ "error":
-  {
-    "errorMessageId": "ZYRA0712",
-    "errorMessage": "The first character cannot be a special character",
-    "errorDetail": "Field: surname"
-  }
-}
