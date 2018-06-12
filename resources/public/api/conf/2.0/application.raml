@@ -120,6 +120,11 @@ uses:
             description: The Help to Save account has been updated successfully
           201:
             description: The Help to Save account has been created successfully
+          400:
+            body:
+              application/json:
+                description: Bad Request
+                example: !include examples/create-account/BadCreateAccountRequest.json
           409:
             body:
               application/json:
@@ -200,6 +205,12 @@ uses:
                     example-8:
                       description: The person already has a Help to Save account
                       value: !include examples/check-eligibility/AccountExistsEligibilityResponse.json
+            400:
+              body:
+                application/json:
+                  description: Bad NINO response
+                  example: !include examples/check-eligibility/BadNINO.json
+
             403:
               body:
                 application/json:
