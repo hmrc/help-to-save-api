@@ -37,8 +37,8 @@ case class ApiErrorValidationError(code: String, message: String) extends ApiErr
 
 object ApiErrorValidationError {
 
-  def apply(headers: String): ApiErrorValidationError =
-    ApiErrorValidationError("400", s"Bad request, Could not validate headers: $headers")
+  def apply(description: String): ApiErrorValidationError =
+    ApiErrorValidationError("400", s"Invalid request, description: $description")
 }
 
 case class ApiErrorBackendError(code: String, message: String) extends ApiError

@@ -110,11 +110,9 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
         val correlationId = UUID.randomUUID()
         helpToSaveApiService.getAccount(nino, correlationId)
           .map {
-            case Right(account) ⇒ Ok(Json.toJson(account))
-            case Left(error) ⇒ {
-              logger.warn(s"getAccount returned an error; $error")
-              InternalServerError(Json.toJson(error))
-            }
+            case Right(account)                   ⇒ Ok(Json.toJson(account))
+            case Left(e: ApiErrorBackendError)    ⇒ InternalServerError(Json.toJson(e))
+            case Left(e: ApiErrorValidationError) ⇒ BadRequest(Json.toJson(e))
           }
       }
       case None ⇒ {

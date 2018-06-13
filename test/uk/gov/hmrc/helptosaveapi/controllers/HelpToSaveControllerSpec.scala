@@ -158,13 +158,23 @@ class HelpToSaveControllerSpec extends AuthSupport {
         headers(result).keys should contain("X-Correlation-ID")
       }
 
-      "handle invalid requests and return BadRequest" in {
+      "handle invalid requests and return BadRequest when a validation error occurs" in {
         mockAuthResultWithSuccess()(retrievals)
-        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorValidationError("")))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorValidationError("error")))
         val result = controller.checkEligibility(Some(nino))(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
-        contentAsString(result) shouldBe """{"code":"400","message":"Bad request, Could not validate headers: "}"""
+        contentAsString(result) shouldBe """{"code":"400","message":"Invalid request, description: error"}"""
+        headers(result).keys should contain("X-Correlation-ID")
+      }
+
+      "handle invalid requests and return InternalServerError when a backend error occurs" in {
+        mockAuthResultWithSuccess()(retrievals)
+        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorBackendError()))
+        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+        contentAsString(result) shouldBe """{"code":"500","message":"Server error"}"""
         headers(result).keys should contain("X-Correlation-ID")
       }
 

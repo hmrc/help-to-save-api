@@ -134,7 +134,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
 
                 case other: Int ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
-                  pagerDutyAlerting.alert("Received unexpected http status in response to eligibility check")
+                  pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check: $other")
                   Left(ApiErrorBackendError())
 
               }
