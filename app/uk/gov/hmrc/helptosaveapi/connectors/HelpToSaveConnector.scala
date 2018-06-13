@@ -47,7 +47,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
     s"http://$host:$port/help-to-save"
   }
 
-  val createAccountUrl: String = s"$htsBBaseUrl/create-de-account"
+  val createAccountUrl: String = s"$htsBBaseUrl/create-account"
 
   def eligibilityCheckUrl(nino: String): String = s"$htsBBaseUrl/api/eligibility-check/$nino"
 
