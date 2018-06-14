@@ -18,16 +18,14 @@ package uk.gov.hmrc.helptosaveapi.controllers
 
 import java.util.UUID
 
-import org.scalamock.handlers.{CallHandler3, CallHandler5}
+import org.scalamock.handlers.{CallHandler3, CallHandler5, CallHandler6}
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.util.toFuture
-
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.helptosaveapi.util.AuthSupport
 
@@ -49,14 +47,16 @@ class HelpToSaveControllerSpec extends AuthSupport {
       .expects(nino, *, *, *, *)
       .returning(toFuture(response))
 
-  def mockGetAccount(nino: String)(request: Request[AnyContent])(response: Either[ApiError, Account]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.GetAccountResponseType] =
-    (apiService.getAccount(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
-      .expects(nino, *, *, *, *)
+  def mockGetAccount(nino: String)(request: Request[AnyContent])(response: Either[ApiError, Account]): CallHandler6[String, String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.GetAccountResponseType] =
+    (apiService.getAccount(_: String, _: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
+      .expects(nino, *, *, *, *, *)
       .returning(toFuture(response))
 
   "The CreateAccountController" when {
 
     val nino = "AE123456C"
+    val systemId = "systemId"
+    val correlationId = UUID.randomUUID()
 
     val fakeRequest = FakeRequest()
 
@@ -198,7 +198,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           mockGetAccount(nino)(fakeRequest)(Right(Account("1100000000001", 40.00, false)))
         }
 
-        val result = controller.getAccount()(fakeRequest)
+        val result = controller.getAccount(nino, systemId, Some(correlationId.toString))(fakeRequest)
 
         status(result) shouldBe OK
         contentAsString(result) shouldBe """{"accountNumber":"1100000000001","headroom":40,"closed":false}"""
@@ -210,7 +210,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           mockGetAccount(nino)(fakeRequest)(Left(ApiErrorBackendError()))
         }
 
-        val result = controller.getAccount()(fakeRequest)
+        val result = controller.getAccount(nino, systemId, Some(correlationId.toString))(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
       }

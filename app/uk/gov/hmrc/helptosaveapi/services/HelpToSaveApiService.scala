@@ -55,9 +55,9 @@ trait HelpToSaveApiService {
                                                           hc: HeaderCarrier,
                                                           ec: ExecutionContext): CheckEligibilityResponseType
 
-  def getAccount(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
-                                                    hc: HeaderCarrier,
-                                                    ec: ExecutionContext): GetAccountResponseType
+  def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit request: Request[AnyContent],
+                                                                      hc: HeaderCarrier,
+                                                                      ec: ExecutionContext): GetAccountResponseType
 
 }
 
@@ -147,12 +147,12 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     }
   }
 
-  override def getAccount(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
-                                                             hc: HeaderCarrier,
-                                                             ec: ExecutionContext): GetAccountResponseType = {
+  override def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit request: Request[AnyContent],
+                                                                               hc: HeaderCarrier,
+                                                                               ec: ExecutionContext): GetAccountResponseType = {
     validateGetAccountRequest {
       () ⇒
-        helpToSaveConnector.getAccount(nino, correlationId)
+        helpToSaveConnector.getAccount(nino, systemId, correlationId)
           .map {
             response ⇒
               response.status match {

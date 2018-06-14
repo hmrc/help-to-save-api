@@ -104,11 +104,11 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
     }
   }
 
-  def getAccount(): Action[AnyContent] = authorised { implicit request ⇒ (authNino, _) ⇒
+  def getAccount(nino: String, systemId: String, correlationId: Option[String]): Action[AnyContent] = authorised { implicit request ⇒ (authNino, _) ⇒
     authNino match {
       case Some(nino) ⇒ {
         val correlationId = UUID.randomUUID()
-        helpToSaveApiService.getAccount(nino, correlationId)
+        helpToSaveApiService.getAccount(nino, systemId, correlationId)
           .map {
             case Right(account)                   ⇒ Ok(Json.toJson(account))
             case Left(e: ApiErrorBackendError)    ⇒ InternalServerError(Json.toJson(e))
