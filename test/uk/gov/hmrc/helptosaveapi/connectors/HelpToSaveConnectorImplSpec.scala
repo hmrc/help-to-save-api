@@ -22,7 +22,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.libs.json.{JsString, Json}
-import play.api.test.Helpers._
+import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport}
 import uk.gov.hmrc.http.HttpResponse
@@ -44,7 +44,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
         implicit val correlationIdArb: Arbitrary[UUID] = Arbitrary(Gen.uuid)
 
         forAll { (body: CreateAccountBody, correlationId: UUID, status: Int, response: String) ⇒
-          mockPost("http://localhost:7001/help-to-save/create-account", body, Map("X-Correlation-ID" -> correlationId.toString))(Some(HttpResponse(status, Some(JsString(response)))))
+          mockPost("http://localhost:7001/help-to-save/create-account", CreateAccountInfo(body, None), Map("X-Correlation-ID" -> correlationId.toString))(Some(HttpResponse(status, Some(JsString(response)))))
           val result = await(connector.createAccount(body, correlationId))
           result.status shouldBe status
           result.json shouldBe JsString(response)
