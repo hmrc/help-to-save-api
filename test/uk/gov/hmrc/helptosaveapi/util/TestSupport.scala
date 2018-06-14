@@ -60,4 +60,5 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
     (http.get(_: String, _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedUrl, headers, *, *)
       .returning(response.fold(Future.failed[HttpResponse](new Exception("")))(Future.successful))
+
 }

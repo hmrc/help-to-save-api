@@ -16,12 +16,16 @@
 
 package uk.gov.hmrc.helptosaveapi
 
-import cats.data.ValidatedNel
+import cats.data.{EitherT, ValidatedNel}
 
 import scala.concurrent.Future
 import scala.util.matching.Regex
 
 package object util {
+
+  type NINO = String
+
+  type Result[A] = EitherT[Future, String, A]
 
   implicit def toFuture[A](a: A): Future[A] = Future.successful(a)
 

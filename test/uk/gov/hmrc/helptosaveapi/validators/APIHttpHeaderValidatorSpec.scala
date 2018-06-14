@@ -35,7 +35,7 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
     "handling CreateAccount requests" must {
 
         def result(headers: Map[String, String]): ValidatedNel[String, Request[Any]] =
-          validator.validateHttpHeadersForCreateAccount(requestWithHeaders(headers))
+          validator.validateHttpHeaders(true)(requestWithHeaders(headers))
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ → "value") ++ List(
@@ -56,7 +56,7 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
       )
 
         def result(headers: Map[String, String]): ValidatedNel[String, Request[Any]] =
-          validator.validateHttpHeadersForEligibilityCheck(requestWithHeaders(headers))
+          validator.validateHttpHeaders(false)(requestWithHeaders(headers))
 
       behave like testCommon(validRequestHeaders, result, false)
     }
