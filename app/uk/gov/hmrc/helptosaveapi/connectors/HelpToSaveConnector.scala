@@ -20,6 +20,8 @@ import java.util.UUID
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
+import play.api.libs.json.{Format, Json}
+import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, Result}
@@ -58,7 +60,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
   override def createAccount(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.post(createAccountUrl, body, Map(correlationIdHeaderName -> correlationId.toString))
+    http.post(createAccountUrl, CreateAccountInfo(body), Map(correlationIdHeaderName -> correlationId.toString))
 
   override def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(eligibilityCheckUrl(nino), Map(correlationIdHeaderName -> correlationId.toString))
@@ -66,4 +68,11 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
   override def getAccount(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(getAccountUrl, Map(correlationIdHeaderName -> correlationId.toString))
 
+}
+
+object HelpToSaveConnectorImpl {
+
+  case class CreateAccountInfo(userInfo: CreateAccountBody)
+
+  implicit val createAccountInfoFormat: Format[CreateAccountInfo] = Json.format[CreateAccountInfo]
 }
