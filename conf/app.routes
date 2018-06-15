@@ -5,4 +5,4 @@ POST       /account             @uk.gov.hmrc.helptosaveapi.controllers.HelpToSav
 
 GET        /eligibility/        @uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.checkEligibility(nino: Option[String])
 
-GET        /:nino/account       @uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.getAccount(nino: String, systemId: String, correlationId: Option[String])
+GET        /account             @uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.getAccount

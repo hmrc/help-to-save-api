@@ -77,7 +77,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
   def mockGetAccount(nino: String, systemId: String, correlationId: UUID)(response: Either[String, HttpResponse]): CallHandler5[String, String, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
     (helpToSaveConnector.getAccount(_: String, _: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(nino, systemId, correlationId, *, *)
+      .expects(nino, systemId, *, *, *)
       .returning(response.fold(
         e ⇒ Future.failed(new Exception(e)),
         Future.successful
@@ -92,7 +92,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   "The HelpToSaveApiService" when {
 
     val nino = "AE123456C"
-    val systemId = "systemId"
+    val systemId = "mtmp"
     val correlationId = UUID.randomUUID()
 
     "handling CreateAccount requests" must {
@@ -288,7 +288,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           mockGetAccount(nino, systemId, correlationId)(Right(HttpResponse(200, Some(Json.parse(account)))))
         }
 
-        val result = await(service.getAccount(nino, systemId, correlationId))
+        val result = await(service.getAccount(nino))
         result shouldBe Right(Account("1100000000001", 40.00, false))
       }
 
@@ -298,7 +298,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           mockGetAccount(nino, systemId, correlationId)(Right(HttpResponse(500, None)))
         }
 
-        val result = await(service.getAccount(nino, systemId, correlationId))
+        val result = await(service.getAccount(nino))
         result shouldBe Left(ApiErrorBackendError())
       }
 
