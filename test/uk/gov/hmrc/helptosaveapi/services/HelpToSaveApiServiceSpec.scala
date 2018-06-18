@@ -92,7 +92,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   "The HelpToSaveApiService" when {
 
     val nino = "AE123456C"
-    val systemId = "mtmp"
+    val systemId = "MDTP"
     val correlationId = UUID.randomUUID()
 
     "handling CreateAccount requests" must {

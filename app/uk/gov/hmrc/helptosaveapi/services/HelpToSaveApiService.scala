@@ -152,7 +152,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     validateGetAccountRequest {
       () ⇒
         val correlationId: UUID = UUID.randomUUID()
-        val systemId: String = "mtmp"
+        val systemId: String = config.underlying.getString("system-id")
         helpToSaveConnector.getAccount(nino, systemId, correlationId)
           .map {
             response ⇒
