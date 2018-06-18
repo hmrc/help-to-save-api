@@ -55,9 +55,8 @@ trait HelpToSaveApiService {
                                                           hc: HeaderCarrier,
                                                           ec: ExecutionContext): CheckEligibilityResponseType
 
-  def getAccount(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
-                                                    hc: HeaderCarrier,
-                                                    ec: ExecutionContext): GetAccountResponseType
+  def getAccount(nino: String)(implicit request: Request[AnyContent], hc: HeaderCarrier,
+                               ec: ExecutionContext): GetAccountResponseType
 
 }
 
@@ -75,6 +74,8 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
   val createAccountRequestValidator: CreateAccountRequestValidator = new CreateAccountRequestValidator
 
   val eligibilityRequestValidator: EligibilityRequestValidator = new EligibilityRequestValidator
+
+  val systemId: String = config.underlying.getString("system-id")
 
   override def createAccount(request: Request[AnyContent])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = {
 
@@ -147,12 +148,14 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     }
   }
 
-  override def getAccount(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
-                                                             hc: HeaderCarrier,
-                                                             ec: ExecutionContext): GetAccountResponseType = {
+  override def getAccount(nino: String)(implicit request: Request[AnyContent],
+                                        hc: HeaderCarrier,
+                                        ec: ExecutionContext): GetAccountResponseType = {
     validateGetAccountRequest {
       () ⇒
-        helpToSaveConnector.getAccount(nino, correlationId)
+        val correlationId: UUID = UUID.randomUUID()
+
+        helpToSaveConnector.getAccount(nino, systemId, correlationId)
           .map {
             response ⇒
               response.status match {

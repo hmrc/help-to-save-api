@@ -36,7 +36,7 @@ trait HelpToSaveConnector {
 
   def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
-  def getAccount(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
 }
 
@@ -55,7 +55,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   def eligibilityCheckUrl(nino: String): String = s"$htsBBaseUrl/api/eligibility-check/$nino"
 
-  def getAccountUrl: String = s"$htsBBaseUrl/account"
+  def getAccountUrl(nino: String, systemId: String, correlationId: String): String = s"$htsBBaseUrl/$nino/account?systemId=$systemId&correlationId=$correlationId"
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
@@ -65,8 +65,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
   override def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(eligibilityCheckUrl(nino), Map(correlationIdHeaderName -> correlationId.toString))
 
-  override def getAccount(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(getAccountUrl, Map(correlationIdHeaderName -> correlationId.toString))
+  override def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    http.get(getAccountUrl(nino, systemId, correlationId.toString), Map(correlationIdHeaderName -> correlationId.toString))
 
 }
 

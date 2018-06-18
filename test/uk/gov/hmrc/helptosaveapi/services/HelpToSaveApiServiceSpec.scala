@@ -20,7 +20,7 @@ import java.util.UUID
 
 import cats.data.Validated._
 import cats.data.{NonEmptyList, ValidatedNel}
-import org.scalamock.handlers.{CallHandler1, CallHandler2, CallHandler4}
+import org.scalamock.handlers.{CallHandler1, CallHandler2, CallHandler4, CallHandler5}
 import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -75,9 +75,9 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         Future.successful
       ))
 
-  def mockGetAccount(nino: String, correlationId: UUID)(response: Either[String, HttpResponse]): CallHandler4[String, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (helpToSaveConnector.getAccount(_: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(nino, correlationId, *, *)
+  def mockGetAccount(nino: String, systemId: String, correlationId: UUID)(response: Either[String, HttpResponse]): CallHandler5[String, String, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (helpToSaveConnector.getAccount(_: String, _: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(nino, systemId, *, *, *)
       .returning(response.fold(
         e ⇒ Future.failed(new Exception(e)),
         Future.successful
@@ -92,6 +92,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   "The HelpToSaveApiService" when {
 
     val nino = "AE123456C"
+    val systemId = "MDTP"
     val correlationId = UUID.randomUUID()
 
     "handling CreateAccount requests" must {
@@ -284,20 +285,20 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       "return OK status and an Account when the call to the connector is successful and there is an account to return" in {
         inSequence {
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
-          mockGetAccount(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(account)))))
+          mockGetAccount(nino, systemId, correlationId)(Right(HttpResponse(200, Some(Json.parse(account)))))
         }
 
-        val result = await(service.getAccount(nino, correlationId))
+        val result = await(service.getAccount(nino))
         result shouldBe Right(Account("1100000000001", 40.00, false))
       }
 
       "return an Api Error when an INTERNAL SERVER ERROR status is returned from the connector" in {
         inSequence {
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
-          mockGetAccount(nino, correlationId)(Right(HttpResponse(500, None)))
+          mockGetAccount(nino, systemId, correlationId)(Right(HttpResponse(500, None)))
         }
 
-        val result = await(service.getAccount(nino, correlationId))
+        val result = await(service.getAccount(nino))
         result shouldBe Left(ApiErrorBackendError())
       }
 

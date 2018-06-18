@@ -35,6 +35,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
   "The HelpToSaveConnectorImpl" when {
 
     val nino = "AE123456C"
+    val systemId = "systemId"
     val correlationId = UUID.randomUUID()
 
     "creating an account" must {
@@ -72,7 +73,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
     "handling get account requests" must {
 
-      val getAccountUrl = "http://localhost:7001/help-to-save/account"
+      val getAccountUrl = s"http://localhost:7001/help-to-save/$nino/account?systemId=$systemId&correlationId=$correlationId"
       val headers = Map("X-Correlation-ID" → correlationId.toString)
 
       val account =
@@ -103,7 +104,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
       "call the correct url and return the response as is" in {
 
         mockGet(getAccountUrl, headers)(Some(HttpResponse(200, Some(json))))
-        val result = await(connector.getAccount(nino, correlationId))
+        val result = await(connector.getAccount(nino, systemId, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
       }
