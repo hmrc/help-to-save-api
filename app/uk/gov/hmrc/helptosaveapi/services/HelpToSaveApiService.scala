@@ -75,6 +75,8 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
 
   val eligibilityRequestValidator: EligibilityRequestValidator = new EligibilityRequestValidator
 
+  val systemId: String = config.underlying.getString("system-id")
+
   override def createAccount(request: Request[AnyContent])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = {
 
     val timer = metrics.apiCreateAccountCallTimer.time()
@@ -152,7 +154,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     validateGetAccountRequest {
       () ⇒
         val correlationId: UUID = UUID.randomUUID()
-        val systemId: String = config.underlying.getString("system-id")
+
         helpToSaveConnector.getAccount(nino, systemId, correlationId)
           .map {
             response ⇒
