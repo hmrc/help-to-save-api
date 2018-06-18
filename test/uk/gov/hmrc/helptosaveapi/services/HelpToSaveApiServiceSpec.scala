@@ -20,10 +20,9 @@ import java.util.UUID
 
 import cats.data.Validated._
 import cats.data.{NonEmptyList, ValidatedNel}
-import org.scalamock.handlers.{CallHandler1, CallHandler2, CallHandler4}
+import org.scalamock.handlers.{CallHandler1, CallHandler2, CallHandler4, CallHandler5}
 import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
 import play.mvc.Http.Status.CREATED
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models._
@@ -67,9 +66,9 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         Future.successful
       ))
 
-  def mockCreateAccountService(expectedBody: CreateAccountBody)(response: Either[String, HttpResponse]): CallHandler4[CreateAccountBody, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (helpToSaveConnector.createAccount(_: CreateAccountBody, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedBody, *, *, *)
+  def mockCreateAccountService(expectedBody: CreateAccountBody)(response: Either[String, HttpResponse]): CallHandler5[CreateAccountBody, UUID, String, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (helpToSaveConnector.createAccount(_: CreateAccountBody, _: UUID, _: String)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(expectedBody, *, *, *, *)
       .returning(response.fold(
         e ⇒ Future.failed(new Exception(e)),
         Future.successful

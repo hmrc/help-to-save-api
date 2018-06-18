@@ -43,9 +43,9 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
         implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.createAccountBodyGen)
         implicit val correlationIdArb: Arbitrary[UUID] = Arbitrary(Gen.uuid)
 
-        forAll { (body: CreateAccountBody, correlationId: UUID, status: Int, response: String) ⇒
-          mockPost("http://localhost:7001/help-to-save/create-account", CreateAccountInfo(body), Map("X-Correlation-ID" -> correlationId.toString))(Some(HttpResponse(status, Some(JsString(response)))))
-          val result = await(connector.createAccount(body, correlationId))
+        forAll { (body: CreateAccountBody, correlationId: UUID, clientCode: String, status: Int, response: String) ⇒
+          mockPost("http://localhost:7001/help-to-save/create-account", CreateAccountInfo(body, clientCode), Map("X-Correlation-ID" -> correlationId.toString))(Some(HttpResponse(status, Some(JsString(response)))))
+          val result = await(connector.createAccount(body, correlationId, clientCode))
           result.status shouldBe status
           result.json shouldBe JsString(response)
         }

@@ -84,7 +84,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
       case CreateAccountRequest(header, body) ⇒
         val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
         logger.info(s"Create Account Request has been made with headers: ${header.show}")
-        helpToSaveConnector.createAccount(body, header.requestCorrelationId).map[Either[CreateAccountError, Unit]] { response ⇒
+        helpToSaveConnector.createAccount(body, header.requestCorrelationId, header.clientCode).map[Either[CreateAccountError, Unit]] { response ⇒
           val _ = timer.stop()
           response.status match {
             case Status.CREATED ⇒

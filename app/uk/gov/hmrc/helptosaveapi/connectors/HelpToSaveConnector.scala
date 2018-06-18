@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[HelpToSaveConnectorImpl])
 trait HelpToSaveConnector {
 
-  def createAccount(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
   def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
@@ -59,8 +59,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
-  override def createAccount(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.post(createAccountUrl, CreateAccountInfo(body), Map(correlationIdHeaderName -> correlationId.toString))
+  override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    http.post(createAccountUrl, CreateAccountInfo(body, clientCode), Map(correlationIdHeaderName -> correlationId.toString))
 
   override def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(eligibilityCheckUrl(nino), Map(correlationIdHeaderName -> correlationId.toString))
@@ -72,7 +72,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
 object HelpToSaveConnectorImpl {
 
-  case class CreateAccountInfo(userInfo: CreateAccountBody)
+  case class CreateAccountInfo(userInfo: CreateAccountBody, source: String)
 
   implicit val createAccountInfoFormat: Format[CreateAccountInfo] = Json.format[CreateAccountInfo]
 }
