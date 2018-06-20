@@ -20,7 +20,6 @@ import java.util.UUID
 
 import cats.instances.string._
 import cats.syntax.eq._
-import cats.instances.future._
 import com.google.inject.Inject
 import play.api.Configuration
 import play.api.libs.json.Json
@@ -60,13 +59,13 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
   def checkEligibilityDeriveNino(): Action[AnyContent] = authorised { implicit request ⇒ (authNino, credentials) ⇒
     val correlationId = UUID.randomUUID()
 
-    val result: Future[Result] = authNino.fold[Future[Result]]{
+    val result: Future[Result] = authNino.fold[Future[Result]] {
       if (isGovernmentGateway(credentials)) {
         toFuture(Forbidden)
       } else {
         toFuture(BadRequest)
       }
-    }{ retrievedNino ⇒
+    } { retrievedNino ⇒
       if (isGovernmentGateway(credentials)) {
         getEligibility(retrievedNino, correlationId)
       } else {
@@ -80,14 +79,14 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
   def checkEligibility(urlNino: String): Action[AnyContent] = authorised { implicit request ⇒ (authNino, credentials) ⇒
     val correlationId = UUID.randomUUID()
 
-    val result: Future[Result] = authNino.fold[Future[Result]]{
+    val result: Future[Result] = authNino.fold[Future[Result]] {
       if (isPrivilegedApplication(credentials)) {
         getEligibility(urlNino, correlationId)
       } else {
         logger.warn("nino exists in the api url and nino not successfully retrieved from auth but providerType is not 'PrivilegedApplication'")
         toFuture(Forbidden)
       }
-    }{ retrievedNino ⇒
+    } { retrievedNino ⇒
       if (retrievedNino === urlNino) {
         getEligibility(retrievedNino, correlationId)
       } else {
@@ -113,23 +112,24 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
 
   def getAccount(): Action[AnyContent] = authorised { implicit request ⇒ (authNino, _) ⇒
     authNino match {
-      case Some(nino) ⇒ {
+      case Some(nino) ⇒
         helpToSaveApiService.getAccount(nino)
           .map {
             case Right(account)                   ⇒ Ok(Json.toJson(account))
             case Left(e: ApiErrorBackendError)    ⇒ InternalServerError(Json.toJson(e))
             case Left(e: ApiErrorValidationError) ⇒ BadRequest(Json.toJson(e))
           }
-      }
-      case None ⇒ {
+
+      case None ⇒
         logger.warn("There was no nino retrieved from auth")
         Forbidden
-      }
+
     }
 
   }
 
   private def isGovernmentGateway(credentials: Credentials): Boolean = credentials.providerType === "GovernmentGateway"
+
   private def isPrivilegedApplication(credentials: Credentials): Boolean = credentials.providerType === "PrivilegedApplication"
 
 }
