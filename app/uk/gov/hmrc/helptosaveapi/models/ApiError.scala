@@ -45,10 +45,7 @@ case class ApiErrorBackendError(code: String, message: String) extends ApiError
 
 object ApiErrorBackendError {
 
-  def apply(): ApiErrorBackendError =
-    ApiErrorBackendError("500", "Server error")
-
-  def applyWithParams(errorMessage: String): ApiErrorBackendError =
+  def apply(errorMessage: String): ApiErrorBackendError =
     ApiErrorBackendError("500", errorMessage)
 }
 
