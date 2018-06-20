@@ -179,7 +179,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "handle invalid requests and return InternalServerError when a backend error occurs" in {
         mockAuthResultWithSuccess()(retrievals)
-        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorBackendError()))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorBackendError("Server error")))
         val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
@@ -189,7 +189,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "handle unexpected internal server error during eligibility check and return 500" in {
         mockAuthResultWithSuccess()(retrievals)
-        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorBackendError()))
+        mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorBackendError("Server error")))
 
         val result = controller.checkEligibility(nino)(fakeRequest)
 
@@ -216,7 +216,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "return an Internal Server Error when getting an account is unsuccessful" in {
         inSequence{
           mockAuthResultWithSuccess()(retrievals)
-          mockGetAccount(nino)(fakeRequest)(Left(ApiErrorBackendError()))
+          mockGetAccount(nino)(fakeRequest)(Left(ApiErrorBackendError("server error")))
         }
 
         val result = controller.getAccount()(fakeRequest)

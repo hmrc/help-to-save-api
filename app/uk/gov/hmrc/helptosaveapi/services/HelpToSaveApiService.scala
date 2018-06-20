@@ -131,19 +131,19 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                   }, _ ⇒
                     logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
                   )
-                  result.leftMap(e ⇒ ApiErrorBackendError())
+                  result.leftMap(e ⇒ ApiErrorBackendError(e))
 
                 case other: Int ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
                   pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check: $other")
-                  Left(ApiErrorBackendError())
+                  Left(ApiErrorBackendError(response.body))
 
               }
           }.recover {
             case e ⇒
               metrics.apiEligibilityCallErrorCounter.inc()
               pagerDutyAlerting.alert("Failed to make call to check eligibility")
-              Left(ApiErrorBackendError())
+              Left(ApiErrorBackendError(e.getMessage))
           }
     }
   }
@@ -160,11 +160,19 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
             response ⇒
               response.status match {
                 case OK ⇒
-                  response.parseJson[HtsAccount].bimap(e ⇒ ApiErrorBackendError(), toAccount)
+                  response.parseJson[HtsAccount].bimap(e ⇒ {
+                    logger.warn(s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}")
+                    ApiErrorBackendError(e)
+                  },
+                    toAccount)
                 case other ⇒
-                  logger.info(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
-                  Left(ApiErrorBackendError())
+                  logger.warn(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
+                  Left(ApiErrorBackendError(response.body))
               }
+          }.recover {
+            case e ⇒
+              logger.warn(s"Error occurred when getting account via the connector, error message: ${e.getMessage}")
+              Left(ApiErrorBackendError(e.getMessage))
           }
     }
   }

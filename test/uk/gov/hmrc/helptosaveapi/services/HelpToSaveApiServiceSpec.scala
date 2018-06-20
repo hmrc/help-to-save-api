@@ -212,7 +212,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         val result = await(service.checkEligibility(nino, correlationId))
 
-        result shouldBe Left(ApiErrorBackendError())
+        result shouldBe Left(ApiErrorBackendError("internal server error"))
       }
 
       "transform user Eligible response from help to save BE as expected" in {
@@ -233,14 +233,16 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle invalid eligibility result and reason code combination from help to save BE" in {
+        val json = Json.parse(eligibilityJson(1, 11))
         inSequence {
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
-          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson(1, 11))))))
-          mockPagerDutyAlert("Failed to make call to check eligibility")
+          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(json))))
+          mockPagerDutyAlert("Could not parse JSON in eligibility check response")
 
           val result = await(service.checkEligibility(nino, correlationId))
-          result shouldBe Left(ApiErrorBackendError())
+          result shouldBe Left(ApiErrorBackendError(s"invalid combination for eligibility response. " +
+            s"Response was 'EligibilityCheckResponse(eligible,1,receiving UC,11)'"))
         }
       }
 
@@ -298,7 +300,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         val result = await(service.getAccount(nino))
-        result shouldBe Left(ApiErrorBackendError())
+        result shouldBe Left(ApiErrorBackendError("500", null))
       }
 
     }
