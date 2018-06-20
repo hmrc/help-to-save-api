@@ -93,7 +93,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         mockAuthResultWithSuccess()(retrievals)
         mockEligibilityCheck(nino)(fakeRequest)(eligibilityResponse)
 
-        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+        val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe OK
         contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
@@ -103,7 +103,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "handle the case when nino from Auth exists but not in the url and providerType is NOT GovernmentGateway" in {
         mockAuthResultWithSuccess()(new ~(Some(nino), Credentials("123-id", "foo-bar")))
 
-        val result = controller.checkEligibility(None)(fakeRequest)
+        val result = controller.checkEligibilityDeriveNino()(fakeRequest)
 
         status(result) shouldBe FORBIDDEN
         headers(result).keys should contain("X-Correlation-ID")
@@ -113,7 +113,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         mockAuthResultWithSuccess()(retrievals)
         mockEligibilityCheck(nino)(fakeRequest)(eligibilityResponse)
 
-        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+        val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe OK
         contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
@@ -123,18 +123,27 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "handle the case when both ninos from Auth and from url exist and they are NOT equal" in {
         mockAuthResultWithSuccess()(retrievals)
 
-        val result = controller.checkEligibility(Some("LX123456D"))(fakeRequest)
+        val result = controller.checkEligibility("LX123456D")(fakeRequest)
 
         status(result) shouldBe FORBIDDEN
         headers(result).keys should contain("X-Correlation-ID")
       }
 
-      "handle the case when both ninos from Auth and from url do NOT exist" in {
+      "handle the case when both ninos from Auth and from url do NOT exist and the authprovider is not GG" in {
         mockAuthResultWithSuccess()(new ~(None, Credentials("123-id", "foo-bar")))
 
-        val result = controller.checkEligibility(None)(fakeRequest)
+        val result = controller.checkEligibilityDeriveNino()(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
+        headers(result).keys should contain("X-Correlation-ID")
+      }
+
+      "handle the case when both ninos from Auth and from url do NOT exist and the authprovider is GG" in {
+        mockAuthResultWithSuccess()(new ~(None, Credentials("GG", "GovernmentGateway")))
+
+        val result = controller.checkEligibilityDeriveNino()(fakeRequest)
+
+        status(result) shouldBe FORBIDDEN
         headers(result).keys should contain("X-Correlation-ID")
       }
 
@@ -142,7 +151,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         mockAuthResultWithSuccess()(new ~(None, Credentials("123-id", "PrivilegedApplication")))
         mockEligibilityCheck(nino)(fakeRequest)(eligibilityResponse)
 
-        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+        val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe OK
         contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
@@ -152,7 +161,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "handle the case when nino from Auth does NOT exist but exist in the url and the providerType is NOT PrivilegedApplication" in {
         mockAuthResultWithSuccess()(new ~(None, Credentials("123-id", "foo-bar")))
 
-        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+        val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe FORBIDDEN
         headers(result).keys should contain("X-Correlation-ID")
@@ -161,7 +170,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "handle invalid requests and return BadRequest when a validation error occurs" in {
         mockAuthResultWithSuccess()(retrievals)
         mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorValidationError("error")))
-        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+        val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe BAD_REQUEST
         contentAsString(result) shouldBe """{"code":"400","message":"Invalid request, description: error"}"""
@@ -171,7 +180,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "handle invalid requests and return InternalServerError when a backend error occurs" in {
         mockAuthResultWithSuccess()(retrievals)
         mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorBackendError()))
-        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+        val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
         contentAsString(result) shouldBe """{"code":"500","message":"Server error"}"""
@@ -182,7 +191,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         mockAuthResultWithSuccess()(retrievals)
         mockEligibilityCheck(nino)(fakeRequest)(Left(ApiErrorBackendError()))
 
-        val result = controller.checkEligibility(Some(nino))(fakeRequest)
+        val result = controller.checkEligibility(nino)(fakeRequest)
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
         contentAsString(result) shouldBe """{"code":"500","message":"Server error"}"""

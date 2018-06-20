@@ -30,7 +30,7 @@ trait AuthSupport extends TestSupport {
 
   val credentials = Credentials("123-id", "GovernmentGateway")
 
-  val retrievals = new ~(Some(nino), credentials)
+  val retrievals: Option[String] ~ Credentials = new ~(Some(nino), credentials)
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 
