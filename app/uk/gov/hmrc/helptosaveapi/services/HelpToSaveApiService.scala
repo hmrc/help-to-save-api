@@ -25,7 +25,7 @@ import cats.syntax.show._
 import com.codahale.metrics.Timer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
-import play.api.http.Status.OK
+import play.api.http.Status.{OK, NOT_FOUND}
 import play.api.libs.json.{Format, JsError, JsSuccess, Json}
 import play.api.mvc.{AnyContent, Request}
 import play.mvc.Http.Status
@@ -47,7 +47,7 @@ trait HelpToSaveApiService {
 
   type CreateAccountResponseType = Future[Either[CreateAccountError, Unit]]
   type CheckEligibilityResponseType = Future[Either[ApiError, EligibilityResponse]]
-  type GetAccountResponseType = Future[Either[ApiError, Account]]
+  type GetAccountResponseType = Future[Either[ApiError, Option[Account]]]
 
   def createAccount(request: Request[AnyContent])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType
 
@@ -131,19 +131,19 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                   }, _ ⇒
                     logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
                   )
-                  result.leftMap(e ⇒ ApiErrorBackendError())
+                  result.leftMap(e ⇒ ApiErrorBackendError(e))
 
                 case other: Int ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
                   pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check: $other")
-                  Left(ApiErrorBackendError())
+                  Left(ApiErrorBackendError(response.body))
 
               }
           }.recover {
             case e ⇒
               metrics.apiEligibilityCallErrorCounter.inc()
               pagerDutyAlerting.alert("Failed to make call to check eligibility")
-              Left(ApiErrorBackendError())
+              Left(ApiErrorBackendError(e.getMessage))
           }
     }
   }
@@ -160,11 +160,22 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
             response ⇒
               response.status match {
                 case OK ⇒
-                  response.parseJson[HtsAccount].bimap(e ⇒ ApiErrorBackendError(), toAccount)
+                  response.parseJson[HtsAccount].bimap(e ⇒ {
+                    logger.warn(s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}")
+                    ApiErrorBackendError(e)
+                  },
+                    toAccount)
+                case NOT_FOUND ⇒
+                  logger.warn(s"NS&I have returned a status of NOT FOUND, response body: ${response.body}")
+                  Right(None)
                 case other ⇒
-                  logger.info(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
-                  Left(ApiErrorBackendError())
+                  logger.warn(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
+                  Left(ApiErrorBackendError(response.body))
               }
+          }.recover {
+            case e ⇒
+              logger.warn(s"Error occurred when getting account via the connector, error message: ${e.getMessage}")
+              Left(ApiErrorBackendError(e.getMessage))
           }
     }
   }
@@ -249,8 +260,8 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
       case _      ⇒ Left(s"invalid combination for eligibility response. Response was '$r'")
     }
 
-  private def toAccount(account: HtsAccount): Account =
-    Account(account.accountNumber, account.canPayInThisMonth, account.isClosed)
+  private def toAccount(account: HtsAccount): Option[Account] =
+    Some(Account(account.accountNumber, account.canPayInThisMonth, account.isClosed))
 
 }
 

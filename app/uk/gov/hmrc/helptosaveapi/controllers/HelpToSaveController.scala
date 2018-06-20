@@ -116,7 +116,8 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
       case Some(nino) ⇒ {
         helpToSaveApiService.getAccount(nino)
           .map {
-            case Right(account)                   ⇒ Ok(Json.toJson(account))
+            case Right(Some(account))             ⇒ Ok(Json.toJson(account))
+            case Right(None)                      ⇒ NotFound
             case Left(e: ApiErrorBackendError)    ⇒ InternalServerError(Json.toJson(e))
             case Left(e: ApiErrorValidationError) ⇒ BadRequest(Json.toJson(e))
           }
