@@ -47,5 +47,8 @@ object ApiErrorBackendError {
 
   def apply(): ApiErrorBackendError =
     ApiErrorBackendError("500", "Server error")
+
+  def applyWithParams(status: String, errorMessage: String): ApiErrorBackendError =
+    ApiErrorBackendError(status, errorMessage)
 }
 

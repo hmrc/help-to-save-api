@@ -298,7 +298,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         val result = await(service.getAccount(nino))
-        result shouldBe Left(ApiErrorBackendError())
+        result shouldBe Left(ApiErrorBackendError("500", null))
       }
 
     }

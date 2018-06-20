@@ -162,17 +162,17 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                 case OK ⇒
                   response.parseJson[HtsAccount].bimap(e ⇒ {
                     logger.warn(s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}")
-                    ApiErrorBackendError()
+                    ApiErrorBackendError(response.status.toString, e)
                   },
                     toAccount)
                 case other ⇒
                   logger.warn(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
-                  Left(ApiErrorBackendError())
+                  Left(ApiErrorBackendError(response.status.toString, response.body))
               }
           }.recover {
             case e ⇒
               logger.warn(s"Error occurred when getting account via the connector, error message: ${e.getMessage}")
-              Left(ApiErrorBackendError())
+              Left(ApiErrorBackendError("500", e.getMessage))
           }
     }
   }
