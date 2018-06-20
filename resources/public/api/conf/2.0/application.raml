@@ -132,8 +132,7 @@ uses:
                 example: !include examples/create-account/ErrorConflictResponse.json
 
 
-    /eligibility:
-      /{nino}:
+    /eligibility/{nino}:
         uriParameters:
                 nino:
                   description: The National Insurance Number for the individual. When given, it must match the regex
