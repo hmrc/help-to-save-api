@@ -18,7 +18,6 @@ package uk.gov.hmrc.helptosaveapi.services
 
 import java.util.UUID
 
-import cats.data.EitherT
 import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.show._
@@ -160,7 +159,12 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
             response ⇒
               response.status match {
                 case OK ⇒
-                  response.parseJson[HtsAccount].bimap(e ⇒ ApiErrorBackendError(), toAccount)
+                  response.parseJson[HtsAccount].bimap(e ⇒ {
+                    logger.warn(s"error parsing the HtsAccount from json, json = ${response.json}, error = $e")
+                    ApiErrorBackendError()
+                  },
+                    toAccount
+                  )
                 case other ⇒
                   logger.info(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
                   Left(ApiErrorBackendError())
