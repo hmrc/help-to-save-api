@@ -27,6 +27,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.helptosaveapi.auth.Auth
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountBackendError.CreateAccountBackendErrorOps
 import uk.gov.hmrc.helptosaveapi.models.CreateAccountValidationError.CreateAccountValidationErrorOps
@@ -56,38 +57,44 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
     }
   }
 
-  def checkEligibility(requestNino: Option[String]): Action[AnyContent] = authorised { implicit request ⇒ (authNino, credentials) ⇒
+  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised { implicit request ⇒ (authNino, credentials) ⇒
     val correlationId = UUID.randomUUID()
 
-    val result: Future[Result] = (authNino, requestNino) match {
-      case (Some(retrievedNino), None) ⇒
-        if (credentials.providerType === "GovernmentGateway") {
-          getEligibility(retrievedNino, correlationId)
-        } else {
-          logger.warn("no nino exists in the api url, but nino from auth exists and providerType is not 'GovernmentGateway'")
-          toFuture(Forbidden)
-        }
-
-      case (Some(retrievedNino), Some(urlNino)) ⇒
-        if (retrievedNino === urlNino) {
-          getEligibility(retrievedNino, correlationId)
-        } else {
-          logger.warn("NINO from the api url doesn't match with auth retrieved nino")
-          toFuture(Forbidden)
-        }
-
-      case (None, None) ⇒
+    val result: Future[Result] = authNino.fold[Future[Result]]{
+      if (isGovernmentGateway(credentials)) {
+        toFuture(Forbidden)
+      } else {
         toFuture(BadRequest)
-
-      case (None, Some(urlNino)) ⇒
-        if (credentials.providerType === "PrivilegedApplication") {
-          getEligibility(urlNino, correlationId)
-        } else {
-          logger.warn("nino exists in the api url and nino successfully retrieved from auth but providerType is not 'PrivilegedApplication'")
-          toFuture(Forbidden)
-        }
+      }
+    }{ retrievedNino ⇒
+      if (isGovernmentGateway(credentials)) {
+        getEligibility(retrievedNino, correlationId)
+      } else {
+        logger.warn("no nino exists in the api url, but nino from auth exists and providerType is not 'GovernmentGateway'")
+        toFuture(Forbidden)
+      }
     }
+    result.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
+  }
 
+  def checkEligibility(urlNino: String): Action[AnyContent] = authorised { implicit request ⇒ (authNino, credentials) ⇒
+    val correlationId = UUID.randomUUID()
+
+    val result: Future[Result] = authNino.fold[Future[Result]]{
+      if (isPrivilegedApplication(credentials)) {
+        getEligibility(urlNino, correlationId)
+      } else {
+        logger.warn("nino exists in the api url and nino not successfully retrieved from auth but providerType is not 'PrivilegedApplication'")
+        toFuture(Forbidden)
+      }
+    }{ retrievedNino ⇒
+      if (retrievedNino === urlNino) {
+        getEligibility(retrievedNino, correlationId)
+      } else {
+        logger.warn("NINO from the api url doesn't match with auth retrieved nino")
+        toFuture(Forbidden)
+      }
+    }
     result.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
   }
 
@@ -121,6 +128,9 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
     }
 
   }
+
+  private def isGovernmentGateway(credentials: Credentials): Boolean = credentials.providerType === "GovernmentGateway"
+  private def isPrivilegedApplication(credentials: Credentials): Boolean = credentials.providerType === "PrivilegedApplication"
 
 }
 
