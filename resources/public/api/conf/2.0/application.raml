@@ -206,23 +206,24 @@ traits:
                 example: !include examples/create-account/ErrorConflictResponse.json
 
     /eligibility:
-        get:
-          description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
-          is: [headers.acceptHeader, eligibility_headers, eligibility_responses]
-          (annotations.scope): "read:help-to-save"
-          securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
+          get:
+                description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
+                is: [headers.acceptHeader, eligibility_headers, eligibility_responses]
+                (annotations.scope): "read:help-to-save"
+                securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
 
-    /eligibility/{nino}:
-        uriParameters:
-                nino:
-                  description: The National Insurance Number for the individual. When given, it must match the regex
-                   "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z]\(D|F|I|O|Q|U|V)\)[A-Z]{2})[0-9]{6}[A-D]?$". For
-                   requests using privileged access the NINO is a mandatory parameter.
-                  type: string
-                  example: "AB123456C"
-                  required: true
-        get:
-          description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
-          is: [headers.acceptHeader, eligibility_headers, eligibility_responses]
-          (annotations.scope): "read:help-to-save"
-          securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
+          /{nino}:
+                uriParameters:
+                        nino:
+                          description: The National Insurance Number for the individual. When given, it must match the regex
+                           "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z]\(D|F|I|O|Q|U|V)\)[A-Z]{2})[0-9]{6}[A-D]?$". For
+                           requests using privileged access the NINO is a mandatory parameter.
+                          type: string
+                          example: "AB123456C"
+                          required: true
+                get:
+                  description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
+                  is: [headers.acceptHeader, eligibility_headers, eligibility_responses]
+                  (annotations.scope): "read:help-to-save"
+                  securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
+
