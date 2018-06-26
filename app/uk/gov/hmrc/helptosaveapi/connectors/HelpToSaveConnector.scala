@@ -74,7 +74,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
     http.get(getAccountUrl(nino, systemId, correlationId.toString), Map(correlationIdHeaderName -> correlationId.toString))
 
   override def storeEmail(email: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.post(storeEmailURL(email), "", Map(correlationIdHeaderName -> correlationId.toString))
+    http.get(storeEmailURL(email), Map(correlationIdHeaderName -> correlationId.toString))
 
 }
 

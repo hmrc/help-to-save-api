@@ -117,7 +117,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
       val header = Map("X-Correlation-ID" -> correlationId.toString)
 
       "should make a call to BE and return response as it to the caller" in {
-        mockPost(url, "", header)(Some(HttpResponse(201)))
+        mockGet(url, header)(Some(HttpResponse(201)))
         val result = await(connector.storeEmail(email, correlationId))
         result.status shouldBe 201
       }
