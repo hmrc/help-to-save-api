@@ -131,19 +131,21 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                   }, _ ⇒
                     logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
                   )
-                  result.leftMap(e ⇒ ApiErrorBackendError(e))
+                  result.leftMap(e ⇒ ApiErrorBackendError())
 
                 case other: Int ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
+                  logger.warn(s"Call to check eligibility returned status: $other, with response body: ${response.body}", nino, correlationIdHeader)
                   pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check: $other")
-                  Left(ApiErrorBackendError(response.body))
+                  Left(ApiErrorBackendError())
 
               }
           }.recover {
             case e ⇒
               metrics.apiEligibilityCallErrorCounter.inc()
+              logger.warn(s"Call to check eligibility failed, error: ${e.getMessage}", nino, correlationIdHeader)
               pagerDutyAlerting.alert("Failed to make call to check eligibility")
-              Left(ApiErrorBackendError(e.getMessage))
+              Left(ApiErrorBackendError())
           }
     }
   }
@@ -161,8 +163,8 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
               response.status match {
                 case OK ⇒
                   response.parseJson[HtsAccount].bimap(e ⇒ {
-                    logger.warn(s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}")
-                    ApiErrorBackendError(e)
+                    logger.warn(s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}, error is: $e")
+                    ApiErrorBackendError()
                   },
                     toAccount)
                 case NOT_FOUND ⇒
@@ -170,12 +172,12 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                   Right(None)
                 case other ⇒
                   logger.warn(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
-                  Left(ApiErrorBackendError(response.body))
+                  Left(ApiErrorBackendError())
               }
           }.recover {
             case e ⇒
-              logger.warn(s"Error occurred when getting account via the connector, error message: ${e.getMessage}")
-              Left(ApiErrorBackendError(e.getMessage))
+              logger.warn(s"Call to get account via the connector failed, error message: ${e.getMessage}")
+              Left(ApiErrorBackendError())
           }
     }
   }
