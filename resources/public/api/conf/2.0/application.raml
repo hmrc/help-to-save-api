@@ -28,6 +28,80 @@ uses:
   annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
   types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
 
+traits:
+ eligibility_headers:
+  headers:
+   Authorization:
+     description: Bearer [SERVER-TOKEN]
+   Gov-Client-Public-IP:
+     description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+   Gov-Client-Public-port:
+     description: The port of the server making the API call
+   Gov-Client-Device-ID:
+     description: This can be the MAC address of the network interface on the server making the API call
+   Gov-Client-User-ID:
+     description: The NINO of the person for which the eligibility check is being performed
+   Gov-Client-Timezone:
+     description: The timezone of the server making the API call
+   Gov-Client-Local-IP:
+     description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+   Gov-Client-User-Agent:
+     example: Windows Server/2016 (Dell PowerEdge R6415)
+     description: The operating system and hardware description of the server making the API call
+   Gov-Vendor-Version:
+     description: The version of the software making the API call
+   Gov-Vendor-Instance-ID:
+     example: app-server-1
+     description: An identifier to differentiate between the various server instances
+   Gov-Vendor-Public-IP:
+     description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
+
+ eligibility_responses:
+  responses:
+    200:
+      headers:
+        X-Correlation-ID:
+         description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+      body:
+        application/json:
+          type: !include schemas/HappyEligibilityResponse.json
+          examples:
+            example-1:
+              description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit and in receipt of UC and their household income is sufficient
+              value: !include examples/check-eligibility/EligiblePositiveWTCAndUCEligibilityResponse.json
+            example-2:
+              description: The person is eligible for Help to Save as they are in receipt of UC and their household income is sufficient
+              value: !include examples/check-eligibility/EligibleUCEligibilityResponse.json
+            example-3:
+              description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit
+              value: !include examples/check-eligibility/EligibleWTCEligibilityResponse.json
+            example-4:
+              description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and in receipt of UC but their household income is insufficient
+              value: !include examples/check-eligibility/IneligibleWTCandUCEligibilityResponse.json
+            example-5:
+              description: The person is ineligible for Help to Save as they are not entitled to WTC and are in receipt of UC but their household income is insufficient
+              value: !include examples/check-eligibility/IneligibleUCIncomeInsufficientEligibilityResponse.json
+            example-6:
+              description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and they are not in receipt of UC
+              value: !include examples/check-eligibility/IneligibleNotPositiveWTCAndNoUCEligibilityResponse.json
+            example-7:
+              description: The person is ineligible for Help to Save as they are not entitled to WTC and not in receipt of UC
+              value: !include examples/check-eligibility/IneligibleNoWTCNoUCEligibilityResponse.json
+            example-8:
+              description: The person already has a Help to Save account
+              value: !include examples/check-eligibility/AccountExistsEligibilityResponse.json
+    400:
+      body:
+        application/json:
+          description: Bad NINO response
+          example: !include examples/check-eligibility/BadNINO.json
+
+    403:
+      body:
+        application/json:
+          description: No NINO response
+          example: !include examples/check-eligibility/NoNINO.json
+
 /individuals:
   /help-to-save:
     /account:
@@ -131,88 +205,25 @@ uses:
                 description: Conflict http response
                 example: !include examples/create-account/ErrorConflictResponse.json
 
-
     /eligibility:
-      /{nino}:
-        uriParameters:
-                nino:
-                  description: The National Insurance Number for the individual. When given, it must match the regex
-                   "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z]\(D|F|I|O|Q|U|V)\)[A-Z]{2})[0-9]{6}[A-D]?$". For
-                   requests using privileged access the NINO is a mandatory parameter.
-                  type: string
-                  example: "AB123456C"
-                  required: false
-        get:
-          description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
-          is: [headers.acceptHeader]
-          (annotations.scope): "read:help-to-save"
-          securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
-          headers:
-            Authorization:
-              description: Bearer [SERVER-TOKEN]
-            Gov-Client-Public-IP:
-              description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-            Gov-Client-Public-port:
-              description: The port of the server making the API call
-            Gov-Client-Device-ID:
-              description: This can be the MAC address of the network interface on the server making the API call
-            Gov-Client-User-ID:
-              description: The NINO of the person for which the eligibility check is being performed
-            Gov-Client-Timezone:
-              description: The timezone of the server making the API call
-            Gov-Client-Local-IP:
-              description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-            Gov-Client-User-Agent:
-              example: Windows Server/2016 (Dell PowerEdge R6415)
-              description: The operating system and hardware description of the server making the API call
-            Gov-Vendor-Version:
-              description: The version of the software making the API call
-            Gov-Vendor-Instance-ID:
-              example: app-server-1
-              description: An identifier to differentiate between the various server instances
-            Gov-Vendor-Public-IP:
-              description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-          responses:
-            200:
-              headers:
-                X-Correlation-ID:
-                 description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
-              body:
-                application/json:
-                  type: !include schemas/HappyEligibilityResponse.json
-                  examples:
-                    example-1:
-                      description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit and in receipt of UC and their household income is sufficient
-                      value: !include examples/check-eligibility/EligiblePositiveWTCAndUCEligibilityResponse.json
-                    example-2:
-                      description: The person is eligible for Help to Save as they are in receipt of UC and their household income is sufficient
-                      value: !include examples/check-eligibility/EligibleUCEligibilityResponse.json
-                    example-3:
-                      description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit
-                      value: !include examples/check-eligibility/EligibleWTCEligibilityResponse.json
-                    example-4:
-                      description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and in receipt of UC but their household income is insufficient
-                      value: !include examples/check-eligibility/IneligibleWTCandUCEligibilityResponse.json
-                    example-5:
-                      description: The person is ineligible for Help to Save as they are not entitled to WTC and are in receipt of UC but their household income is insufficient
-                      value: !include examples/check-eligibility/IneligibleUCIncomeInsufficientEligibilityResponse.json
-                    example-6:
-                      description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and they are not in receipt of UC
-                      value: !include examples/check-eligibility/IneligibleNotPositiveWTCAndNoUCEligibilityResponse.json
-                    example-7:
-                      description: The person is ineligible for Help to Save as they are not entitled to WTC and not in receipt of UC
-                      value: !include examples/check-eligibility/IneligibleNoWTCNoUCEligibilityResponse.json
-                    example-8:
-                      description: The person already has a Help to Save account
-                      value: !include examples/check-eligibility/AccountExistsEligibilityResponse.json
-            400:
-              body:
-                application/json:
-                  description: Bad NINO response
-                  example: !include examples/check-eligibility/BadNINO.json
+          get:
+                description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
+                is: [headers.acceptHeader, eligibility_headers, eligibility_responses]
+                (annotations.scope): "read:help-to-save"
+                securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
 
-            403:
-              body:
-                application/json:
-                  description: No NINO response
-                  example: !include examples/check-eligibility/NoNINO.json
+          /{nino}:
+                uriParameters:
+                        nino:
+                          description: The National Insurance Number for the individual. When given, it must match the regex
+                           "^((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z]\(D|F|I|O|Q|U|V)\)[A-Z]{2})[0-9]{6}[A-D]?$". For
+                           requests using privileged access the NINO is a mandatory parameter.
+                          type: string
+                          example: "AB123456C"
+                          required: true
+                get:
+                  description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
+                  is: [headers.acceptHeader, eligibility_headers, eligibility_responses]
+                  (annotations.scope): "read:help-to-save"
+                  securedBy: [sec.oauth_2_0:{scopes:["read:help-to-save"]}]
+

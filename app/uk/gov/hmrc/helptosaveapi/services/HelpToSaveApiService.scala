@@ -18,7 +18,6 @@ package uk.gov.hmrc.helptosaveapi.services
 
 import java.util.UUID
 
-import cats.data.EitherT
 import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.show._
