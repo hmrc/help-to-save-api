@@ -19,7 +19,8 @@ the API. For create account the mandatory fields are:
 - `dateOfBirth`
 - `nino`
 - `address1`, `address2` and `postcode`
-- registrationChannel
+- `registrationChannel`
+
 The exception to the above is `registrationChannel` - for all create account requests this has to be supplied
 in the request body.
 
