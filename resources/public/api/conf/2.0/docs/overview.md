@@ -12,7 +12,7 @@ will have a controlled go-live with a pilot population in Q1/2018.
 
 ### What is this API for?
 
-This is a private API on the HMRC API Platform with user-restricted for the Help to Save (HtS)
+This is a private API on the HMRC API Platform with user-restricted access for the Help to Save (HtS)
 product that behaves as a proxy to manage accounts on NS&I.
 
 Before invoking the create account endpoint, the caller is assumed to have already checked that the
