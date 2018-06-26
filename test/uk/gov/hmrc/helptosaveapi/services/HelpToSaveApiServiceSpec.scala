@@ -21,15 +21,15 @@ import java.util.UUID
 import cats.data.Validated._
 import cats.data.{NonEmptyList, ValidatedNel}
 import org.scalamock.handlers.{CallHandler1, CallHandler2, CallHandler4, CallHandler5}
+import play.api.libs.json.Json
 import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
 import play.mvc.Http.Status.CREATED
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models._
-import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport}
+import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport, base64Encode}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import play.api.libs.json.Json
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -82,6 +82,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         Future.successful
       ))
 
+  def mockStoreEmail(email: String, correlationId: UUID)(response: Option[HttpResponse]): CallHandler4[String, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (helpToSaveConnector.storeEmail(_: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(email, correlationId, *, *)
+      .returning(response.fold(
+        Future.failed[HttpResponse](new Exception("error")))(
+          r ⇒ Future.successful(r)
+        ))
+
   val service = new HelpToSaveApiServiceImpl(helpToSaveConnector, metrics, mockPagerDuty) {
     override val httpHeaderValidator: APIHttpHeaderValidator = mockApiHttpHeaderValidator
     override val createAccountRequestValidator: CreateAccountRequestValidator = mockCreateAccountRequestValidator
@@ -99,17 +107,32 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       val fakeRequest = FakeRequest()
       val createAccountRequest = DataGenerators.random(DataGenerators.createAccountRequestGen)
       val fakeRequestWithBody = FakeRequest().withJsonBody(Json.toJson(createAccountRequest))
+      val email: Option[String] = createAccountRequest.body.contactDetails.email
+      val correlationId = createAccountRequest.header.requestCorrelationId
 
       "handle valid requests and create accounts successfully" in {
-        inSequence {
-          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
-          mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
-          // put some dummy JSON in the response to see if it comes out the other end
-          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CREATED, Some(Json.toJson(createAccountRequest.header)))))
-        }
 
-        val result = await(service.createAccount(fakeRequestWithBody))
-        result shouldBe Right(())
+        val storeEmailStatuses = List(200, 400, 500)
+
+        storeEmailStatuses.foreach {
+          status ⇒
+            inSequence {
+              mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+              mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+              // put some dummy JSON in the response to see if it comes out the other end
+              mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CREATED, Some(Json.toJson(createAccountRequest.header)))))
+
+              if (email.isDefined) {
+                mockStoreEmail(base64Encode(email.getOrElse("")), correlationId)(Some(HttpResponse(status)))
+                if (status != 201) {
+                  mockPagerDutyAlert("could not store email in mongo after account has been created")
+                }
+              }
+
+              val result = await(service.createAccount(fakeRequestWithBody))
+              result shouldBe Right(())
+            }
+        }
       }
 
       "handle responses other than 201 from the createAccount endpoint" in {

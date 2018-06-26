@@ -35,7 +35,7 @@ import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCh
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, PagerDutyAlerting, toFuture}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, PagerDutyAlerting, base64Encode, toFuture}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -89,6 +89,8 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
           response.status match {
             case Status.CREATED ⇒
               logger.info("successfully created account via API", body.nino, correlationIdHeader)
+
+              storeEmail(body.contactDetails.email, body.nino, header.requestCorrelationId)
               Right(())
 
             case other: Int ⇒
@@ -106,6 +108,27 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
             Left(CreateAccountBackendError())
         }
     }
+  }
+
+  //as users of this api service are digital , we should store their emails in mongo to distinguish them from DE users
+  private def storeEmail(maybeEmail: Option[String], nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+    val correlationIdHeader = "requestCorrelationId" -> correlationId.toString
+    maybeEmail.fold(
+      logger.warn("no email found to store in mongo after account has been created", nino, correlationIdHeader)
+    )(
+        email ⇒ {
+          val _ = helpToSaveConnector.storeEmail(base64Encode(email), correlationId).map {
+            response ⇒
+              response.status match {
+                case Status.CREATED ⇒
+                  logger.warn("successfully stored email in mongo after account has been created", nino, correlationIdHeader)
+                case other: Int ⇒
+                  logger.warn(s"could not store email in mongo after account has been created, status: $other", nino, correlationIdHeader)
+                  pagerDutyAlerting.alert("could not store email in mongo after account has been created")
+              }
+          }
+        }
+      )
   }
 
   override def checkEligibility(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
