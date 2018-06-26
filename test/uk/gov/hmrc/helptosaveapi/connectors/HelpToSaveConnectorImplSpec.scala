@@ -26,6 +26,7 @@ import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccoun
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport}
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.helptosaveapi.util.base64Encode
 
 // scalastyle:off magic.number
 class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with GeneratorDrivenPropertyChecks with EitherValues {
@@ -107,6 +108,18 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
         val result = await(connector.getAccount(nino, systemId, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
+      }
+    }
+
+    "storing email" must {
+      val email = base64Encode("user@test.com")
+      val url = s"http://localhost:7001/help-to-save/store-email?email=$email"
+      val header = Map("X-Correlation-ID" -> correlationId.toString)
+
+      "should make a call to BE and return response as it to the caller" in {
+        mockPost(url, "", header)(Some(HttpResponse(201)))
+        val result = await(connector.storeEmail(email, correlationId))
+        result.status shouldBe 201
       }
     }
   }

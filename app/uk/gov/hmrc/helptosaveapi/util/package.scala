@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.helptosaveapi
 
+import java.util.Base64
+
 import cats.data.{EitherT, ValidatedNel}
 
 import scala.concurrent.Future
@@ -30,6 +32,8 @@ package object util {
   implicit def toFuture[A](a: A): Future[A] = Future.successful(a)
 
   type ValidatedOrErrorString[A] = ValidatedNel[String, A]
+
+  def base64Encode(input: String): String = new String(Base64.getEncoder.encode(input.getBytes))
 
   private val ninoRegex: Regex = """[A-Za-z]{2}[0-9]{6}[A-Za-z]{1}""".r
 
