@@ -47,7 +47,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       .expects(nino, *, *, *, *)
       .returning(toFuture(response))
 
-  def mockGetAccount(nino: String)(request: Request[AnyContent])(response: Either[ApiError, Account]): CallHandler4[String, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.GetAccountResponseType] =
+  def mockGetAccount(nino: String)(request: Request[AnyContent])(response: Either[ApiError, Option[Account]]): CallHandler4[String, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.GetAccountResponseType] =
     (apiService.getAccount(_: String)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
       .expects(nino, *, *, *)
       .returning(toFuture(response))
@@ -204,11 +204,10 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "return a success response along with some json if getting the account is successful" in {
         inSequence{
           mockAuthResultWithSuccess()(retrievals)
-          mockGetAccount(nino)(fakeRequest)(Right(Account("1100000000001", 40.00, false)))
+          mockGetAccount(nino)(fakeRequest)(Right(Some(Account("1100000000001", 40.00, false))))
         }
 
         val result = controller.getAccount()(fakeRequest)
-
         status(result) shouldBe OK
         contentAsString(result) shouldBe """{"accountNumber":"1100000000001","headroom":40,"closed":false}"""
       }
@@ -220,9 +219,26 @@ class HelpToSaveControllerSpec extends AuthSupport {
         }
 
         val result = controller.getAccount()(fakeRequest)
-
         status(result) shouldBe INTERNAL_SERVER_ERROR
       }
+
+      "return a Forbidden result when the nino isn't in Auth" in {
+        mockAuthResultWithSuccess()(new ~(None, Credentials("123-id", "foo-bar")))
+
+        val result = controller.getAccount()(fakeRequest)
+        status(result) shouldBe FORBIDDEN
+      }
+
+      "return a Not Found result" in {
+        inSequence{
+          mockAuthResultWithSuccess()(retrievals)
+          mockGetAccount(nino)(fakeRequest)(Right(None))
+        }
+
+        val result = controller.getAccount()(fakeRequest)
+        status(result) shouldBe NOT_FOUND
+      }
+
     }
   }
 }
