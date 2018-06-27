@@ -19,8 +19,9 @@ package uk.gov.hmrc.helptosaveapi.util
 import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
 
 import org.scalacheck.Gen
-import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody.ContactDetails
-import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
+import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest, RetrievedUserDetails}
+import uk.gov.hmrc.smartstub.AutoGen
 
 object DataGenerators {
 
@@ -48,7 +49,7 @@ object DataGenerators {
       email ← Gen.option(Gen.alphaStr)
     } yield ContactDetails(line1, line2, line3, line4, line5, postcode, countryCode, communicationPreference, phoneNumber, email)
 
-  val createAccountBodyGen: Gen[CreateAccountBody] =
+  val validCreateAccountBodyGen: Gen[CreateAccountBody] =
     for {
       nino ← Gen.identifier
       name ← Gen.alphaStr
@@ -58,10 +59,12 @@ object DataGenerators {
       registrationChannel ← Gen.alphaStr
     } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel)
 
-  val createAccountRequestGen: Gen[CreateAccountRequest] =
+  val validCreateAccountRequestGen: Gen[CreateAccountRequest] =
     for {
       header ← createAccountHeaderGen
-      body ← createAccountBodyGen
+      body ← validCreateAccountBodyGen
     } yield CreateAccountRequest(header, body)
+
+  val retrievedUserDetailsGen: Gen[RetrievedUserDetails] = AutoGen[RetrievedUserDetails]
 
 }

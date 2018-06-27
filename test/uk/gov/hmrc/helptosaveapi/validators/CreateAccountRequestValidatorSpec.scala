@@ -20,10 +20,10 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
 import cats.data.Validated.Invalid
-import cats.data.{NonEmptyList}
+import cats.data.NonEmptyList
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody.ContactDetails
-import uk.gov.hmrc.helptosaveapi.models.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
+import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
 class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDrivenPropertyChecks {

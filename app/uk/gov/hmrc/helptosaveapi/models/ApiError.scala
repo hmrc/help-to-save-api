@@ -33,19 +33,26 @@ object ApiError {
 
 }
 
-case class ApiErrorValidationError(code: String, message: String) extends ApiError
+case class ApiValidationError(code: String, message: String) extends ApiError
 
-object ApiErrorValidationError {
+object ApiValidationError {
 
-  def apply(description: String): ApiErrorValidationError =
-    ApiErrorValidationError("400", s"Invalid request, description: $description")
+  def apply(description: String): ApiValidationError =
+    ApiValidationError("VALIDATION_ERROR", s"Invalid request: $description")
 }
 
-case class ApiErrorBackendError(code: String, message: String) extends ApiError
+case class ApiBackendError(code: String, message: String) extends ApiError
 
-object ApiErrorBackendError {
+object ApiBackendError {
 
-  def apply(): ApiErrorBackendError =
-    ApiErrorBackendError("500", "Server error")
+  def apply(): ApiBackendError =
+    ApiBackendError("SERVER_ERROR", "Server error")
 }
 
+case class ApiAccessError(code: String, message: String) extends ApiError
+
+object ApiAccessError {
+
+  def apply(): ApiAccessError =
+    ApiAccessError("ACCESS_ERROR", "access not allowed")
+}
