@@ -24,7 +24,8 @@ import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.models._
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging}
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, Result}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}

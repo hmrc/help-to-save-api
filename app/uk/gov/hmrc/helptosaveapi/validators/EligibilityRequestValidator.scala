@@ -28,7 +28,7 @@ class EligibilityRequestValidator {
   private val pattern: String ⇒ Matcher = ninoRegex.r.pattern.matcher _
 
   def validateNino(nino: String): ValidatedOrErrorString[String] = {
-    validationFromBoolean[String](nino)(_ ⇒ pattern(nino).matches(), _ ⇒ s"NINO doesn't match the regex: $ninoRegex")
+    validationFromBoolean(nino)(_ ⇒ pattern(nino).matches(), _ ⇒ s"NINO doesn't match the regex: $ninoRegex")
   }
 
 }

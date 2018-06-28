@@ -24,6 +24,7 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.models._
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport}
 import uk.gov.hmrc.http.HttpResponse
 
@@ -41,7 +42,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
     "creating an account" must {
 
       "call the correct url and return the response as is" in {
-        implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.createAccountBodyGen)
+        implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.validCreateAccountBodyGen)
         implicit val correlationIdArb: Arbitrary[UUID] = Arbitrary(Gen.uuid)
 
         forAll { (body: CreateAccountBody, correlationId: UUID, clientCode: String, status: Int, response: String) ⇒
@@ -77,7 +78,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
       val headers = Map("X-Correlation-ID" → correlationId.toString)
 
       val account =
-        s"""{
+        """{
            |"accountNumber":"1100000000001",
            |"isClosed": false,
            |"blocked": {

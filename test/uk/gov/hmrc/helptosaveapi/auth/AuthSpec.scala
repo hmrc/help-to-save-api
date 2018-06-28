@@ -20,6 +20,7 @@ import play.api.http.Status
 import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AuthorisationException.fromString
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, Retrievals, ~}
 import uk.gov.hmrc.helptosaveapi.util.AuthSupport
 
 import scala.concurrent.duration._
@@ -29,23 +30,27 @@ class AuthSpec extends AuthSupport {
 
   val auth = new Auth(mockAuthConnector)
 
-  private def callAuth = auth.authorised { implicit request ⇒ (nino, credentials) ⇒
-    Future.successful(Ok("authSuccess"))
-  }
+  val retrieve: Retrieval[Option[String] ~ Credentials] = Retrievals.nino and Retrievals.credentials
 
-  private def mockAuthWith(error: String) = mockAuthResultWithFail()(fromString(error))
+  private def callAuth = auth.authorised(retrieve) { implicit request ⇒
+    {
+      case nino ~ credentials ⇒
+        Future.successful(Ok("authSuccess"))
+    }
+  }
 
   "HelpToSaveAuth" should {
 
     "return after successful authentication" in {
 
-      mockAuthResultWithSuccess()(retrievals)
+      mockAuthResultWithSuccess(retrieve)(retrievals)
 
       val result = Await.result(callAuth(FakeRequest()), 5.seconds)
       status(result) shouldBe Status.OK
     }
 
     "handle various auth related exceptions and throw an error" in {
+        def mockAuthWith(error: String) = mockAuthResultWithFail()(fromString(error))
 
       val exceptions = List(
         "InsufficientConfidenceLevel" → Status.FORBIDDEN,

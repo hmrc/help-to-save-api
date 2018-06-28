@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.models
+package uk.gov.hmrc.helptosaveapi.util
 
-import play.api.libs.json.{Format, Json}
+import cats.instances.string._
+import cats.syntax.eq._
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 
-case class CreateAccountRequest(header: CreateAccountHeader, body: CreateAccountBody)
+object Credentials {
 
-object CreateAccountRequest {
+  implicit class CredentialsOps(val c: Credentials) extends AnyVal {
+    def isGovernmentGateway(): Boolean = c.providerType === "GovernmentGateway"
 
-  implicit val format: Format[CreateAccountRequest] = Json.format[CreateAccountRequest]
+    def isPrivilegedApplication(): Boolean = c.providerType === "PrivilegedApplication"
+  }
+
 }

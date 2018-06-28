@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.models
+package uk.gov.hmrc.helptosaveapi.models.createaccount
 
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.models
+package uk.gov.hmrc.helptosaveapi.models.createaccount
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import play.api.libs.json._
 import play.api.libs.json.Reads.localDateReads
 import play.api.libs.json.Writes.temporalWrites
-import uk.gov.hmrc.helptosaveapi.models.CreateAccountBody.ContactDetails
+import play.api.libs.json._
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
 
 case class CreateAccountBody(
     nino:                String,

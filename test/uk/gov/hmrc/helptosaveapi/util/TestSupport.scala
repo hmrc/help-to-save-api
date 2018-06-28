@@ -17,11 +17,15 @@
 package uk.gov.hmrc.helptosaveapi.util
 
 import akka.stream.Materializer
+import com.codahale.metrics.{Counter, Histogram, Timer, UniformReservoir}
+import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
+import com.typesafe.config.ConfigFactory
 import org.scalamock.handlers.CallHandler6
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Writes
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
@@ -31,6 +35,17 @@ import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import scala.concurrent.{ExecutionContext, Future}
 
 class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory with WithFakeApplication {
+
+  override lazy val fakeApplication =
+    new GuiceApplicationBuilder()
+      .configure(Configuration(
+        ConfigFactory.parseString(
+          """
+            | metrics.enabled       = false
+            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveapi.RegistrationModule" ]
+          """.stripMargin)
+      ))
+      .build()
 
   implicit lazy val materializer: Materializer = fakeApplication.materializer
 
@@ -44,7 +59,11 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
 
   val httpErrorHandler: HttpErrorHandler = mock[HttpErrorHandler]
 
-  implicit lazy val metrics: Metrics = fakeApplication.injector.instanceOf[Metrics]
+  val mockMetrics = new Metrics(stub[PlayMetrics]) {
+    override def timer(name: String): Timer = new Timer()
+
+    override def counter(name: String): Counter = new Counter()
+  }
 
   implicit lazy val logMessageTransformer: LogMessageTransformer = fakeApplication.injector.instanceOf[LogMessageTransformer]
 

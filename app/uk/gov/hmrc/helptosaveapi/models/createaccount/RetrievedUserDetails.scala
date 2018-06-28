@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.util
+package uk.gov.hmrc.helptosaveapi.models.createaccount
 
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import java.time.LocalDate
+import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
 
-object Validation {
-
-  type Validation[A] = ValidatedNel[String, A]
-
-  def validationFromBoolean[T, E](t: T)(predicate: T ⇒ Boolean, error: T ⇒ E): ValidatedNel[E, T] =
-    if (predicate(t)) { Validated.Valid(t) } else { Validated.Invalid(NonEmptyList.of(error(t))) }
-
-}
+case class RetrievedUserDetails(
+    nino:        Option[String],
+    forename:    Option[String],
+    surname:     Option[String],
+    dateOfBirth: Option[LocalDate],
+    address:     ItmpAddress,
+    email:       Option[String]
+)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.models
+package uk.gov.hmrc.helptosaveapi.models.createaccount
 
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
