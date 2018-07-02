@@ -49,7 +49,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[HelpToSaveApiServiceImpl])
 trait HelpToSaveApiService {
 
-  type CreateAccountResponseType = Future[Either[ApiError, Unit]]
+  type CreateAccountResponseType = Future[Either[ApiError, CreateAccountSuccess]]
   type CheckEligibilityResponseType = Future[Either[ApiError, EligibilityResponse]]
   type GetAccountResponseType = Future[Either[ApiError, Option[Account]]]
 
@@ -119,12 +119,20 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
       case CreateAccountRequest(header, body) ⇒
         val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
         logger.info(s"Create Account Request has been made with headers: ${header.show}")
-        helpToSaveConnector.createAccount(body, header.requestCorrelationId, header.clientCode).map[Either[ApiError, Unit]] { response ⇒
+        helpToSaveConnector.createAccount(body, header.requestCorrelationId, header.clientCode).map[Either[ApiError, CreateAccountSuccess]] { response ⇒
           val _ = timer.stop()
           response.status match {
             case Status.CREATED ⇒
               logger.info("successfully created account via API", body.nino, correlationIdHeader)
-              Right(())
+              Right(CreateAccountSuccess(alreadyHadAccount = false))
+
+            case Status.CONFLICT ⇒
+              logger.info("successfully received 409 from create account via API, user already had account", body.nino, correlationIdHeader)
+              Right(CreateAccountSuccess(alreadyHadAccount = true))
+
+            case Status.BAD_REQUEST ⇒
+              logger.warn("validation of create account request failed", body.nino, correlationIdHeader)
+              Left(ApiValidationError(response.body))
 
             case other: Int ⇒
               metrics.apiCreateAccountCallErrorCounter.inc()

@@ -29,7 +29,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
 import uk.gov.hmrc.helptosaveapi.models._
-import uk.gov.hmrc.helptosaveapi.models.createaccount.RetrievedUserDetails
+import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.util.AuthSupport._
 import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, DataGenerators, toFuture}
@@ -43,7 +43,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
   val controller: HelpToSaveController = new HelpToSaveController(apiService, mockAuthConnector)
 
-  def mockCreateAccount(request: Request[AnyContent], credentials: Credentials, retrievedUserDetails: RetrievedUserDetails)(response: Either[ApiError, Unit]): CallHandler5[Request[AnyContent], Credentials, RetrievedUserDetails, HeaderCarrier, ExecutionContext, apiService.CreateAccountResponseType] =
+  def mockCreateAccount(request: Request[AnyContent], credentials: Credentials, retrievedUserDetails: RetrievedUserDetails)(response: Either[ApiError, CreateAccountSuccess]): CallHandler5[Request[AnyContent], Credentials, RetrievedUserDetails, HeaderCarrier, ExecutionContext, apiService.CreateAccountResponseType] =
     (apiService.createAccount(_: Request[AnyContent], _: Credentials, _: RetrievedUserDetails)(_: HeaderCarrier, _: ExecutionContext))
       .expects(request, credentials, retrievedUserDetails, *, *)
       .returning(toFuture(response))
@@ -101,11 +101,24 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         inSequence {
           mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Right(Unit))
+          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
         }
 
         val result = controller.createAccount()(fakeRequest)
         status(result) shouldBe CREATED
+      }
+
+      "return a Conflict response if the request is valid and account create indicates that the accoutn already existed " in {
+        val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+        val retrieval = createAccountRetrievalResult(retrievedUserDetails)
+
+        inSequence {
+          mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
+          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
+        }
+
+        val result = controller.createAccount()(fakeRequest)
+        status(result) shouldBe CONFLICT
       }
 
       "prefer the user details from ITMP over GG" in {
@@ -122,7 +135,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         inSequence {
           mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Right(Unit))
+          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
         }
 
         val result = controller.createAccount()(fakeRequest)
