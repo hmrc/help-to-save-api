@@ -34,7 +34,7 @@ import uk.gov.hmrc.auth.core.retrieve.{Name ⇒ RetrievedName}
 import uk.gov.hmrc.helptosaveapi.auth.Auth
 import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
 import uk.gov.hmrc.helptosaveapi.models._
-import uk.gov.hmrc.helptosaveapi.models.createaccount.RetrievedUserDetails
+import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.util.{WithMdcExecutionContext, toFuture}
 import uk.gov.hmrc.helptosaveapi.util.Credentials._
@@ -81,10 +81,10 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
         )
 
         helpToSaveApiService.createAccount(request, credentials, retrievedDetails).map {
-          case Left(e: ApiAccessError)     ⇒ Forbidden(toJson(e))
-          case Left(a: ApiValidationError) ⇒ BadRequest(toJson(a))
-          case Left(b: ApiBackendError)    ⇒ InternalServerError(toJson(b))
-          case Right(_)                    ⇒ Created
+          case Left(e: ApiAccessError)                        ⇒ Forbidden(toJson(e))
+          case Left(a: ApiValidationError)                    ⇒ BadRequest(toJson(a))
+          case Left(b: ApiBackendError)                       ⇒ InternalServerError(toJson(b))
+          case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒ if (alreadyHadAccount) { Conflict } else { Created }
         }
     }
   }

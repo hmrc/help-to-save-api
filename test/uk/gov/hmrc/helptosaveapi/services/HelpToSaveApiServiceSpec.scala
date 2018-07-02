@@ -25,7 +25,7 @@ import cats.syntax.either._
 import org.scalamock.handlers.{CallHandler1, CallHandler2, CallHandler4, CallHandler5}
 import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
-import play.mvc.Http.Status.CREATED
+import play.mvc.Http.Status._
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport}
@@ -177,7 +177,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             }
 
             val result = await(service.createAccount(mimimalJsonRequest("online"), ggCredentials, fullRetrievedUserDetails))
-            result shouldBe Right(())
+            result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
           }
 
           "the email is missing and the email cannot be retrieved but the registration channel is not " +
@@ -195,7 +195,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
               }
 
               val result = await(service.createAccount(mimimalJsonRequest("callCentre"), ggCredentials, fullRetrievedUserDetails.copy(email = None)))
-              result shouldBe Right(())
+              result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
             }
 
           "the communication preference is missing and the registration channel is online" in {
@@ -210,7 +210,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             }
 
             val result = await(service.createAccount(mimimalJsonRequest("online"), ggCredentials, fullRetrievedUserDetails))
-            result shouldBe Right(())
+            result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
           }
 
           "the communication preference is missing and the registration channel is callCentre" in {
@@ -227,7 +227,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             }
 
             val result = await(service.createAccount(mimimalJsonRequest("callCentre"), ggCredentials, fullRetrievedUserDetails))
-            result shouldBe Right(())
+            result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
           }
 
           "the nino is given in the request and the nino can be retrieved and they match" in {
@@ -249,7 +249,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             }
 
             val result = await(service.createAccount(request, ggCredentials, fullRetrievedUserDetails.copy(nino = Some("nino"))))
-            result shouldBe Right(())
+            result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
           }
 
           "the communicationPreference is given" in {
@@ -270,7 +270,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             }
 
             val result = await(service.createAccount(request, ggCredentials, fullRetrievedUserDetails))
-            result shouldBe Right(())
+            result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
           }
 
           "the email is given in the request" in {
@@ -293,7 +293,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             }
 
             val result = await(service.createAccount(request, ggCredentials, fullRetrievedUserDetails.copy(email = None)))
-            result shouldBe Right(())
+            result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
           }
 
         }
@@ -337,7 +337,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         "return a backend error" when {
 
-            def checkIsBackendError(result: Either[ApiError, Unit], field: String) =
+            def checkIsBackendError(result: Either[ApiError, CreateAccountSuccess], field: String) =
               result shouldBe Left(ApiBackendError("MISSING_DATA", s"cannot retrieve data: [$field]"))
 
           "no email is retrieved when the email is not given in the request and the registration channel is 'online'" in {
@@ -392,7 +392,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
       }
 
-      "handle valid requests and create accounts successfully when all mandatory fields are present" in {
+      "handle valid requests and create accounts successfully when all mandatory fields are present and the account creation returns 201" in {
         inSequence {
           mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
@@ -401,7 +401,32 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         val result = await(service.createAccount(fakeRequestWithBody, credentials, emptyRetrievedUserDetails))
-        result shouldBe Right(())
+        result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
+      }
+
+      "handle valid requests and create accounts successfully when all mandatory fields are present and the account creation returns 409" in {
+        inSequence {
+          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+          // put some dummy JSON in the response to see if it comes out the other end
+          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CONFLICT, Some(Json.toJson(createAccountRequest.header)))))
+        }
+
+        val result = await(service.createAccount(fakeRequestWithBody, credentials, emptyRetrievedUserDetails))
+        result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = true))
+      }
+
+      "handle 400 responses" in {
+        val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(createAccountRequest.header)))
+        inSequence {
+          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+          // put some dummy JSON in the response to see if it comes out the other end
+          mockCreateAccountService(createAccountRequest.body)(Right(response))
+        }
+
+        val result = await(service.createAccount(fakeRequestWithBody, credentials, emptyRetrievedUserDetails))
+        result shouldBe Left(ApiValidationError(response.body))
       }
 
       "handle responses other than 201 from the createAccount endpoint" in {
