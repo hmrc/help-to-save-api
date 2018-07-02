@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 import org.joda.time.LocalDate
-import org.scalamock.handlers.{CallHandler4, CallHandler5}
+import org.scalamock.handlers.{CallHandler3, CallHandler4, CallHandler5}
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -31,6 +31,7 @@ import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountE
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
 import uk.gov.hmrc.helptosaveapi.util.AuthSupport._
 import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, DataGenerators, toFuture}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -43,17 +44,22 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
   val controller: HelpToSaveController = new HelpToSaveController(apiService, mockAuthConnector)
 
-  def mockCreateAccount(request: Request[AnyContent], credentials: Credentials, retrievedUserDetails: RetrievedUserDetails)(response: Either[ApiError, CreateAccountSuccess]): CallHandler5[Request[AnyContent], Credentials, RetrievedUserDetails, HeaderCarrier, ExecutionContext, apiService.CreateAccountResponseType] =
-    (apiService.createAccount(_: Request[AnyContent], _: Credentials, _: RetrievedUserDetails)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(request, credentials, retrievedUserDetails, *, *)
+  def mockCreateAccountPrivileged(request: Request[AnyContent])(response: Either[ApiError, CreateAccountSuccess]): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
+    (apiService.createAccountPrivileged(_: Request[AnyContent])(_: HeaderCarrier, _: ExecutionContext))
+      .expects(request, *, *)
       .returning(toFuture(response))
 
-  def mockEligibilityCheck(nino: String)(response: Either[ApiError, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.CheckEligibilityResponseType] =
+  def mockCreateAccountUserRestricted(request: Request[AnyContent], retrievedUserDetails: RetrievedUserDetails)(response: Either[ApiError, CreateAccountSuccess]): CallHandler4[Request[AnyContent], RetrievedUserDetails, HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
+    (apiService.createAccountUserRestricted(_: Request[AnyContent], _: RetrievedUserDetails)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(request, retrievedUserDetails, *, *)
+      .returning(toFuture(response))
+
+  def mockEligibilityCheck(nino: String)(response: Either[ApiError, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, CheckEligibilityResponseType] =
     (apiService.checkEligibility(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
       .expects(nino, *, *, *, *)
       .returning(toFuture(response))
 
-  def mockGetAccount(nino: String)(response: Either[ApiError, Option[Account]]): CallHandler4[String, Request[AnyContent], HeaderCarrier, ExecutionContext, apiService.GetAccountResponseType] =
+  def mockGetAccount(nino: String)(response: Either[ApiError, Option[Account]]): CallHandler4[String, Request[AnyContent], HeaderCarrier, ExecutionContext, GetAccountResponseType] =
     (apiService.getAccount(_: String)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
       .expects(nino, *, *, *)
       .returning(toFuture(response))
@@ -69,143 +75,243 @@ class HelpToSaveControllerSpec extends AuthSupport {
     val eligibilityResponse: Either[ApiError, ApiEligibilityResponse] =
       Right(ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = true), false))
 
-    "handling createAccount requests" must {
+    "handling createAccount requests" when {
 
-      val userInfoRetrievals: Retrieval[Name ~ Option[LocalDate] ~ ItmpName ~ Option[LocalDate] ~ ItmpAddress ~ Option[String]] =
-        Retrievals.name and
-          Retrievals.dateOfBirth and
-          Retrievals.itmpName and
-          Retrievals.itmpDateOfBirth and
-          Retrievals.itmpAddress and
-          Retrievals.email
+      "the request is made with privileged access" must {
 
-      val createAccountRetrievals =
-        userInfoRetrievals and Retrievals.nino and Retrievals.credentials
+        val privilegedCredentials = Credentials("id", "PrivilegedApplication")
 
-      val credentials = Credentials("id", "type")
-
-        def createAccountRetrievalResult(u: RetrievedUserDetails): Name ~ Option[LocalDate] ~ ItmpName ~ Option[LocalDate] ~ ItmpAddress ~ Option[String] ~ Option[String] ~ Credentials = {
-          val dob = u.dateOfBirth.map(toJoddaDate)
-
-          new ~(Name(u.forename, u.surname), dob) and
-            ItmpName(u.forename, None, u.surname) and dob and
-            u.address and u.email and u.nino and credentials
-        }
-
-        def toJoddaDate(d: java.time.LocalDate): org.joda.time.LocalDate =
-          LocalDate.parse(d.format(DateTimeFormatter.ISO_DATE))
-
-      "return a Created response if the request is valid and account create is successful " in {
-        val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
-        val retrieval = createAccountRetrievalResult(retrievedUserDetails)
-
-        inSequence {
-          mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
-        }
-
-        val result = controller.createAccount()(fakeRequest)
-        status(result) shouldBe CREATED
-      }
-
-      "return a Conflict response if the request is valid and account create indicates that the accoutn already existed " in {
-        val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
-        val retrieval = createAccountRetrievalResult(retrievedUserDetails)
-
-        inSequence {
-          mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
-        }
-
-        val result = controller.createAccount()(fakeRequest)
-        status(result) shouldBe CONFLICT
-      }
-
-      "prefer the user details from ITMP over GG" in {
-        val (retrieval, retrievedUserDetails) = {
-          val u = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
-
-          val retrieval = new ~(Name(Some("a"), Some("b")), Some(new LocalDate(1, 2, 3))) and
-            ItmpName(Some("c"), None, Some("d")) and Some(new LocalDate(3, 2, 1)) and
-            u.address and u.email and u.nino and credentials
-
-          val expectedRetrievedUserDetails = u.copy(forename    = Some("c"), surname = Some("d"), dateOfBirth = Some(java.time.LocalDate.of(3, 2, 1)))
-          retrieval → expectedRetrievedUserDetails
-        }
-
-        inSequence {
-          mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
-        }
-
-        val result = controller.createAccount()(fakeRequest)
-        status(result) shouldBe CREATED
-      }
-
-      "handle invalid createAccount requests and return BadRequest" in {
-        val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
-        val retrieval = createAccountRetrievalResult(retrievedUserDetails)
-        val error = ApiValidationError("invalid request", "uh oh")
-
-        inSequence {
-          mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Left(error))
-        }
-        val result = controller.createAccount()(fakeRequest)
-
-        status(result) shouldBe BAD_REQUEST
-        contentAsJson(result) shouldBe Json.toJson(error)
-      }
-
-      "handle unexpected internal server errors and return InternalServerError" in {
-        val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
-        val retrieval = createAccountRetrievalResult(retrievedUserDetails)
-
-        inSequence {
-          mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Left(ApiBackendError()))
-        }
-        val result = controller.createAccount()(fakeRequest)
-
-        status(result) shouldBe INTERNAL_SERVER_ERROR
-        contentAsJson(result) shouldBe Json.toJson(ApiBackendError())
-      }
-
-      "handle access errors and return Forbidden" in {
-        val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
-        val retrieval = createAccountRetrievalResult(retrievedUserDetails)
-
-        inSequence {
-          mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-          mockCreateAccount(fakeRequest, credentials, retrievedUserDetails)(Left(ApiAccessError()))
-        }
-
-        val result = controller.createAccount()(fakeRequest)
-
-        status(result) shouldBe FORBIDDEN
-        contentAsJson(result) shouldBe Json.toJson(ApiAccessError())
-      }
-
-      "change the error JSON format if the API call is v1.0" in {
-        val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
-        val retrieval = createAccountRetrievalResult(retrievedUserDetails)
-        val (errorCode, errorMessage) = "CODE" → "message"
-        val request = fakeRequest.withHeaders(HeaderNames.ACCEPT → "application/vnd.hmrc.1.0+json")
-
-        List[ApiError](
-          ApiBackendError(errorCode, errorMessage),
-          ApiValidationError(errorCode, errorMessage),
-          ApiAccessError(errorCode, errorMessage)
-        ).foreach{ e ⇒
-            inSequence {
-              mockAuthResultWithSuccess(createAccountRetrievals)(retrieval)
-              mockCreateAccount(request, credentials, retrievedUserDetails)(Left(e))
-            }
-
-            val result = controller.createAccount()(request)
-            contentAsJson(result) shouldBe Json.toJson(CreateAccountErrorOldFormat(errorCode, "error", errorMessage))
+        "return a Created response if the request is valid and account create is successful " in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockCreateAccountPrivileged(fakeRequest)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
           }
 
+          val result = controller.createAccount()(fakeRequest)
+          status(result) shouldBe CREATED
+        }
+
+        "return a Conflict response if the request is valid and account create indicates that the account already existed " in {
+
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockCreateAccountPrivileged(fakeRequest)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
+          }
+
+          val result = controller.createAccount()(fakeRequest)
+          status(result) shouldBe CONFLICT
+        }
+
+        "handle invalid createAccount requests and return BadRequest" in {
+          val error = ApiValidationError("invalid request", "uh oh")
+
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockCreateAccountPrivileged(fakeRequest)(Left(error))
+          }
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe BAD_REQUEST
+          contentAsJson(result) shouldBe Json.toJson(error)
+        }
+
+        "handle unexpected internal server errors and return InternalServerError" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockCreateAccountPrivileged(fakeRequest)(Left(ApiBackendError()))
+          }
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe INTERNAL_SERVER_ERROR
+          contentAsJson(result) shouldBe Json.toJson(ApiBackendError())
+        }
+
+        "handle access errors and return Forbidden" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockCreateAccountPrivileged(fakeRequest)(Left(ApiAccessError()))
+          }
+
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe FORBIDDEN
+          contentAsJson(result) shouldBe Json.toJson(ApiAccessError())
+        }
+
+        "change the error JSON format if the API call is v1.0" in {
+          val (errorCode, errorMessage) = "CODE" → "message"
+          val request = fakeRequest.withHeaders(HeaderNames.ACCEPT → "application/vnd.hmrc.1.0+json")
+
+          List[ApiError](
+            ApiBackendError(errorCode, errorMessage),
+            ApiValidationError(errorCode, errorMessage),
+            ApiAccessError(errorCode, errorMessage)
+          ).foreach { e ⇒
+              inSequence {
+                mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+                mockCreateAccountPrivileged(request)(Left(e))
+              }
+
+              val result = controller.createAccount()(request)
+              contentAsJson(result) shouldBe Json.toJson(CreateAccountErrorOldFormat(errorCode, "error", errorMessage))
+            }
+
+        }
+      }
+
+      "the request is made with user-restricted access" must {
+
+        val userInfoRetrievals: Retrieval[Name ~ Option[LocalDate] ~ ItmpName ~ Option[LocalDate] ~ ItmpAddress ~ Option[String]] =
+          Retrievals.name and
+            Retrievals.dateOfBirth and
+            Retrievals.itmpName and
+            Retrievals.itmpDateOfBirth and
+            Retrievals.itmpAddress and
+            Retrievals.email
+
+        val createAccountUserDetailsRetrievals = userInfoRetrievals and Retrievals.nino
+
+          def createAccountRetrievalResult(u: RetrievedUserDetails): Name ~ Option[LocalDate] ~ ItmpName ~ Option[LocalDate] ~ ItmpAddress ~ Option[String] ~ Option[String] = {
+            val dob = u.dateOfBirth.map(toJodaDate)
+
+            new ~(Name(u.forename, u.surname), dob) and
+              ItmpName(u.forename, None, u.surname) and dob and
+              u.address and u.email and u.nino
+          }
+
+          def toJodaDate(d: java.time.LocalDate): org.joda.time.LocalDate =
+            LocalDate.parse(d.format(DateTimeFormatter.ISO_DATE))
+
+        val ggCredentials = Credentials("id", "GovernmentGateway")
+
+        "return a Created response if the request is valid and account create is successful " in {
+          val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+          val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
+
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
+          }
+
+          val result = controller.createAccount()(fakeRequest)
+          status(result) shouldBe CREATED
+        }
+
+        "return a Conflict response if the request is valid and account create indicates that the account already existed " in {
+          val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+          val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
+
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
+          }
+
+          val result = controller.createAccount()(fakeRequest)
+          status(result) shouldBe CONFLICT
+        }
+
+        "prefer the user details from ITMP over GG" in {
+          val (userDetailsRetrieval, retrievedUserDetails) = {
+            val u = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+
+            val retrieval = new ~(Name(Some("a"), Some("b")), Some(new LocalDate(1, 2, 3))) and
+              ItmpName(Some("c"), None, Some("d")) and Some(new LocalDate(3, 2, 1)) and
+              u.address and u.email and u.nino
+
+            val expectedRetrievedUserDetails = u.copy(forename    = Some("c"), surname = Some("d"), dateOfBirth = Some(java.time.LocalDate.of(3, 2, 1)))
+            retrieval → expectedRetrievedUserDetails
+          }
+
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
+          }
+
+          val result = controller.createAccount()(fakeRequest)
+          status(result) shouldBe CREATED
+        }
+
+        "handle invalid createAccount requests and return BadRequest" in {
+          val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+          val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
+          val error = ApiValidationError("invalid request", "uh oh")
+
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(error))
+          }
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe BAD_REQUEST
+          contentAsJson(result) shouldBe Json.toJson(error)
+        }
+
+        "handle unexpected internal server errors and return InternalServerError" in {
+          val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+          val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
+
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiBackendError()))
+          }
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe INTERNAL_SERVER_ERROR
+          contentAsJson(result) shouldBe Json.toJson(ApiBackendError())
+        }
+
+        "handle access errors and return Forbidden" in {
+          val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+          val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
+
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiAccessError()))
+          }
+
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe FORBIDDEN
+          contentAsJson(result) shouldBe Json.toJson(ApiAccessError())
+        }
+
+        "change the error JSON format if the API call is v1.0" in {
+          val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+          val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
+          val (errorCode, errorMessage) = "CODE" → "message"
+          val request = fakeRequest.withHeaders(HeaderNames.ACCEPT → "application/vnd.hmrc.1.0+json")
+
+          List[ApiError](
+            ApiBackendError(errorCode, errorMessage),
+            ApiValidationError(errorCode, errorMessage),
+            ApiAccessError(errorCode, errorMessage)
+          ).foreach { e ⇒
+              inSequence {
+                mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+                mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
+                mockCreateAccountUserRestricted(request, retrievedUserDetails)(Left(e))
+              }
+
+              val result = controller.createAccount()(request)
+              contentAsJson(result) shouldBe Json.toJson(CreateAccountErrorOldFormat(errorCode, "error", errorMessage))
+            }
+
+        }
+      }
+
+      "the request is made with unknown access" must {
+
+        "return a 403" in {
+          mockAuthResultWithSuccess(Retrievals.credentials)(Credentials("id", "type"))
+          val result = controller.createAccount()(fakeRequest)
+          status(result) shouldBe FORBIDDEN
+        }
       }
 
     }

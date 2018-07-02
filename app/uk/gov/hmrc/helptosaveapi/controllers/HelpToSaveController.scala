@@ -56,36 +56,49 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
       Retrievals.itmpAddress and
       Retrievals.email
 
-  def createAccount(): Action[AnyContent] = authorised(userInfoRetrievals and Retrievals.nino and Retrievals.credentials) { implicit request ⇒
-    {
-      case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ authNino ~ credentials ⇒
-        def toJavaDate(jodaDate: JodaLocalDate): LocalDate =
-            LocalDate.of(jodaDate.getYear, jodaDate.getMonthOfYear, jodaDate.getDayOfMonth)
+  def createAccount(): Action[AnyContent] = authorised(Retrievals.credentials) { implicit request ⇒ credentials ⇒
+    def toJson(error: ApiError)(implicit request: Request[_]): JsValue = {
+        if (request.headers.get(HeaderNames.ACCEPT).exists(_.contains("1.0"))) {
+          // use old format for errors if API call is for is v1.0
+          Json.toJson(CreateAccountErrorOldFormat(error))
+        } else {
+          Json.toJson(error)
+        }
+      }
 
-          def toJson(error: ApiError)(implicit request: Request[_]): JsValue = {
-            if (request.headers.get(HeaderNames.ACCEPT).exists(_.contains("1.0"))) {
-              // use old format for errors if API call is for is v1.0
-              Json.toJson(CreateAccountErrorOldFormat(error))
-            } else {
-              Json.toJson(error)
-            }
-          }
+      def toJavaDate(jodaDate: JodaLocalDate): LocalDate =
+        LocalDate.of(jodaDate.getYear, jodaDate.getMonthOfYear, jodaDate.getDayOfMonth)
 
-        val retrievedDetails = RetrievedUserDetails(
-          authNino,
-          itmpName.givenName.orElse(ggName.name),
-          itmpName.familyName.orElse(ggName.lastName),
-          itmpDob.orElse(dob).map(toJavaDate),
-          itmpAddress,
-          email
-        )
-
-        helpToSaveApiService.createAccount(request, credentials, retrievedDetails).map {
+      def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
+        result match {
           case Left(e: ApiAccessError)                        ⇒ Forbidden(toJson(e))
           case Left(a: ApiValidationError)                    ⇒ BadRequest(toJson(a))
           case Left(b: ApiBackendError)                       ⇒ InternalServerError(toJson(b))
           case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒ if (alreadyHadAccount) { Conflict } else { Created }
         }
+
+    if (credentials.isPrivilegedApplication()) {
+      helpToSaveApiService.createAccountPrivileged(request).map(handleResult)
+    } else if (credentials.isGovernmentGateway()) {
+      // we can't do the user retrievals before this point because the user retrievals
+      // will definitely fail with a 500 resopnse from auth for privileged access
+      authorised(userInfoRetrievals and Retrievals.nino){ _ ⇒
+        {
+          case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ authNino ⇒
+            val retrievedDetails = RetrievedUserDetails(
+              authNino,
+              itmpName.givenName.orElse(ggName.name),
+              itmpName.familyName.orElse(ggName.lastName),
+              itmpDob.orElse(dob).map(toJavaDate),
+              itmpAddress,
+              email
+            )
+            helpToSaveApiService.createAccountUserRestricted(request, retrievedDetails).map(handleResult)
+        }
+      }(request)
+    } else {
+      logger.warn(s"Received create account request with unsupported credentials provider type: ${credentials.providerType}")
+      Forbidden(Json.toJson(ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised")))
     }
   }
 
