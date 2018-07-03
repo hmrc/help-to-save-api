@@ -342,6 +342,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
             mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+            mockPagerDutyAlert("NINOs in create account request do not match")
           }
 
           val result = await(service.createAccountUserRestricted(fakeRequestWithBody, RetrievedUserDetails.empty().copy(nino = Some("other-nino"))))

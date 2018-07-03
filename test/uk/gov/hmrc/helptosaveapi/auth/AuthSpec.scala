@@ -43,7 +43,7 @@ class AuthSpec extends AuthSupport {
 
     "return after successful authentication" in {
 
-      mockAuthResultWithSuccess(retrieve)(retrievals)
+      mockAuthResultWithSuccess(retrieve)(ggRetrievals)
 
       val result = Await.result(callAuth(FakeRequest()), 5.seconds)
       status(result) shouldBe Status.OK

@@ -316,123 +316,191 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
     }
 
-    "handling checkEligibility requests" must {
+    "handling checkEligibility requests" when {
 
-      "handle the case when nino from Auth exists but not in the url and providerType is GovernmentGateway" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(retrievals)
-        mockEligibilityCheck(nino)(eligibilityResponse)
+      "the request is made with user-restricted access" must {
 
-        val result = controller.checkEligibility(nino)(fakeRequest)
+        "handle the case when nino from Auth exists but not in the url" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
+            mockEligibilityCheck(nino)(eligibilityResponse)
+          }
 
-        status(result) shouldBe OK
-        contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
-        headers(result).keys should contain("X-Correlation-ID")
+          val result = controller.checkEligibilityDeriveNino()(fakeRequest)
+
+          status(result) shouldBe OK
+          contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle the case when both ninos from Auth and from url exist and they are equal" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
+            mockEligibilityCheck(nino)(eligibilityResponse)
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe OK
+          contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle the case when both ninos from Auth and from url exist and they are NOT equal" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
+          }
+
+          val result = controller.checkEligibility("LX123456D")(fakeRequest)
+
+          status(result) shouldBe FORBIDDEN
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle the case when both ninos from Auth and from url do NOT exist" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.nino)(None)
+          }
+          val result = controller.checkEligibilityDeriveNino()(fakeRequest)
+
+          status(result) shouldBe FORBIDDEN
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle the case when nino from Auth does NOT exist but exist in the url" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.nino)(None)
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe FORBIDDEN
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle invalid requests and return BadRequest when a validation error occurs" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
+            mockEligibilityCheck(nino)(Left(ApiValidationError("error")))
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe BAD_REQUEST
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle invalid requests and return InternalServerError when a backend error occurs" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
+            mockEligibilityCheck(nino)(Left(ApiBackendError()))
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe INTERNAL_SERVER_ERROR
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle unexpected access errors during eligibility check and return 403" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
+            mockEligibilityCheck(nino)(Left(ApiAccessError()))
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe FORBIDDEN
+          headers(result).keys should contain("X-Correlation-ID")
+        }
       }
 
-      "handle the case when nino from Auth exists but not in the url and providerType is NOT GovernmentGateway" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(new ~(Some(nino), Credentials("123-id", "foo-bar")))
+      "the request is made with privileged access" must {
 
-        val result = controller.checkEligibilityDeriveNino()(fakeRequest)
+        "handle the case when nino from Auth exists but not in the url" in {
+          mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
 
-        status(result) shouldBe FORBIDDEN
-        headers(result).keys should contain("X-Correlation-ID")
+          val result = controller.checkEligibilityDeriveNino()(fakeRequest)
+
+          status(result) shouldBe FORBIDDEN
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle the case when nino from Auth does NOT exist but exist in the url" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockEligibilityCheck(nino)(eligibilityResponse)
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe OK
+          contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle invalid requests and return BadRequest when a validation error occurs" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockEligibilityCheck(nino)(Left(ApiValidationError("error")))
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe BAD_REQUEST
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle invalid requests and return InternalServerError when a backend error occurs" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockEligibilityCheck(nino)(Left(ApiBackendError()))
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe INTERNAL_SERVER_ERROR
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
+        "handle unexpected access errors during eligibility check and return 403" in {
+          inSequence {
+            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockEligibilityCheck(nino)(Left(ApiAccessError()))
+          }
+
+          val result = controller.checkEligibility(nino)(fakeRequest)
+
+          status(result) shouldBe FORBIDDEN
+          headers(result).keys should contain("X-Correlation-ID")
+        }
+
       }
 
-      "handle the case when both ninos from Auth and from url exist and they are equal" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(retrievals)
-        mockEligibilityCheck(nino)(eligibilityResponse)
+      "the request is made with other access" must {
 
-        val result = controller.checkEligibility(nino)(fakeRequest)
+        "return a 403 when no NINO is passed in the URL" in {
+          mockAuthResultWithSuccess(Retrievals.credentials)(Credentials("id", "type"))
+          val result = controller.checkEligibilityDeriveNino()(fakeRequest)
+          status(result) shouldBe FORBIDDEN
+        }
 
-        status(result) shouldBe OK
-        contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
-        headers(result).keys should contain("X-Correlation-ID")
+        "return a 403 a NINO is passed in the URL" in {
+          mockAuthResultWithSuccess(Retrievals.credentials)(Credentials("id", "type"))
+          val result = controller.checkEligibility(nino)(fakeRequest)
+          status(result) shouldBe FORBIDDEN
+        }
+
       }
 
-      "handle the case when both ninos from Auth and from url exist and they are NOT equal" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(retrievals)
-
-        val result = controller.checkEligibility("LX123456D")(fakeRequest)
-
-        status(result) shouldBe FORBIDDEN
-        headers(result).keys should contain("X-Correlation-ID")
-      }
-
-      "handle the case when both ninos from Auth and from url do NOT exist and the authprovider is not GG" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(new ~(None, Credentials("123-id", "foo-bar")))
-
-        val result = controller.checkEligibilityDeriveNino()(fakeRequest)
-
-        status(result) shouldBe BAD_REQUEST
-        headers(result).keys should contain("X-Correlation-ID")
-      }
-
-      "handle the case when both ninos from Auth and from url do NOT exist and the authprovider is GG" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(new ~(None, Credentials("GG", "GovernmentGateway")))
-
-        val result = controller.checkEligibilityDeriveNino()(fakeRequest)
-
-        status(result) shouldBe FORBIDDEN
-        headers(result).keys should contain("X-Correlation-ID")
-      }
-
-      "handle the case when nino from Auth does NOT exist but exist in the url and the providerType is PrivilegedApplication" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(new ~(None, Credentials("123-id", "PrivilegedApplication")))
-        mockEligibilityCheck(nino)(eligibilityResponse)
-
-        val result = controller.checkEligibility(nino)(fakeRequest)
-
-        status(result) shouldBe OK
-        contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
-        headers(result).keys should contain("X-Correlation-ID")
-      }
-
-      "handle the case when nino from Auth does NOT exist but exist in the url and the providerType is NOT PrivilegedApplication" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(new ~(None, Credentials("123-id", "foo-bar")))
-
-        val result = controller.checkEligibility(nino)(fakeRequest)
-
-        status(result) shouldBe FORBIDDEN
-        headers(result).keys should contain("X-Correlation-ID")
-      }
-
-      "handle invalid requests and return BadRequest when a validation error occurs" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(retrievals)
-        mockEligibilityCheck(nino)(Left(ApiValidationError("error")))
-        val result = controller.checkEligibility(nino)(fakeRequest)
-
-        status(result) shouldBe BAD_REQUEST
-        headers(result).keys should contain("X-Correlation-ID")
-      }
-
-      "handle invalid requests and return InternalServerError when a backend error occurs" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(retrievals)
-        mockEligibilityCheck(nino)(Left(ApiBackendError()))
-        val result = controller.checkEligibility(nino)(fakeRequest)
-
-        status(result) shouldBe INTERNAL_SERVER_ERROR
-        headers(result).keys should contain("X-Correlation-ID")
-      }
-
-      "handle unexpected internal server error during eligibility check and return 500" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(retrievals)
-        mockEligibilityCheck(nino)(Left(ApiBackendError()))
-
-        val result = controller.checkEligibility(nino)(fakeRequest)
-
-        status(result) shouldBe INTERNAL_SERVER_ERROR
-        headers(result).keys should contain("X-Correlation-ID")
-      }
-
-      "handle unexpected access errors during eligibility check and return 403" in {
-        mockAuthResultWithSuccess(Retrievals.nino and Retrievals.credentials)(retrievals)
-        mockEligibilityCheck(nino)(Left(ApiAccessError()))
-
-        val result = controller.checkEligibility(nino)(fakeRequest)
-
-        status(result) shouldBe FORBIDDEN
-        headers(result).keys should contain("X-Correlation-ID")
-      }
     }
 
     "handling getAccount requests" must {

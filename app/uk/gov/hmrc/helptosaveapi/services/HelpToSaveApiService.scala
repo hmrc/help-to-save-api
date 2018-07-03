@@ -25,7 +25,7 @@ import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.eq._
 import cats.syntax.show._
-import com.codahale.metrics.Timer
+import com.codahale.metrics.{Counter, Timer}
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
 import play.api.http.Status.{NOT_FOUND, OK}
@@ -90,7 +90,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
   override def createAccountUserRestricted(request:              Request[AnyContent],
                                            retrievedUserDetails: RetrievedUserDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = { //scalastyle:ignore
 
-    val timer = metrics.apiCreateAccountCallTimer.time()
+    val timer = metrics.apiCreateAccountUserRestrictedCallTimer.time()
 
     val result = request.body.asJson.fold[CreateAccountResponseType] {
       Future.successful(Left(ApiValidationError("NO_JSON", "no JSON found in request body")))
@@ -109,18 +109,24 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     }
 
     val _ = timer.stop()
-    result
+    result.map(_.leftMap{ e ⇒
+      metrics.apiCreateAccountUserRestrictedCallErrorCounter.inc()
+      e
+    })
   }
 
   override def createAccountPrivileged(request: Request[AnyContent])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = { //scalastyle:ignore
-    val timer = metrics.apiCreateAccountCallTimer.time()
+    val timer = metrics.apiCreateAccountPrivilegedCallTimer.time()
 
     val result = request.body.asJson.fold[CreateAccountResponseType](
       Future.successful(Left(ApiValidationError("NO_JSON", "no JSON found in request body")))
     ){ createAccount(_, None, request) }
 
     val _ = timer.stop()
-    result
+    result.map(_.leftMap { e ⇒
+      metrics.apiCreateAccountPrivilegedCallErrorCounter.inc()
+      e
+    })
   }
 
   private def createAccount(json:          JsValue,
@@ -147,20 +153,19 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                 Left(ApiValidationError(response.body))
 
               case other: Int ⇒
-                metrics.apiCreateAccountCallErrorCounter.inc()
                 logger.warn(s"Received unexpected http status in response to create account, status=$other", body.nino, correlationIdHeader)
                 pagerDutyAlerting.alert("Received unexpected http status in response to create account")
                 Left(ApiBackendError())
             }
           }.recover {
             case e ⇒
-              metrics.apiCreateAccountCallErrorCounter.inc()
               logger.warn(s"Received unexpected error during create account, error=$e", body.nino, correlationIdHeader)
               pagerDutyAlerting.alert("Failed to make call to createAccount")
               Left(ApiBackendError())
           }
         } else {
           logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth")
+          pagerDutyAlerting.alert("NINOs in create account request do not match")
           Left(ApiAccessError())
         }
     }
@@ -250,7 +255,6 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
           .mapN { case (_, b) ⇒ b }
           .fold(
             { errors ⇒
-              metrics.apiCreateAccountCallErrorCounter.inc()
               val errorString = s"[${errors.toList.mkString("; ")}]"
               logger.warn(s"Error when validating request: $errorString")
               Left(ApiValidationError(errorString))
@@ -259,7 +263,6 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
           )
 
       case error: JsError ⇒
-        metrics.apiCreateAccountCallErrorCounter.inc()
         val errorString = error.prettyPrint()
         logger.warn(s"Could not parse JSON in request body: $errorString")
         Left(ApiValidationError(s"Could not parse JSON in request: $errorString"))

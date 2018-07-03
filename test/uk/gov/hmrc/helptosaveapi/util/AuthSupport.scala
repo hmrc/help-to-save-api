@@ -29,9 +29,11 @@ trait AuthSupport extends TestSupport {
 
   val nino = "AE123456C"
 
-  val credentials = retrieve.Credentials("123-id", "GovernmentGateway")
+  val ggCredentials = retrieve.Credentials("123-id", "GovernmentGateway")
 
-  val retrievals: Option[String] ~ retrieve.Credentials = new ~(Some(nino), credentials)
+  val privilegedCredentials = retrieve.Credentials("123-id", "PrivilegedApplication")
+
+  val ggRetrievals: Option[String] ~ retrieve.Credentials = new ~(Some(nino), ggCredentials)
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 
