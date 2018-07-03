@@ -42,7 +42,8 @@ class AuthSpec extends AuthSupport {
   "HelpToSaveAuth" should {
 
     "return after successful authentication" in {
-
+      val ggCredentials = Credentials("id", "GovernmentGateway")
+      val ggRetrievals: Option[String] ~ Credentials = new ~(Some(nino), ggCredentials)
       mockAuthResultWithSuccess(retrieve)(ggRetrievals)
 
       val result = Await.result(callAuth(FakeRequest()), 5.seconds)

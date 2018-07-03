@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.models
 
-import cats.instances.string._
-import cats.syntax.eq._
-import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.auth.core.retrieve._
 
 sealed trait AccessType
 
@@ -28,15 +26,10 @@ object AccessType {
 
   case object UserRestricted extends AccessType
 
-  def fromCredentials(credentials: Credentials): Either[String, AccessType] = {
-    val providerType = credentials.providerType
-    if (providerType === "GovernmentGateway") {
-      Right(UserRestricted)
-    } else if (providerType === "PrivilegedApplication") {
-      Right(PrivilegedAccess)
-    } else {
-      Left(providerType)
-    }
+  def fromLegacyCredentials(credentials: LegacyCredentials): Either[String, AccessType] = credentials match {
+    case GGCredId(_)   ⇒ Right(UserRestricted)
+    case PAClientId(_) ⇒ Right(PrivilegedAccess)
+    case other         ⇒ Left(other.toString)
   }
 
 }
