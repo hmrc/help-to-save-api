@@ -14,18 +14,29 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.util
+package uk.gov.hmrc.helptosaveapi.models
 
 import cats.instances.string._
 import cats.syntax.eq._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 
-object Credentials {
+sealed trait AccessType
 
-  implicit class CredentialsOps(val c: Credentials) extends AnyVal {
-    def isGovernmentGateway(): Boolean = c.providerType === "GovernmentGateway"
+object AccessType {
 
-    def isPrivilegedApplication(): Boolean = c.providerType === "PrivilegedApplication"
+  case object PrivilegedAccess extends AccessType
+
+  case object UserRestricted extends AccessType
+
+  def fromCredentials(credentials: Credentials): Either[String, AccessType] = {
+    val providerType = credentials.providerType
+    if (providerType === "GovernmentGateway") {
+      Right(UserRestricted)
+    } else if (providerType === "PrivilegedApplication") {
+      Right(PrivilegedAccess)
+    } else {
+      Left(providerType)
+    }
   }
 
 }

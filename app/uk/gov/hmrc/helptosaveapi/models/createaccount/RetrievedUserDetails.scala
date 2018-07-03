@@ -27,3 +27,8 @@ case class RetrievedUserDetails(
     address:     ItmpAddress,
     email:       Option[String]
 )
+
+object RetrievedUserDetails {
+  def empty(): RetrievedUserDetails =
+    RetrievedUserDetails(None, None, None, None, ItmpAddress(None, None, None, None, None, None, None, None), None)
+}

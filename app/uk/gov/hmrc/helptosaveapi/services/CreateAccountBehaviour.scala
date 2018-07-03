@@ -21,7 +21,7 @@ import cats.instances.string._
 import cats.syntax.apply._
 import cats.syntax.eq._
 import play.api.libs.json.{JsString, JsValue, Writes}
-import uk.gov.hmrc.helptosaveapi.models.{ApiAccessError, ApiError, ApiBackendError, ApiValidationError}
+import uk.gov.hmrc.helptosaveapi.models.{ApiAccessError, ApiBackendError, ApiError, ApiValidationError}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountField._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 
@@ -50,6 +50,7 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
       case (_, _, None) ⇒
         Left(ApiAccessError())
     }
+
   }
 
   private def collate(json:                 JsValue, // scalastyle:ignore
