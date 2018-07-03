@@ -79,11 +79,11 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "the request is made with privileged access" must {
 
-        val privilegedCredentials = Credentials("id", "PrivilegedApplication")
+        val privilegedCredentials = PAClientId("id")
 
         "return a Created response if the request is valid and account create is successful " in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockCreateAccountPrivileged(fakeRequest)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
           }
 
@@ -94,7 +94,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         "return a Conflict response if the request is valid and account create indicates that the account already existed " in {
 
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockCreateAccountPrivileged(fakeRequest)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
           }
 
@@ -106,7 +106,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val error = ApiValidationError("invalid request", "uh oh")
 
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockCreateAccountPrivileged(fakeRequest)(Left(error))
           }
           val result = controller.createAccount()(fakeRequest)
@@ -117,7 +117,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle unexpected internal server errors and return InternalServerError" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockCreateAccountPrivileged(fakeRequest)(Left(ApiBackendError()))
           }
           val result = controller.createAccount()(fakeRequest)
@@ -128,7 +128,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle access errors and return Forbidden" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockCreateAccountPrivileged(fakeRequest)(Left(ApiAccessError()))
           }
 
@@ -148,7 +148,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
             ApiAccessError(errorCode, errorMessage)
           ).foreach { e ⇒
               inSequence {
-                mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+                mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
                 mockCreateAccountPrivileged(request)(Left(e))
               }
 
@@ -182,14 +182,14 @@ class HelpToSaveControllerSpec extends AuthSupport {
           def toJodaDate(d: java.time.LocalDate): org.joda.time.LocalDate =
             LocalDate.parse(d.format(DateTimeFormatter.ISO_DATE))
 
-        val ggCredentials = Credentials("id", "GovernmentGateway")
+        val ggCredentials = GGCredId("id")
 
         "return a Created response if the request is valid and account create is successful " in {
           val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
           val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
 
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
             mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
           }
@@ -203,7 +203,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
 
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
             mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
           }
@@ -225,7 +225,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           }
 
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
             mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
           }
@@ -240,7 +240,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val error = ApiValidationError("invalid request", "uh oh")
 
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
             mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(error))
           }
@@ -255,7 +255,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
 
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
             mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiBackendError()))
           }
@@ -270,7 +270,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
 
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
             mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiAccessError()))
           }
@@ -293,7 +293,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
             ApiAccessError(errorCode, errorMessage)
           ).foreach { e ⇒
               inSequence {
-                mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+                mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
                 mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
                 mockCreateAccountUserRestricted(request, retrievedUserDetails)(Left(e))
               }
@@ -308,7 +308,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "the request is made with unknown access" must {
 
         "return a 403" in {
-          mockAuthResultWithSuccess(Retrievals.credentials)(Credentials("id", "type"))
+          mockAuthResultWithSuccess(Retrievals.authProviderId)(VerifyPid("id"))
           val result = controller.createAccount()(fakeRequest)
           status(result) shouldBe FORBIDDEN
         }
@@ -322,7 +322,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle the case when nino from Auth exists but not in the url" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
             mockEligibilityCheck(nino)(eligibilityResponse)
           }
@@ -336,7 +336,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle the case when both ninos from Auth and from url exist and they are equal" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
             mockEligibilityCheck(nino)(eligibilityResponse)
           }
@@ -350,7 +350,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle the case when both ninos from Auth and from url exist and they are NOT equal" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
           }
 
@@ -362,7 +362,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle the case when both ninos from Auth and from url do NOT exist" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(Retrievals.nino)(None)
           }
           val result = controller.checkEligibilityDeriveNino()(fakeRequest)
@@ -373,7 +373,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle the case when nino from Auth does NOT exist but exist in the url" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(Retrievals.nino)(None)
           }
 
@@ -385,7 +385,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle invalid requests and return BadRequest when a validation error occurs" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
             mockEligibilityCheck(nino)(Left(ApiValidationError("error")))
           }
@@ -398,7 +398,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle invalid requests and return InternalServerError when a backend error occurs" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
             mockEligibilityCheck(nino)(Left(ApiBackendError()))
           }
@@ -411,7 +411,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle unexpected access errors during eligibility check and return 403" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(ggCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
             mockEligibilityCheck(nino)(Left(ApiAccessError()))
           }
@@ -426,7 +426,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "the request is made with privileged access" must {
 
         "handle the case when nino from Auth exists but not in the url" in {
-          mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+          mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
 
           val result = controller.checkEligibilityDeriveNino()(fakeRequest)
 
@@ -436,7 +436,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle the case when nino from Auth does NOT exist but exist in the url" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockEligibilityCheck(nino)(eligibilityResponse)
           }
 
@@ -449,7 +449,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle invalid requests and return BadRequest when a validation error occurs" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockEligibilityCheck(nino)(Left(ApiValidationError("error")))
           }
 
@@ -461,7 +461,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle invalid requests and return InternalServerError when a backend error occurs" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockEligibilityCheck(nino)(Left(ApiBackendError()))
           }
 
@@ -473,7 +473,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         "handle unexpected access errors during eligibility check and return 403" in {
           inSequence {
-            mockAuthResultWithSuccess(Retrievals.credentials)(privilegedCredentials)
+            mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
             mockEligibilityCheck(nino)(Left(ApiAccessError()))
           }
 
@@ -488,13 +488,13 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "the request is made with other access" must {
 
         "return a 403 when no NINO is passed in the URL" in {
-          mockAuthResultWithSuccess(Retrievals.credentials)(Credentials("id", "type"))
+          mockAuthResultWithSuccess(Retrievals.authProviderId)(VerifyPid("id"))
           val result = controller.checkEligibilityDeriveNino()(fakeRequest)
           status(result) shouldBe FORBIDDEN
         }
 
         "return a 403 a NINO is passed in the URL" in {
-          mockAuthResultWithSuccess(Retrievals.credentials)(Credentials("id", "type"))
+          mockAuthResultWithSuccess(Retrievals.authProviderId)(VerifyPid("id"))
           val result = controller.checkEligibility(nino)(fakeRequest)
           status(result) shouldBe FORBIDDEN
         }

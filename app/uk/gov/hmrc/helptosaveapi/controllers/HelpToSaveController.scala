@@ -56,7 +56,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
       Retrievals.itmpAddress and
       Retrievals.email
 
-  def createAccount(): Action[AnyContent] = authorised(Retrievals.credentials) { implicit request ⇒ credentials ⇒
+  def createAccount(): Action[AnyContent] = authorised(Retrievals.authProviderId) { implicit request ⇒ credentials ⇒
     def toJson(error: ApiError)(implicit request: Request[_]): JsValue = {
         if (request.headers.get(HeaderNames.ACCEPT).exists(_.contains("1.0"))) {
           // use old format for errors if API call is for is v1.0
@@ -77,7 +77,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
           case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒ if (alreadyHadAccount) { Conflict } else { Created }
         }
 
-    AccessType.fromCredentials(credentials) match {
+    AccessType.fromLegacyCredentials(credentials) match {
       case Right(PrivilegedAccess) ⇒
         helpToSaveApiService.createAccountPrivileged(request).map(handleResult)
 
@@ -105,11 +105,11 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
     }
   }
 
-  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(Retrievals.credentials) { implicit request ⇒ credentials ⇒
+  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(Retrievals.authProviderId) { implicit request ⇒ credentials ⇒
     val correlationId = UUID.randomUUID()
 
     val result: Future[Result] =
-      AccessType.fromCredentials(credentials) match {
+      AccessType.fromLegacyCredentials(credentials) match {
         case Right(UserRestricted) ⇒
           authorised(Retrievals.nino){ _ ⇒
             _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
@@ -128,11 +128,11 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
 
   }
 
-  def checkEligibility(urlNino: String): Action[AnyContent] = authorised(Retrievals.credentials) { implicit request ⇒ credentials ⇒
+  def checkEligibility(urlNino: String): Action[AnyContent] = authorised(Retrievals.authProviderId) { implicit request ⇒ credentials ⇒
     val correlationId = UUID.randomUUID()
 
     val result: Future[Result] =
-      AccessType.fromCredentials(credentials) match {
+      AccessType.fromLegacyCredentials(credentials) match {
         case Right(UserRestricted) ⇒
           authorised(Retrievals.nino){ _ ⇒
             _.fold[Future[Result]] {
