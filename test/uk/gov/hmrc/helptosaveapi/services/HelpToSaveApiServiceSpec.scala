@@ -55,9 +55,9 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   def mockEligibilityCheckHeaderValidator(contentTypeCk: Boolean)(response: ValidatedNel[String, Request[_]]): CallHandler2[Boolean, Request[_], ValidatedNel[String, Request[Any]]] =
     (mockApiHttpHeaderValidator.validateHttpHeaders(_: Boolean)(_: Request[_])).expects(contentTypeCk, *).returning(response)
 
-  def mockCreateAccountRequestValidator(request: CreateAccountRequest)(response: Either[String, Unit]): CallHandler2[CreateAccountRequest, EmailValidation, ValidatedNel[String, CreateAccountRequest]] =
-    (mockCreateAccountRequestValidator.validateRequest(_: CreateAccountRequest)(_: EmailValidation))
-      .expects(request, *)
+  def mockCreateAccountRequestValidator(request: CreateAccountRequest)(response: Either[String, Unit]): CallHandler1[CreateAccountRequest, ValidatedNel[String, CreateAccountRequest]] =
+    (mockCreateAccountRequestValidator.validateRequest(_: CreateAccountRequest))
+      .expects(request)
       .returning(fromEither(response).bimap(e ⇒ NonEmptyList.of(e), _ ⇒ request))
 
   def mockEligibilityCheckRequestValidator(nino: String)(response: ValidatedNel[String, String]): CallHandler1[String, ValidatedNel[String, String]] =
@@ -95,9 +95,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         Future.successful
       ))
 
-  val service = new HelpToSaveApiServiceImpl(helpToSaveConnector, mockMetrics, mockPagerDuty) {
+  val service = new HelpToSaveApiServiceImpl(helpToSaveConnector, mockMetrics, mockPagerDuty, mockCreateAccountRequestValidator) {
     override val httpHeaderValidator: APIHttpHeaderValidator = mockApiHttpHeaderValidator
-    override val createAccountRequestValidator: CreateAccountRequestValidator = mockCreateAccountRequestValidator
     override val eligibilityRequestValidator: EligibilityRequestValidator = mockEligibilityRequestValidator
   }
 

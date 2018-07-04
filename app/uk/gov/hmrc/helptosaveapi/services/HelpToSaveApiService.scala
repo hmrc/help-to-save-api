@@ -72,18 +72,16 @@ object HelpToSaveApiService {
 }
 
 @Singleton
-class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnector,
-                                          metrics:             Metrics,
-                                          pagerDutyAlerting:   PagerDutyAlerting)(implicit config: Configuration,
-                                                                                  logMessageTransformer: LogMessageTransformer,
-                                                                                  emailValidation:       EmailValidation)
+class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector:           HelpToSaveConnector,
+                                          metrics:                       Metrics,
+                                          pagerDutyAlerting:             PagerDutyAlerting,
+                                          createAccountRequestValidator: CreateAccountRequestValidator)(implicit config: Configuration,
+                                                                                                        logMessageTransformer: LogMessageTransformer)
   extends HelpToSaveApiService with CreateAccountBehaviour with Logging {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
   val httpHeaderValidator: APIHttpHeaderValidator = new APIHttpHeaderValidator
-
-  val createAccountRequestValidator: CreateAccountRequestValidator = new CreateAccountRequestValidator
 
   val eligibilityRequestValidator: EligibilityRequestValidator = new EligibilityRequestValidator
 
@@ -134,8 +132,8 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
   }
 
   private def storeEmailThenCreateAccount(json:          JsValue,
-                                         retrievedNINO: Option[String],
-                                         request:       Request[_])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType =
+                                          retrievedNINO: Option[String],
+                                          request:       Request[_])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType =
     validateCreateAccountRequest(json, request) {
 
       case CreateAccountRequest(header, body) ⇒
