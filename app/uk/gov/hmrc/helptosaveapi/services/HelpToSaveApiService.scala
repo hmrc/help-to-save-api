@@ -33,6 +33,7 @@ import play.api.libs.json._
 import play.api.mvc.{AnyContent, Request}
 import play.mvc.Http.Status
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
+import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.models._
@@ -149,11 +150,18 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                 Right(CreateAccountSuccess(alreadyHadAccount = true))
 
               case Status.BAD_REQUEST ⇒
-                logger.warn("validation of create account request failed", body.nino, correlationIdHeader)
-                Left(ApiValidationError(response.body))
+                logger.warn(s"validation of create account request failed: ${request.body}", body.nino, correlationIdHeader)
+                val error = response.parseJson[CreateAccountErrorOldFormat].fold({
+                  e ⇒
+                    logger.warn(s"Create account response body was in unexpected format: $e")
+                    ApiValidationError("request contained invalid or missing details")
+                }, { e ⇒
+                  ApiValidationError(e.errorDetails)
+                })
+                Left(error)
 
               case other: Int ⇒
-                logger.warn(s"Received unexpected http status in response to create account, status=$other", body.nino, correlationIdHeader)
+                logger.warn(s"Received unexpected http status in response to create account, status=$other, body=${request.body}", body.nino, correlationIdHeader)
                 pagerDutyAlerting.alert("Received unexpected http status in response to create account")
                 Left(ApiBackendError())
             }
