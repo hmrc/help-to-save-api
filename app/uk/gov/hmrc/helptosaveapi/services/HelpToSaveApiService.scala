@@ -37,7 +37,7 @@ import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountE
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
-import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType, StoreEmailResponseType}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCheckResponse
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
@@ -69,6 +69,7 @@ object HelpToSaveApiService {
   type CreateAccountResponseType = Future[Either[ApiError, CreateAccountSuccess]]
   type CheckEligibilityResponseType = Future[Either[ApiError, EligibilityResponse]]
   type GetAccountResponseType = Future[Either[ApiError, Option[Account]]]
+  type StoreEmailResponseType = Future[Either[ApiError, Unit]]
 }
 
 @Singleton
@@ -141,11 +142,8 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector:           HelpToS
         if (retrievedNINO.forall(_ === body.nino)) {
 
           storeEmail(body, header.requestCorrelationId).flatMap {
-
-            case Left(_)  ⇒ Left(ApiBackendError())
-
-            case Right(_) ⇒ createAccount(body, header, request)
-
+            case Left(error) ⇒ Left(error)
+            case Right(_)    ⇒ createAccount(body, header, request)
           }
         } else {
           logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth")
@@ -269,12 +267,12 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector:           HelpToS
   }
 
   //store email in mongo if the communicationPreference is set to 02
-  private def storeEmail(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] = {
+  private def storeEmail(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): StoreEmailResponseType = {
     if (body.contactDetails.communicationPreference === "02") {
       body.contactDetails.email match {
         case Some(email) ⇒
           val correlationIdHeader = "requestCorrelationId" -> correlationId.toString
-          helpToSaveConnector.storeEmail(base64Encode(email), correlationId).map[Either[String, Unit]] {
+          helpToSaveConnector.storeEmail(base64Encode(email), correlationId).map[Either[ApiError, Unit]] {
             response ⇒
               response.status match {
                 case Status.CREATED ⇒
@@ -283,18 +281,18 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector:           HelpToS
                 case other: Int ⇒
                   logger.warn(s"could not store email in mongo for the api user, not creating account, status: $other", body.nino, correlationIdHeader)
                   pagerDutyAlerting.alert("unexpected status during storing email for the api user")
-                  Left("could not store email in mongo for the api user")
+                  Left(ApiBackendError())
               }
           }.recover {
             case e ⇒
               logger.warn(s"error during storing email for the api user, error=${e.getMessage}")
               pagerDutyAlerting.alert("could not store email in mongo for the api user")
-              Left("could not store email in mongo for the api user")
+              Left(ApiBackendError())
           }
 
         case None ⇒ //should never happen as we already validate the email if communicationPreference is 02
           logger.warn("no email found in the request body but communicationPreference is 02")
-          Left("no email found in the request body but communicationPreference is 02")
+          Left(ApiValidationError("no email found in the request body but communicationPreference is 02"))
 
       }
     } else {
