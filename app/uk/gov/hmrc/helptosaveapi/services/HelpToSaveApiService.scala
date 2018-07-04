@@ -25,7 +25,7 @@ import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.eq._
 import cats.syntax.show._
-import com.codahale.metrics.{Counter, Timer}
+import com.codahale.metrics.Timer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
 import play.api.http.Status.{NOT_FOUND, OK}
@@ -35,15 +35,15 @@ import play.mvc.Http.Status
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
-import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.models._
+import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCheckResponse
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, PagerDutyAlerting, toFuture}
-import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, PagerDutyAlerting, base64Encode, toFuture}
+import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator, EmailValidation}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -75,7 +75,8 @@ object HelpToSaveApiService {
 class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnector,
                                           metrics:             Metrics,
                                           pagerDutyAlerting:   PagerDutyAlerting)(implicit config: Configuration,
-                                                                                  logMessageTransformer: LogMessageTransformer)
+                                                                                  logMessageTransformer: LogMessageTransformer,
+                                                                                  emailValidation:       EmailValidation)
   extends HelpToSaveApiService with CreateAccountBehaviour with Logging {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
@@ -95,7 +96,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
 
     val result = request.body.asJson.fold[CreateAccountResponseType] {
       Future.successful(Left(ApiValidationError("NO_JSON", "no JSON found in request body")))
-    }{ json ⇒
+    } { json ⇒
       val missingMandatoryFields = CreateAccountField.missingMandatoryFields(json)
 
       if (missingMandatoryFields.isEmpty) {
@@ -110,7 +111,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     }
 
     val _ = timer.stop()
-    result.map(_.leftMap{ e ⇒
+    result.map(_.leftMap { e ⇒
       metrics.apiCreateAccountUserRestrictedCallErrorCounter.inc()
       e
     })
@@ -121,7 +122,9 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
 
     val result = request.body.asJson.fold[CreateAccountResponseType](
       Future.successful(Left(ApiValidationError("NO_JSON", "no JSON found in request body")))
-    ){ createAccount(_, None, request) }
+    ) {
+        createAccount(_, None, request)
+      }
 
     val _ = timer.stop()
     result.map(_.leftMap { e ⇒
@@ -139,37 +142,44 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
         logger.info(s"Create Account Request has been made with headers: ${header.show}")
 
         if (retrievedNINO.forall(_ === body.nino)) {
-          helpToSaveConnector.createAccount(body, header.requestCorrelationId, header.clientCode).map[Either[ApiError, CreateAccountSuccess]] { response ⇒
-            response.status match {
-              case Status.CREATED ⇒
-                logger.info("successfully created account via API", body.nino, correlationIdHeader)
-                Right(CreateAccountSuccess(alreadyHadAccount = false))
 
-              case Status.CONFLICT ⇒
-                logger.info("successfully received 409 from create account via API, user already had account", body.nino, correlationIdHeader)
-                Right(CreateAccountSuccess(alreadyHadAccount = true))
+          storeEmail(body, header.requestCorrelationId).flatMap {
 
-              case Status.BAD_REQUEST ⇒
-                logger.warn(s"validation of create account request failed: ${request.body}", body.nino, correlationIdHeader)
-                val error = response.parseJson[CreateAccountErrorOldFormat].fold({
-                  e ⇒
-                    logger.warn(s"Create account response body was in unexpected format: $e")
-                    ApiValidationError("request contained invalid or missing details")
-                }, { e ⇒
-                  ApiValidationError(e.errorDetail)
-                })
-                Left(error)
+            case Left(_) ⇒ Left(ApiBackendError())
 
-              case other: Int ⇒
-                logger.warn(s"Received unexpected http status in response to create account, status=$other, body=${request.body}", body.nino, correlationIdHeader)
-                pagerDutyAlerting.alert("Received unexpected http status in response to create account")
-                Left(ApiBackendError())
-            }
-          }.recover {
-            case e ⇒
-              logger.warn(s"Received unexpected error during create account, error=$e", body.nino, correlationIdHeader)
-              pagerDutyAlerting.alert("Failed to make call to createAccount")
-              Left(ApiBackendError())
+            case Right(_) ⇒
+              helpToSaveConnector.createAccount(body, header.requestCorrelationId, header.clientCode).map[Either[ApiError, CreateAccountSuccess]] { response ⇒
+                response.status match {
+                  case Status.CREATED ⇒
+                    logger.info("successfully created account via API", body.nino, correlationIdHeader)
+                    Right(CreateAccountSuccess(alreadyHadAccount = false))
+
+                  case Status.CONFLICT ⇒
+                    logger.info("successfully received 409 from create account via API, user already had account", body.nino, correlationIdHeader)
+                    Right(CreateAccountSuccess(alreadyHadAccount = true))
+
+                  case Status.BAD_REQUEST ⇒
+                    logger.warn(s"validation of create account request failed: ${request.body}", body.nino, correlationIdHeader)
+                    val error = response.parseJson[CreateAccountErrorOldFormat].fold({
+                      e ⇒
+                        logger.warn(s"Create account response body was in unexpected format: $e")
+                        ApiValidationError("request contained invalid or missing details")
+                    }, { e ⇒
+                      ApiValidationError(e.errorDetail)
+                    })
+                    Left(error)
+
+                  case other: Int ⇒
+                    logger.warn(s"Received unexpected http status in response to create account, status=$other, body=${request.body}", body.nino, correlationIdHeader)
+                    pagerDutyAlerting.alert("Received unexpected http status in response to create account")
+                    Left(ApiBackendError())
+                }
+              }.recover {
+                case e ⇒
+                  logger.warn(s"Received unexpected error during create account, error=$e", body.nino, correlationIdHeader)
+                  pagerDutyAlerting.alert("Failed to make call to createAccount")
+                  Left(ApiBackendError())
+              }
           }
         } else {
           logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth")
@@ -251,6 +261,40 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
               logger.warn(s"Call to get account via the connector failed, error message: ${e.getMessage}")
               Left(ApiBackendError())
           }
+    }
+  }
+
+  //store email in mongo if the communicationPreference is set to 02
+  private def storeEmail(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[String, Unit]] = {
+    if (body.contactDetails.communicationPreference === "02") {
+      body.contactDetails.email match {
+        case Some(email) ⇒
+          val correlationIdHeader = "requestCorrelationId" -> correlationId.toString
+          helpToSaveConnector.storeEmail(base64Encode(email), correlationId).map[Either[String, Unit]] {
+            response ⇒
+              response.status match {
+                case Status.CREATED ⇒
+                  logger.info("successfully stored email for the api user, proceeding with create account", body.nino, correlationIdHeader)
+                  Right(())
+                case other: Int ⇒
+                  logger.warn(s"could not store email in mongo for the api user, not creating account, status: $other", body.nino, correlationIdHeader)
+                  pagerDutyAlerting.alert("unexpected status during storing email for the api user")
+                  Left("could not store email in mongo for the api user")
+              }
+          }.recover {
+            case e ⇒
+              logger.warn(s"error during storing email for the api user, error=${e.getMessage}")
+              pagerDutyAlerting.alert("could not store email in mongo for the api user")
+              Left("could not store email in mongo for the api user")
+          }
+
+        case None ⇒ //should never happen as we already validate the email if communicationPreference is 02
+          logger.warn("no email found in the request body but communicationPreference is 02")
+          Left("no email found in the request body but communicationPreference is 02")
+
+      }
+    } else {
+      Right(())
     }
   }
 
@@ -336,6 +380,7 @@ object HelpToSaveApiServiceImpl {
         case (3, _) ⇒ Right(AccountAlreadyExists())
         case _      ⇒ Left(s"invalid combination for eligibility response. Response was '$r'")
       }
+
     // scalastyle:on magic.number
 
   }

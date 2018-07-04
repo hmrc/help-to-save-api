@@ -34,7 +34,7 @@ class CreateAccountRequestValidator {
 
   import uk.gov.hmrc.helptosaveapi.validators.CreateAccountRequestValidator._
 
-  def validateRequest(request: CreateAccountRequest): ValidatedOrErrorString[CreateAccountRequest] = {
+  def validateRequest(request: CreateAccountRequest)(implicit emailValidation: EmailValidation): ValidatedOrErrorString[CreateAccountRequest] = {
     (request.header.validate(), request.body.validate()).mapN(CreateAccountRequest(_, _))
   }
 }
@@ -44,7 +44,7 @@ object CreateAccountRequestValidator {
   implicit class CreateAccountBodyOps(val body: CreateAccountBody) extends AnyVal {
 
     // checks the communication preference and registration channel - the rest of the body is validated downstream
-    def validate(): ValidatedOrErrorString[CreateAccountBody] = {
+    def validate()(implicit emailValidation: EmailValidation): ValidatedOrErrorString[CreateAccountBody] = {
 
       val forenameCheck: ValidatedOrErrorString[String] = forenameValidation(body.forename)
 
@@ -54,11 +54,25 @@ object CreateAccountRequestValidator {
         validationFromBoolean(body.contactDetails.communicationPreference)(_ === "00", c ⇒ s"Unknown communication preference: $c")
 
       val registrationChannelCheck: ValidatedOrErrorString[String] =
-        validationFromBoolean(body.registrationChannel)(_ === "callCentre", r ⇒ s"Unknown registration channel: $r")
+        validationFromBoolean(body.registrationChannel)(validChannels.contains, r ⇒ s"Unknown registration channel: $r")
+
+      val emailCheck: ValidatedOrErrorString[CreateAccountBody] = {
+
+          def checkEmail(body: CreateAccountBody): Boolean = {
+            if (body.contactDetails.communicationPreference === "02") {
+              body.contactDetails.email.exists(emailValidation.validate(_).isValid)
+            } else {
+              true
+            }
+          }
+
+        validationFromBoolean(body)(checkEmail, r ⇒ s"Unknown registration channel: $r")
+      }
 
       (forenameCheck, surnameCheck,
         communicationPreferenceCheck, registrationChannelCheck,
-        phoneNumberValidation(body.contactDetails.phoneNumber)).mapN { case _ ⇒ body }
+        phoneNumberValidation(body.contactDetails.phoneNumber),
+        emailCheck).mapN { case _ ⇒ body }
     }
   }
 
@@ -111,7 +125,7 @@ object CreateAccountRequestValidator {
         _.forall(!_.exists(_.isLetter)),
         _ ⇒ "phone number contained letters")
 
-    (hasDigit, specialCharacterCheck, letterCheck).mapN{ case _ ⇒ phoneNumber }
+    (hasDigit, specialCharacterCheck, letterCheck).mapN { case _ ⇒ phoneNumber }
   }
 
   private[validators] val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
@@ -179,6 +193,7 @@ object CreateAccountRequestValidator {
             loop(tail, head, 0)
           }
       }
+
     if (n === 1) {
       s.exists(predicate)
     } else if (n > 1) {
@@ -203,6 +218,8 @@ object CreateAccountRequestValidator {
    */
   private def isSpecial(c: Char, ignore: List[Char] = List.empty[Char]): Boolean =
     !(c === ' ' || c.isLetterOrDigit || ignore.contains(c))
+
+  private val validChannels: Set[String] = Set("online", "callCentre")
 
 }
 
