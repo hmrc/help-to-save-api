@@ -33,6 +33,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 import uk.gov.hmrc.auth.core.retrieve
 import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
+import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountFieldSpec.TestCreateAccountRequest
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 
@@ -433,6 +434,21 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle 400 responses" in {
+        val error = CreateAccountErrorOldFormat("", "", "details")
+        val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(error)))
+
+        inSequence {
+          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+          // put some dummy JSON in the response to see if it comes out the other end
+          mockCreateAccountService(createAccountRequest.body)(Right(response))
+        }
+
+        val result = await(service.createAccountPrivileged(fakeRequestWithBody))
+        result shouldBe Left(ApiValidationError("details"))
+      }
+
+      "handle 400 responses with unrecognised JSON response format" in {
         val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(createAccountRequest.header)))
         inSequence {
           mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
@@ -442,7 +458,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         val result = await(service.createAccountPrivileged(fakeRequestWithBody))
-        result shouldBe Left(ApiValidationError(response.body))
+        result shouldBe Left(ApiValidationError("request contained invalid or missing details"))
       }
 
       "handle responses other than 201 from the createAccount endpoint" in {

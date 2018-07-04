@@ -198,9 +198,9 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
 
 object HelpToSaveController {
 
-  private[controllers] case class CreateAccountErrorOldFormat(errorMessageId: String, errorMessage: String, errorDetails: String)
+  case class CreateAccountErrorOldFormat(errorMessageId: String, errorMessage: String, errorDetails: String)
 
-  private[controllers] object CreateAccountErrorOldFormat {
+  object CreateAccountErrorOldFormat {
 
     def apply(apiError: ApiError): CreateAccountErrorOldFormat = CreateAccountErrorOldFormat(apiError.code, "error", apiError.message)
 
