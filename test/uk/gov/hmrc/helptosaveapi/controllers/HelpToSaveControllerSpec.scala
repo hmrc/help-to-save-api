@@ -44,14 +44,14 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
   val controller: HelpToSaveController = new HelpToSaveController(apiService, mockAuthConnector)
 
-  def mockCreateAccountPrivileged(request: Request[AnyContent])(response: Either[ApiError, CreateAccountSuccess]): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
-    (apiService.createAccountPrivileged(_: Request[AnyContent])(_: HeaderCarrier, _: ExecutionContext))
+  def mockCreateOrUpdateAccountPrivileged(request: Request[AnyContent])(response: Either[ApiError, CreateAccountSuccess]): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
+    (apiService.createOrUpdateAccountPrivileged()(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
       .expects(request, *, *)
       .returning(toFuture(response))
 
-  def mockCreateAccountUserRestricted(request: Request[AnyContent], retrievedUserDetails: RetrievedUserDetails)(response: Either[ApiError, CreateAccountSuccess]): CallHandler4[Request[AnyContent], RetrievedUserDetails, HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
-    (apiService.createAccountUserRestricted(_: Request[AnyContent], _: RetrievedUserDetails)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(request, retrievedUserDetails, *, *)
+  def mockCreateorUpdateAccountUserRestricted(request: Request[AnyContent], retrievedUserDetails: RetrievedUserDetails)(response: Either[ApiError, CreateAccountSuccess]): CallHandler4[RetrievedUserDetails, Request[AnyContent], HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
+    (apiService.createOrUpdateAccountUserRestricted(_: RetrievedUserDetails)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
+      .expects(retrievedUserDetails, request, *, *)
       .returning(toFuture(response))
 
   def mockEligibilityCheck(nino: String)(response: Either[ApiError, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, CheckEligibilityResponseType] =
@@ -84,7 +84,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         "return a Created response if the request is valid and account create is successful " in {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
-            mockCreateAccountPrivileged(fakeRequest)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
+            mockCreateOrUpdateAccountPrivileged(fakeRequest)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -95,7 +95,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
-            mockCreateAccountPrivileged(fakeRequest)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
+            mockCreateOrUpdateAccountPrivileged(fakeRequest)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -107,7 +107,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
-            mockCreateAccountPrivileged(fakeRequest)(Left(error))
+            mockCreateOrUpdateAccountPrivileged(fakeRequest)(Left(error))
           }
           val result = controller.createAccount()(fakeRequest)
 
@@ -118,7 +118,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         "handle unexpected internal server errors and return InternalServerError" in {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
-            mockCreateAccountPrivileged(fakeRequest)(Left(ApiBackendError()))
+            mockCreateOrUpdateAccountPrivileged(fakeRequest)(Left(ApiBackendError()))
           }
           val result = controller.createAccount()(fakeRequest)
 
@@ -129,7 +129,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         "handle access errors and return Forbidden" in {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
-            mockCreateAccountPrivileged(fakeRequest)(Left(ApiAccessError()))
+            mockCreateOrUpdateAccountPrivileged(fakeRequest)(Left(ApiAccessError()))
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -149,7 +149,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           ).foreach { e ⇒
               inSequence {
                 mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
-                mockCreateAccountPrivileged(request)(Left(e))
+                mockCreateOrUpdateAccountPrivileged(request)(Left(e))
               }
 
               val result = controller.createAccount()(request)
@@ -191,7 +191,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
+            mockCreateorUpdateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -205,7 +205,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
+            mockCreateorUpdateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -227,7 +227,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
+            mockCreateorUpdateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -242,7 +242,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(error))
+            mockCreateorUpdateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(error))
           }
           val result = controller.createAccount()(fakeRequest)
 
@@ -257,7 +257,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiBackendError()))
+            mockCreateorUpdateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiBackendError()))
           }
           val result = controller.createAccount()(fakeRequest)
 
@@ -272,7 +272,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           inSequence {
             mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiAccessError()))
+            mockCreateorUpdateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiAccessError()))
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -295,7 +295,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
               inSequence {
                 mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
                 mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-                mockCreateAccountUserRestricted(request, retrievedUserDetails)(Left(e))
+                mockCreateorUpdateAccountUserRestricted(request, retrievedUserDetails)(Left(e))
               }
 
               val result = controller.createAccount()(request)
