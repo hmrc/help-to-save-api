@@ -198,7 +198,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
 
 object HelpToSaveController {
 
-  case class CreateAccountErrorOldFormat(errorMessageId: String, errorMessage: String, errorDetails: String)
+  case class CreateAccountErrorOldFormat(errorMessageId: String, errorMessage: String, errorDetail: String)
 
   object CreateAccountErrorOldFormat {
 

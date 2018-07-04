@@ -156,7 +156,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
                     logger.warn(s"Create account response body was in unexpected format: $e")
                     ApiValidationError("request contained invalid or missing details")
                 }, { e ⇒
-                  ApiValidationError(e.errorDetails)
+                  ApiValidationError(e.errorDetail)
                 })
                 Left(error)
 
