@@ -22,7 +22,7 @@ import java.util.UUID
 import cats.data.Validated._
 import cats.data.{NonEmptyList, ValidatedNel}
 import org.scalamock.handlers.{CallHandler1, CallHandler2, CallHandler4, CallHandler5}
-import play.api.mvc.{AnyContentAsEmpty, Request}
+import play.api.mvc.{AnyContent, AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
 import play.mvc.Http.Status._
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
@@ -50,10 +50,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
   val mockEligibilityRequestValidator: EligibilityRequestValidator = mock[EligibilityRequestValidator]
 
-  def mockCreateAccountHeaderValidator(contentTypeCk: Boolean)(response: ValidatedNel[String, Request[_]]): CallHandler2[Boolean, Request[_], ValidatedNel[String, Request[Any]]] =
-    (mockApiHttpHeaderValidator.validateHttpHeaders(_: Boolean)(_: Request[_])).expects(contentTypeCk, *).returning(response)
-
-  def mockEligibilityCheckHeaderValidator(contentTypeCk: Boolean)(response: ValidatedNel[String, Request[_]]): CallHandler2[Boolean, Request[_], ValidatedNel[String, Request[Any]]] =
+  def mockHeaderValidator(contentTypeCk: Boolean)(response: ValidatedNel[String, Request[_]]): CallHandler2[Boolean, Request[_], ValidatedNel[String, Request[Any]]] =
     (mockApiHttpHeaderValidator.validateHttpHeaders(_: Boolean)(_: Request[_])).expects(contentTypeCk, *).returning(response)
 
   def mockCreateAccountRequestValidator(request: CreateAccountRequest)(response: Either[String, Unit]): CallHandler1[CreateAccountRequest, ValidatedNel[String, CreateAccountRequest]] =
@@ -72,7 +69,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         Future.successful
       ))
 
-  def mockCreateAccountService(expectedBody: CreateAccountBody)(response: Either[String, HttpResponse]): CallHandler5[CreateAccountBody, UUID, String, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+  def mockCreateAccount(expectedBody: CreateAccountBody)(response: Either[String, HttpResponse]): CallHandler5[CreateAccountBody, UUID, String, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
     (helpToSaveConnector.createAccount(_: CreateAccountBody, _: UUID, _: String)(_: HeaderCarrier, _: ExecutionContext))
       .expects(expectedBody, *, *, *, *)
       .returning(response.fold(
@@ -94,20 +91,42 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
     override val eligibilityRequestValidator: EligibilityRequestValidator = mockEligibilityRequestValidator
   }
 
+  val accountJson =
+    """{
+           |"accountNumber":"1100000000001",
+           |"isClosed": false,
+           |"blocked": {
+           |  "unspecified": true
+           |},
+           |"balance": "100.00",
+           |"paidInThisMonth": "10.00",
+           |"canPayInThisMonth": "40.00",
+           |"maximumPaidInThisMonth": "50.00",
+           |"thisMonthEndDate": "2018-06-30",
+           |"bonusTerms": [ {
+           |  "bonusEstimate": "50.00",
+           |  "bonusPaid": "0.00",
+           |  "endDate": "2019-12-31",
+           |  "bonusPaidOnOrAfterDate": "2020-01-01"
+           |  }
+           |],
+           |"closureDate": "2022-01-01",
+           |"closingBalance": "100.00"
+          }""".stripMargin
+
   "The HelpToSaveApiService" when {
 
     val nino = "AE123456C"
     val systemId = "MDTP"
     val correlationId = UUID.randomUUID()
 
-    val credentials = retrieve.Credentials("provider", "type")
     val fakeRequest = FakeRequest()
     val createAccountRequest = DataGenerators.random(DataGenerators.validCreateAccountRequestGen)
     val fakeRequestWithBody = FakeRequest().withJsonBody(Json.toJson(createAccountRequest))
 
-    "handling user-restricted CreateAccount requests" must {
+    val getAccountOKResponse = HttpResponse(200, Some(Json.parse(accountJson)))
 
-      import CreateAccountFieldSpec._
+    "handling user-restricted CreateAccount requests" must {
 
       val ggCredentials = retrieve.Credentials("provider", "GovernmentGateway")
 
@@ -169,12 +188,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         "there are no missing mandatory fields" in {
           inSequence {
-            mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+            mockHeaderValidator(true)(Valid(fakeRequestWithBody))
             mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
-            mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockGetAccount(createAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+            mockCreateAccount(createAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
-          val result = await(service.createAccountUserRestricted(fakeRequestWithBody, RetrievedUserDetails.empty()))
+          implicit val request: Request[AnyContent] = fakeRequestWithBody
+          val result = await(service.createOrUpdateAccountUserRestricted(RetrievedUserDetails.empty()))
           result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
         }
 
@@ -183,12 +204,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02")
 
           inSequence {
-            mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+            mockHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockGetAccount(generatedCreateAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+            mockCreateAccount(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"), fullRetrievedUserDetails))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails))
           result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
         }
 
@@ -200,12 +223,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             }
 
             inSequence {
-              mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+              mockHeaderValidator(true)(Valid(FakeRequest()))
               mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-              mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+              mockGetAccount(generatedCreateAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+              mockCreateAccount(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
             }
 
-            val result = await(service.createAccountUserRestricted(minimalJsonRequest("callCentre"), fullRetrievedUserDetails.copy(email = None)))
+            implicit val request: Request[AnyContent] = minimalJsonRequest("callCentre")
+            val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(email = None)))
             result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
           }
 
@@ -214,12 +239,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02")
 
           inSequence {
-            mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+            mockHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockGetAccount(generatedCreateAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+            mockCreateAccount(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"), fullRetrievedUserDetails))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails))
           result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
         }
 
@@ -230,12 +257,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           }
 
           inSequence {
-            mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+            mockHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockGetAccount(generatedCreateAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+            mockCreateAccount(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("callCentre"), fullRetrievedUserDetails))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("callCentre")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails))
           result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
         }
 
@@ -244,19 +273,20 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             val request = createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02")
             request.copy(body = request.body.copy(nino = "nino"))
           }
-          val request =
+          implicit val request: Request[AnyContent] =
             FakeRequest().withJsonBody(
               minimalJson("online").as[JsObject].deepMerge(
                 JsObject(List("body" → JsObject(List("nino" → JsString("nino")))))
               ))
 
           inSequence {
-            mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+            mockHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockGetAccount(generatedCreateAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+            mockCreateAccount(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
-          val result = await(service.createAccountUserRestricted(request, fullRetrievedUserDetails.copy(nino = Some("nino"))))
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(nino = Some("nino"))))
           result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
         }
 
@@ -264,19 +294,20 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           val generatedCreateAccountRequest =
             createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "comms")
 
-          val request =
+          implicit val request: Request[AnyContent] =
             FakeRequest().withJsonBody(
               minimalJson("online").as[JsObject].deepMerge(
                 JsObject(List("body" → JsObject(List("contactDetails" → JsObject(List("communicationPreference" → JsString("comms")))))))
               ))
 
           inSequence {
-            mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+            mockHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockGetAccount(generatedCreateAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+            mockCreateAccount(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
-          val result = await(service.createAccountUserRestricted(request, fullRetrievedUserDetails))
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails))
           result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
         }
 
@@ -286,19 +317,20 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             request.copy(body = request.body.copy(contactDetails = request.body.contactDetails.copy(email = Some("email"))))
           }
 
-          val request =
+          implicit val request: Request[AnyContent] =
             FakeRequest().withJsonBody(
               minimalJson("online").as[JsObject].deepMerge(
                 JsObject(List("body" → JsObject(List("contactDetails" → JsObject(List("email" → JsString("email")))))))
               ))
 
           inSequence {
-            mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+            mockHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockGetAccount(generatedCreateAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+            mockCreateAccount(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
-          val result = await(service.createAccountUserRestricted(request, fullRetrievedUserDetails.copy(email = None)))
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(email = None)))
           result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
         }
 
@@ -307,46 +339,62 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       "return a validation error" when {
 
         "no registration channel is given" in {
-          val result = await(
-            service.createAccountUserRestricted(
-              FakeRequest().withJsonBody(Json.parse(s"""{ "header" : ${Json.toJson(createAccountHeader)} }""".stripMargin)), fullRetrievedUserDetails))
+          implicit val request: Request[AnyContent] =
+            FakeRequest().withJsonBody(Json.parse(s"""{ "header" : ${Json.toJson(createAccountHeader)} }""".stripMargin))
+
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails))
 
           result shouldBe Left(ApiValidationError("No registration channel was given", ""))
         }
 
         "there is no JSON in the request" in {
-          val result = await(service.createAccountUserRestricted(FakeRequest(), fullRetrievedUserDetails))
+          implicit val request: Request[AnyContent] = FakeRequest()
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails))
 
           result shouldBe Left(ApiValidationError("NO_JSON", "no JSON found in request body"))
+        }
+
+        "the account already exists" in {
+          inSequence {
+            mockHeaderValidator(true)(Valid(fakeRequestWithBody))
+            mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+            mockGetAccount(createAccountRequest.body.nino, systemId)(Right(HttpResponse(404)))
+          }
+
+          implicit val request: Request[AnyContent] = fakeRequestWithBody
+          val result = await(service.createOrUpdateAccountUserRestricted(RetrievedUserDetails.empty()))
+          result shouldBe Left(ApiValidationError("updates are not yet supported"))
         }
 
       }
 
       "return an access error" when {
         "the nino is not given in the request and cannot be retrieved" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"), fullRetrievedUserDetails.copy(nino = None)))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(nino = None)))
           result shouldBe Left(ApiAccessError())
         }
 
         "the nino is given in the request and the nino is retrieved but they do not match and there are missing mandatory details" in {
-          val request =
+          implicit val request: Request[AnyContent] =
             FakeRequest().withJsonBody(
               minimalJson("online").as[JsObject].deepMerge(
                 JsObject(List("body" → JsObject(List("nino" → JsString("nino1")))))
               ))
 
-          val result = await(service.createAccountUserRestricted(request, fullRetrievedUserDetails.copy(nino = Some("nino2"))))
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(nino = Some("nino2"))))
           result shouldBe Left(ApiAccessError())
         }
 
         "the nino is given in the request and the nino is retrieved but they do not match and there are no missing mandatory details" in {
           inSequence {
-            mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+            mockHeaderValidator(true)(Valid(fakeRequestWithBody))
             mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
             mockPagerDutyAlert("NINOs in create account request do not match")
           }
 
-          val result = await(service.createAccountUserRestricted(fakeRequestWithBody, RetrievedUserDetails.empty().copy(nino = Some("other-nino"))))
+          implicit val request: Request[AnyContent] = fakeRequestWithBody
+          val result = await(service.createOrUpdateAccountUserRestricted(RetrievedUserDetails.empty().copy(nino = Some("other-nino"))))
           result shouldBe Left(ApiAccessError())
         }
 
@@ -358,52 +406,64 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             result shouldBe Left(ApiBackendError("MISSING_DATA", s"cannot retrieve data: [$field]"))
 
         "no email is retrieved when the email is not given in the request and the registration channel is 'online'" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(email = None)))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(email = None)))
           checkIsBackendError(result, "Email")
         }
 
         "the registration channel is not 'online' or 'callCentre' and no communication preference is set" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("other"),
-                                                                 fullRetrievedUserDetails.copy(email = None)))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("other")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(email = None)))
           checkIsBackendError(result, "CommunicationPreference")
         }
 
         "the forename is not given in the request and cannot be retrieved" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(forename = None)))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(forename = None)))
           checkIsBackendError(result, "Forename")
         }
 
         "the surname is not given in the request and cannot be retrieved" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(surname = None)))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(surname = None)))
           checkIsBackendError(result, "Surname")
         }
 
         "the date of birth is not given in the request and cannot be retrieved" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(dateOfBirth = None)))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(dateOfBirth = None)))
 
           checkIsBackendError(result, "DateOfBirth")
         }
 
         "address line 1 is not given in the request and cannot be retrieved" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(line1 = None))))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(line1 = None))))
           checkIsBackendError(result, "Address")
         }
 
         "address line 2 is not given in the request and cannot be retrieved" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(line2 = None))))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(line2 = None))))
           checkIsBackendError(result, "Address")
         }
 
         "the postcode is not given in the request and cannot be retrieved" in {
-          val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(postCode = None))))
+          implicit val request: Request[AnyContent] = minimalJsonRequest("online")
+          val result = await(service.createOrUpdateAccountUserRestricted(fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(postCode = None))))
           checkIsBackendError(result, "Address")
+        }
+
+        "the call to get account fails" in {
+          inSequence {
+            mockHeaderValidator(true)(Valid(fakeRequestWithBody))
+            mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+            mockGetAccount(createAccountRequest.body.nino, systemId)(Right(HttpResponse(500)))
+          }
+
+          implicit val request: Request[AnyContent] = fakeRequestWithBody
+          val result = await(service.createOrUpdateAccountUserRestricted(RetrievedUserDetails.empty()))
+          result shouldBe Left(ApiBackendError())
         }
 
       }
@@ -413,23 +473,27 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       "handle valid requests and create accounts successfully when all mandatory fields are present and the account creation returns 201" in {
         inSequence {
-          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockHeaderValidator(true)(Valid(fakeRequestWithBody))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
-          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CREATED)))
+          mockGetAccount(createAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+          mockCreateAccount(createAccountRequest.body)(Right(HttpResponse(CREATED)))
         }
 
-        val result = await(service.createAccountPrivileged(fakeRequestWithBody))
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
         result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
       }
 
       "handle valid requests and create accounts successfully when all mandatory fields are present and the account creation returns 409" in {
         inSequence {
-          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockHeaderValidator(true)(Valid(fakeRequestWithBody))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
-          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CONFLICT)))
+          mockGetAccount(createAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+          mockCreateAccount(createAccountRequest.body)(Right(HttpResponse(CONFLICT)))
         }
 
-        val result = await(service.createAccountPrivileged(fakeRequestWithBody))
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
         result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = true))
       }
 
@@ -438,72 +502,105 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(error)))
 
         inSequence {
-          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockHeaderValidator(true)(Valid(fakeRequestWithBody))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+          mockGetAccount(createAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
           // put some dummy JSON in the response to see if it comes out the other end
-          mockCreateAccountService(createAccountRequest.body)(Right(response))
+          mockCreateAccount(createAccountRequest.body)(Right(response))
         }
 
-        val result = await(service.createAccountPrivileged(fakeRequestWithBody))
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
         result shouldBe Left(ApiValidationError("details"))
       }
 
       "handle 400 responses with unrecognised JSON response format" in {
         val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(createAccountRequest.header)))
         inSequence {
-          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockHeaderValidator(true)(Valid(fakeRequestWithBody))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+          mockGetAccount(createAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
           // put some dummy JSON in the response to see if it comes out the other end
-          mockCreateAccountService(createAccountRequest.body)(Right(response))
+          mockCreateAccount(createAccountRequest.body)(Right(response))
         }
 
-        val result = await(service.createAccountPrivileged(fakeRequestWithBody))
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
         result shouldBe Left(ApiValidationError("request contained invalid or missing details"))
       }
 
       "handle responses other than 201 from the createAccount endpoint" in {
         inSequence {
-          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockHeaderValidator(true)(Valid(fakeRequestWithBody))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
-          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(202)))
+          mockGetAccount(createAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+          mockCreateAccount(createAccountRequest.body)(Right(HttpResponse(202)))
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
 
-        val result = await(service.createAccountPrivileged(fakeRequestWithBody))
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
         result shouldBe Left(ApiBackendError())
       }
 
       "handle unexpected server errors during createAccount" in {
         inSequence {
-          mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockHeaderValidator(true)(Valid(fakeRequestWithBody))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
-          mockCreateAccountService(createAccountRequest.body)(Left(""))
+          mockGetAccount(createAccountRequest.body.nino, systemId)(Right(getAccountOKResponse))
+          mockCreateAccount(createAccountRequest.body)(Left(""))
           mockPagerDutyAlert("Failed to make call to createAccount")
         }
 
-        val result = await(service.createAccountPrivileged(fakeRequestWithBody))
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
         result shouldBe Left(ApiBackendError())
       }
 
       "return a validation error for requests with invalid http headers" in {
         inSequence {
-          mockCreateAccountHeaderValidator(true)(Invalid(NonEmptyList.one("content type was not JSON: text/html")))
+          mockHeaderValidator(true)(Invalid(NonEmptyList.one("content type was not JSON: text/html")))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
         }
 
-        val result = await(service.createAccountPrivileged(fakeRequestWithBody))
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
 
         result shouldBe Left(ApiValidationError("[content type was not JSON: text/html]"))
       }
 
       "return a validation error if the request has missing mandatory fields" in {
-        val resultFuture = service.createAccountPrivileged(
-          fakeRequest.withJsonBody(TestCreateAccountRequest.empty().withForename(Some("forename")).toJson))
+        implicit val request: Request[AnyContent] = fakeRequest.withJsonBody(TestCreateAccountRequest.empty().withForename(Some("forename")).toJson)
+        val resultFuture = service.createOrUpdateAccountPrivileged()
 
         await(resultFuture) match {
           case Left(e: ApiValidationError) ⇒ e.code shouldBe "VALIDATION_ERROR"
           case other                       ⇒ fail(s"Expected Left(ApiValidationError) but got $other")
         }
+      }
+
+      "return a validation error the account already exists" in {
+        inSequence {
+          mockHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+          mockGetAccount(createAccountRequest.body.nino, systemId)(Right(HttpResponse(404)))
+        }
+
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
+        result shouldBe Left(ApiValidationError("updates are not yet supported"))
+      }
+
+      "return a server error when the call to get account fails" in {
+        inSequence {
+          mockHeaderValidator(true)(Valid(fakeRequestWithBody))
+          mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
+          mockGetAccount(createAccountRequest.body.nino, systemId)(Right(HttpResponse(500)))
+        }
+
+        implicit val request: Request[AnyContent] = fakeRequestWithBody
+        val result = await(service.createOrUpdateAccountPrivileged())
+        result shouldBe Left(ApiBackendError())
       }
 
     }
@@ -523,7 +620,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       "handle valid requests and return EligibilityResponse" in {
         inSequence {
-          mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+          mockHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
           mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson(1, 6))))))
         }
@@ -533,7 +630,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle when the request contains invalid headers" in {
-        mockEligibilityCheckHeaderValidator(false)(Invalid(NonEmptyList[String]("accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json'", Nil)))
+        mockHeaderValidator(false)(Invalid(NonEmptyList[String]("accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json'", Nil)))
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
 
         val result = await(service.checkEligibility(nino, correlationId))
@@ -541,7 +638,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle when the request contains invalid nino" in {
-        mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+        mockHeaderValidator(false)(Valid(fakeRequest))
         mockEligibilityCheckRequestValidator(nino)(Invalid(NonEmptyList[String]("NINO doesn't match the regex", Nil)))
 
         val result = await(service.checkEligibility(nino, correlationId))
@@ -549,7 +646,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle server errors during eligibility check" in {
-        mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+        mockHeaderValidator(false)(Valid(fakeRequest))
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
         mockEligibilityCheck(nino, correlationId)(Left("internal server error"))
         mockPagerDutyAlert("Failed to make call to check eligibility")
@@ -579,7 +676,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       "handle invalid eligibility result and reason code combination from help to save BE" in {
         val json = Json.parse(eligibilityJson(1, 11))
         inSequence {
-          mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+          mockHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
           mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(json))))
           mockPagerDutyAlert("Could not parse JSON in eligibility check response")
@@ -590,7 +687,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
         def test(eligibilityJson: String, apiResponse: EligibilityResponse) = {
-          mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+          mockHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
           mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson)))))
 
@@ -603,33 +700,10 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
 
-      val account =
-        """{
-           |"accountNumber":"1100000000001",
-           |"isClosed": false,
-           |"blocked": {
-           |  "unspecified": true
-           |},
-           |"balance": "100.00",
-           |"paidInThisMonth": "10.00",
-           |"canPayInThisMonth": "40.00",
-           |"maximumPaidInThisMonth": "50.00",
-           |"thisMonthEndDate": "2018-06-30",
-           |"bonusTerms": [ {
-           |  "bonusEstimate": "50.00",
-           |  "bonusPaid": "0.00",
-           |  "endDate": "2019-12-31",
-           |  "bonusPaidOnOrAfterDate": "2020-01-01"
-           |  }
-           |],
-           |"closureDate": "2022-01-01",
-           |"closingBalance": "100.00"
-          }""".stripMargin
-
       "return OK status and an Account when the call to the connector is successful and there is an account to return" in {
         inSequence {
-          mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
-          mockGetAccount(nino, systemId)(Right(HttpResponse(200, Some(Json.parse(account)))))
+          mockHeaderValidator(false)(Valid(fakeRequest))
+          mockGetAccount(nino, systemId)(Right(HttpResponse(200, Some(Json.parse(accountJson)))))
         }
 
         val result = await(service.getAccount(nino))
@@ -638,7 +712,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       "return an Api Error when an INTERNAL SERVER ERROR status is returned from the connector" in {
         inSequence {
-          mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+          mockHeaderValidator(false)(Valid(fakeRequest))
           mockGetAccount(nino, systemId)(Right(HttpResponse(500, None)))
         }
 

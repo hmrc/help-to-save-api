@@ -51,10 +51,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[HelpToSaveApiServiceImpl])
 trait HelpToSaveApiService {
 
-  def createAccountPrivileged(request: Request[AnyContent])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType
+  def createOrUpdateAccountPrivileged()(implicit r: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType
 
-  def createAccountUserRestricted(request:              Request[AnyContent],
-                                  retrievedUserDetails: RetrievedUserDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType
+  def createOrUpdateAccountUserRestricted(retrievedUserDetails: RetrievedUserDetails)(implicit r: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType
 
   def checkEligibility(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
                                                           hc: HeaderCarrier,
@@ -88,22 +87,20 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
 
   val systemId: String = config.underlying.getString("system-id")
 
-  override def createAccountUserRestricted(request:              Request[AnyContent],
-                                           retrievedUserDetails: RetrievedUserDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = { //scalastyle:ignore
+  override def createOrUpdateAccountUserRestricted(retrievedUserDetails: RetrievedUserDetails)(implicit request: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = { //scalastyle:ignore
 
     val timer = metrics.apiCreateAccountUserRestrictedCallTimer.time()
-
     val result = request.body.asJson.fold[CreateAccountResponseType] {
       Future.successful(Left(ApiValidationError("NO_JSON", "no JSON found in request body")))
     }{ json ⇒
       val missingMandatoryFields = CreateAccountField.missingMandatoryFields(json)
 
       if (missingMandatoryFields.isEmpty) {
-        createAccount(json, retrievedUserDetails.nino, request)
+        createOrUpdateAccount(json, retrievedUserDetails.nino)
       } else {
         (for {
           updatedJson ← EitherT.fromEither[Future](fillInMissingDetailsGG(json, missingMandatoryFields, retrievedUserDetails))
-          r ← EitherT(createAccount(updatedJson, retrievedUserDetails.nino, request))
+          r ← EitherT(createOrUpdateAccount(updatedJson, retrievedUserDetails.nino))
         } yield r
         ).value
       }
@@ -116,12 +113,12 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     })
   }
 
-  override def createAccountPrivileged(request: Request[AnyContent])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = { //scalastyle:ignore
+  override def createOrUpdateAccountPrivileged()(implicit request: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = { //scalastyle:ignore
     val timer = metrics.apiCreateAccountPrivilegedCallTimer.time()
 
     val result = request.body.asJson.fold[CreateAccountResponseType](
       Future.successful(Left(ApiValidationError("NO_JSON", "no JSON found in request body")))
-    ){ createAccount(_, None, request) }
+    ){ createOrUpdateAccount(_, None) }
 
     val _ = timer.stop()
     result.map(_.leftMap { e ⇒
@@ -130,53 +127,68 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     })
   }
 
-  private def createAccount(json:          JsValue,
-                            retrievedNINO: Option[String],
-                            request:       Request[_])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType =
+  private def createOrUpdateAccount(json:          JsValue,
+                                    retrievedNINO: Option[String])(implicit request: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType =
     validateCreateAccountRequest(json, request) {
-      case CreateAccountRequest(header, body) ⇒
-        val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
+      case createAccountRequest @ CreateAccountRequest(header, body) ⇒
         logger.info(s"Create Account Request has been made with headers: ${header.show}")
 
         if (retrievedNINO.forall(_ === body.nino)) {
-          helpToSaveConnector.createAccount(body, header.requestCorrelationId, header.clientCode).map[Either[ApiError, CreateAccountSuccess]] { response ⇒
-            response.status match {
-              case Status.CREATED ⇒
-                logger.info("successfully created account via API", body.nino, correlationIdHeader)
-                Right(CreateAccountSuccess(alreadyHadAccount = false))
+          val result = for {
+            maybeAccount ← EitherT(getAccount(body.nino, header.requestCorrelationId))
+            r ← EitherT(maybeAccount.fold[CreateAccountResponseType](
+              Left(ApiValidationError("updates are not yet supported")))(_ ⇒ createAccount(createAccountRequest))
+            )
+          } yield r
 
-              case Status.CONFLICT ⇒
-                logger.info("successfully received 409 from create account via API, user already had account", body.nino, correlationIdHeader)
-                Right(CreateAccountSuccess(alreadyHadAccount = true))
-
-              case Status.BAD_REQUEST ⇒
-                logger.warn(s"validation of create account request failed: ${request.body}", body.nino, correlationIdHeader)
-                val error = response.parseJson[CreateAccountErrorOldFormat].fold({
-                  e ⇒
-                    logger.warn(s"Create account response body was in unexpected format: $e")
-                    ApiValidationError("request contained invalid or missing details")
-                }, { e ⇒
-                  ApiValidationError(e.errorDetail)
-                })
-                Left(error)
-
-              case other: Int ⇒
-                logger.warn(s"Received unexpected http status in response to create account, status=$other, body=${request.body}", body.nino, correlationIdHeader)
-                pagerDutyAlerting.alert("Received unexpected http status in response to create account")
-                Left(ApiBackendError())
-            }
-          }.recover {
-            case e ⇒
-              logger.warn(s"Received unexpected error during create account, error=$e", body.nino, correlationIdHeader)
-              pagerDutyAlerting.alert("Failed to make call to createAccount")
-              Left(ApiBackendError())
-          }
+          result.value
         } else {
           logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth")
           pagerDutyAlerting.alert("NINOs in create account request do not match")
           Left(ApiAccessError())
         }
     }
+
+  private def createAccount(createAccountRequest: CreateAccountRequest)(
+      implicit
+      request: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType = {
+    val correlationIdHeader = "requestCorrelationId" -> createAccountRequest.header.requestCorrelationId.toString
+    val nino = createAccountRequest.body.nino
+
+    helpToSaveConnector.createAccount(createAccountRequest.body, createAccountRequest.header.requestCorrelationId, createAccountRequest.header.clientCode)
+      .map[Either[ApiError, CreateAccountSuccess]] { response ⇒
+        response.status match {
+          case Status.CREATED ⇒
+            logger.info("successfully created account via API", nino, correlationIdHeader)
+            Right(CreateAccountSuccess(alreadyHadAccount = false))
+
+          case Status.CONFLICT ⇒
+            logger.info("successfully received 409 from create account via API, user already had account", nino, correlationIdHeader)
+            Right(CreateAccountSuccess(alreadyHadAccount = true))
+
+          case Status.BAD_REQUEST ⇒
+            logger.warn(s"validation of create account request failed: ${request.body}", nino, correlationIdHeader)
+            val error = response.parseJson[CreateAccountErrorOldFormat].fold({
+              e ⇒
+                logger.warn(s"Create account response body was in unexpected format: $e")
+                ApiValidationError("request contained invalid or missing details")
+            }, { e ⇒
+              ApiValidationError(e.errorDetail)
+            })
+            Left(error)
+
+          case other: Int ⇒
+            logger.warn(s"Received unexpected http status in response to create account, status=$other, body=${request.body}", nino, correlationIdHeader)
+            pagerDutyAlerting.alert("Received unexpected http status in response to create account")
+            Left(ApiBackendError())
+        }
+      }.recover {
+        case e ⇒
+          logger.warn(s"Received unexpected error during create account, error=$e", nino, correlationIdHeader)
+          pagerDutyAlerting.alert("Failed to make call to createAccount")
+          Left(ApiBackendError())
+      }
+  }
 
   override def checkEligibility(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
                                                                    hc: HeaderCarrier,
@@ -222,36 +234,34 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     result
   }
 
-  override def getAccount(nino: String)(implicit request: Request[AnyContent],
-                                        hc: HeaderCarrier,
-                                        ec: ExecutionContext): GetAccountResponseType = {
-    validateGetAccountRequest {
-      () ⇒
-        val correlationId: UUID = UUID.randomUUID()
+  override def getAccount(nino: String)(implicit r: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): GetAccountResponseType =
+    validateGetAccountRequest { () ⇒ getAccount(nino, UUID.randomUUID()) }
 
-        helpToSaveConnector.getAccount(nino, systemId, correlationId)
-          .map {
-            response ⇒
-              response.status match {
-                case OK ⇒
-                  response.parseJson[HtsAccount].bimap(e ⇒ {
-                    logger.warn(s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}, error is: $e")
-                    ApiBackendError()
-                  },
-                    a ⇒ Some(toAccount(a)))
-                case NOT_FOUND ⇒
-                  logger.warn(s"NS&I have returned a status of NOT FOUND, response body: ${response.body}")
-                  Right(None)
-                case other ⇒
-                  logger.warn(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
-                  Left(ApiBackendError())
-              }
-          }.recover {
-            case e ⇒
-              logger.warn(s"Call to get account via the connector failed, error message: ${e.getMessage}")
+  private def getAccount(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
+                                                            hc: HeaderCarrier,
+                                                            ec: ExecutionContext): GetAccountResponseType = {
+    helpToSaveConnector.getAccount(nino, systemId, correlationId)
+      .map {
+        response ⇒
+          response.status match {
+            case OK ⇒
+              response.parseJson[HtsAccount].bimap(e ⇒ {
+                logger.warn(s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}, error is: $e")
+                ApiBackendError()
+              },
+                a ⇒ Some(toAccount(a)))
+            case NOT_FOUND ⇒
+              logger.warn(s"NS&I have returned a status of NOT FOUND, response body: ${response.body}")
+              Right(None)
+            case other ⇒
+              logger.warn(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
               Left(ApiBackendError())
           }
-    }
+      }.recover {
+        case e ⇒
+          logger.warn(s"Call to get account via the connector failed, error message: ${e.getMessage}")
+          Left(ApiBackendError())
+      }
   }
 
   private def validateCreateAccountRequest(body:    JsValue,

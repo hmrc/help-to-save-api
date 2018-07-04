@@ -79,7 +79,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
 
     AccessType.fromLegacyCredentials(credentials) match {
       case Right(PrivilegedAccess) ⇒
-        helpToSaveApiService.createAccountPrivileged(request).map(handleResult)
+        helpToSaveApiService.createOrUpdateAccountPrivileged().map(handleResult)
 
       case Right(UserRestricted) ⇒
         // we can't do the user retrievals before this point because the user retrievals
@@ -95,7 +95,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
                 itmpAddress,
                 email
               )
-              helpToSaveApiService.createAccountUserRestricted(request, retrievedDetails).map(handleResult)
+              helpToSaveApiService.createOrUpdateAccountUserRestricted(retrievedDetails).map(handleResult)
           }
         }(request)
 
