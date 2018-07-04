@@ -66,7 +66,7 @@ object CreateAccountRequestValidator {
             }
           }
 
-        validationFromBoolean(body)(checkEmail, r ⇒ s"Unknown registration channel: $r")
+        validationFromBoolean(body)(checkEmail, r ⇒ s"invalid email provided with communicationPreference = 02: $r")
       }
 
       (forenameCheck, surnameCheck,

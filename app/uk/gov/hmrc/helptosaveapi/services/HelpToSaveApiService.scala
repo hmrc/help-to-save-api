@@ -100,11 +100,11 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
       val missingMandatoryFields = CreateAccountField.missingMandatoryFields(json)
 
       if (missingMandatoryFields.isEmpty) {
-        storeEmailAndCreateAccount(json, retrievedUserDetails.nino, request)
+        storeEmailThenCreateAccount(json, retrievedUserDetails.nino, request)
       } else {
         (for {
           updatedJson ← EitherT.fromEither[Future](fillInMissingDetailsGG(json, missingMandatoryFields, retrievedUserDetails))
-          r ← EitherT(storeEmailAndCreateAccount(updatedJson, retrievedUserDetails.nino, request))
+          r ← EitherT(storeEmailThenCreateAccount(updatedJson, retrievedUserDetails.nino, request))
         } yield r
         ).value
       }
@@ -123,7 +123,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     val result = request.body.asJson.fold[CreateAccountResponseType](
       Future.successful(Left(ApiValidationError("NO_JSON", "no JSON found in request body")))
     ) {
-        storeEmailAndCreateAccount(_, None, request)
+        storeEmailThenCreateAccount(_, None, request)
       }
 
     val _ = timer.stop()
@@ -133,7 +133,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector: HelpToSaveConnect
     })
   }
 
-  private def storeEmailAndCreateAccount(json:          JsValue,
+  private def storeEmailThenCreateAccount(json:          JsValue,
                                          retrievedNINO: Option[String],
                                          request:       Request[_])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType =
     validateCreateAccountRequest(json, request) {
