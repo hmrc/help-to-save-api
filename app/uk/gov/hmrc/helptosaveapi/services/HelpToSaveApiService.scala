@@ -275,7 +275,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector:           HelpToS
           helpToSaveConnector.storeEmail(base64Encode(email), correlationId).map[Either[ApiError, Unit]] {
             response ⇒
               response.status match {
-                case Status.CREATED ⇒
+                case Status.OK ⇒
                   logger.info("successfully stored email for the api user, proceeding with create account", body.nino, correlationIdHeader)
                   Right(())
                 case other: Int ⇒

@@ -176,7 +176,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
             mockCreateAccountRequestValidator(request)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), request.header.requestCorrelationId)(Right(HttpResponse(201)))
+            mockStoreEmail(base64Encode(validEmail), request.header.requestCorrelationId)(Right(HttpResponse(200)))
             mockCreateAccountService(request.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -232,7 +232,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(201)))
+            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -263,7 +263,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(201)))
+            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -302,7 +302,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(201)))
+            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -345,7 +345,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockStoreEmail(base64Encode("email"), correlationId)(Right(HttpResponse(201)))
+            mockStoreEmail(base64Encode("email"), correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
