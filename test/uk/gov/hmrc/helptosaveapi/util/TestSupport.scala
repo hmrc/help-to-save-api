@@ -17,7 +17,7 @@
 package uk.gov.hmrc.helptosaveapi.util
 
 import akka.stream.Materializer
-import com.codahale.metrics.{Counter, Histogram, Timer, UniformReservoir}
+import com.codahale.metrics.{Counter, Timer}
 import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
 import com.typesafe.config.ConfigFactory
 import org.scalamock.handlers.CallHandler6
@@ -29,6 +29,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Writes
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
+import uk.gov.hmrc.helptosaveapi.validators.EmailValidation
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
@@ -66,6 +67,12 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
   }
 
   implicit lazy val logMessageTransformer: LogMessageTransformer = fakeApplication.injector.instanceOf[LogMessageTransformer]
+
+  implicit val mockEmailValidation: EmailValidation =
+    new EmailValidation(Configuration(
+      "email-validation.max-total-length" → Int.MaxValue,
+      "email-validation.max-local-length" → Int.MaxValue,
+      "email-validation.max-domain-length" → Int.MaxValue))
 
   def mockPost[A](expectedUrl:  String,
                   expectedBody: A,

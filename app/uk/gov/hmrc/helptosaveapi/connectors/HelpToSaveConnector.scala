@@ -23,9 +23,8 @@ import play.api.Configuration
 import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
-import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, Result}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,6 +38,8 @@ trait HelpToSaveConnector {
 
   def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
+  def storeEmail(encodedEmail: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+
 }
 
 @Singleton
@@ -46,17 +47,20 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
                                          http:   WSHttp)(implicit transformer: LogMessageTransformer)
   extends HelpToSaveConnector with Logging {
 
-  private val htsBBaseUrl = {
+  private val htsBaseUrl = {
     val host = config.underlying.getString("microservice.services.help-to-save.host")
     val port = config.underlying.getInt("microservice.services.help-to-save.port")
     s"http://$host:$port/help-to-save"
   }
 
-  val createAccountUrl: String = s"$htsBBaseUrl/create-account"
+  val createAccountUrl: String = s"$htsBaseUrl/create-account"
 
-  def eligibilityCheckUrl(nino: String): String = s"$htsBBaseUrl/api/eligibility-check/$nino"
+  private def storeEmailURL(encodedEmail: String) =
+    s"$htsBaseUrl/store-email?email=$encodedEmail"
 
-  def getAccountUrl(nino: String, systemId: String, correlationId: String): String = s"$htsBBaseUrl/$nino/account?systemId=$systemId&correlationId=$correlationId"
+  def eligibilityCheckUrl(nino: String): String = s"$htsBaseUrl/api/eligibility-check/$nino"
+
+  def getAccountUrl(nino: String, systemId: String, correlationId: String): String = s"$htsBaseUrl/$nino/account?systemId=$systemId&correlationId=$correlationId"
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
@@ -69,6 +73,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
   override def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(getAccountUrl(nino, systemId, correlationId.toString), Map(correlationIdHeaderName -> correlationId.toString))
 
+  override def storeEmail(encodedEmail: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    http.get(storeEmailURL(encodedEmail), Map(correlationIdHeaderName -> correlationId.toString))
 }
 
 object HelpToSaveConnectorImpl {

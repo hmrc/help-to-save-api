@@ -28,9 +28,7 @@ import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
 class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDrivenPropertyChecks {
 
-  import uk.gov.hmrc.helptosaveapi.validators.CreateAccountRequestValidator.allowedPhoneNumberSpecialCharacters
-
-  val validator = new CreateAccountRequestValidator
+  val validator = new CreateAccountRequestValidator(new EmailValidation(config))
 
   val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
 
@@ -80,7 +78,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
       }
 
       "has an phone number with allowed special characters" in {
-        allowedPhoneNumberSpecialCharacters.foreach{ c ⇒
+        validator.allowedPhoneNumberSpecialCharacters.foreach{ c ⇒
           testIsValid(
             CreateAccountRequest(
               validCreateAccountHeader,
@@ -99,7 +97,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
       "have a phone number" which {
 
         "does not contain any digits" in {
-          allowedPhoneNumberSpecialCharacters.foreach{ c ⇒
+          validator.allowedPhoneNumberSpecialCharacters.foreach{ c ⇒
             testIsInvalid(
               CreateAccountRequest(
                 validCreateAccountHeader,
@@ -110,7 +108,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
 
         "contains disallowed characters" in {
           forAll{ (c: Char) ⇒
-            whenever(!c.isDigit && !allowedPhoneNumberSpecialCharacters.contains(c)){
+            whenever(!c.isDigit && !validator.allowedPhoneNumberSpecialCharacters.contains(c)){
               testIsInvalid(
                 CreateAccountRequest(
                   validCreateAccountHeader,
@@ -252,6 +250,31 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "surname123")
             )).isInvalid shouldBe true
+        }
+
+        "have a missing email when communicationPreference is 02" in {
+          val body = validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "02"))
+          val bodyWithNoEmail = body.copy(contactDetails = body.contactDetails.copy(email = None))
+          val result = validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              bodyWithNoEmail
+            ))
+
+          result.isInvalid shouldBe true
+          result shouldBe Invalid(NonEmptyList.of("invalid email provided with communicationPreference = 02"))
+        }
+
+        "have invalid email when communicationPreference is 02" in {
+          val body = validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "02"))
+          val bodyWithNoEmail = body.copy(contactDetails = body.contactDetails.copy(email = Some("invalidEmail")))
+          val result = validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              bodyWithNoEmail
+            ))
+          result.isInvalid shouldBe true
+          result shouldBe Invalid(NonEmptyList.of("invalid email provided with communicationPreference = 02"))
         }
       }
 

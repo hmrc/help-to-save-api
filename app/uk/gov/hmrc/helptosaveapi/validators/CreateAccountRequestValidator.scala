@@ -18,80 +18,89 @@ package uk.gov.hmrc.helptosaveapi.validators
 
 import java.util.regex.Matcher
 
-import cats.instances.int._
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
-import cats.instances.string._
 import cats.instances.char._
+import cats.instances.int._
+import cats.instances.string._
 import cats.syntax.apply._
 import cats.syntax.eq._
+import com.google.inject.{Inject, Singleton}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.ValidatedOrErrorString
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
 
 import scala.annotation.tailrec
 
-class CreateAccountRequestValidator {
+@Singleton
+class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation) {
 
-  import uk.gov.hmrc.helptosaveapi.validators.CreateAccountRequestValidator._
+  def validateRequest(request: CreateAccountRequest): ValidatedOrErrorString[CreateAccountRequest] =
+    (validateHeaders(request.header), validateBody(request.body)).mapN(CreateAccountRequest(_, _))
 
-  def validateRequest(request: CreateAccountRequest): ValidatedOrErrorString[CreateAccountRequest] = {
-    (request.header.validate(), request.body.validate()).mapN(CreateAccountRequest(_, _))
-  }
-}
+  // checks the communication preference and registration channel - the rest of the body is validated downstream
+  def validateBody(body: CreateAccountBody): ValidatedOrErrorString[CreateAccountBody] = {
 
-object CreateAccountRequestValidator {
+    val forenameCheck: ValidatedOrErrorString[String] = forenameValidation(body.forename)
 
-  implicit class CreateAccountBodyOps(val body: CreateAccountBody) extends AnyVal {
+    val surnameCheck: ValidatedOrErrorString[String] = surnameValidation(body.surname)
 
-    // checks the communication preference and registration channel - the rest of the body is validated downstream
-    def validate(): ValidatedOrErrorString[CreateAccountBody] = {
+    val communicationPreferenceCheck: ValidatedOrErrorString[String] =
+      validationFromBoolean(body.contactDetails.communicationPreference)(validCommunicationPreferences.contains, c ⇒ s"Unknown communication preference: $c")
 
-      val forenameCheck: ValidatedOrErrorString[String] = forenameValidation(body.forename)
+    val registrationChannelCheck: ValidatedOrErrorString[String] =
+      validationFromBoolean(body.registrationChannel)(validChannels.contains, r ⇒ s"Unknown registration channel: $r")
 
-      val surnameCheck: ValidatedOrErrorString[String] = surnameValidation(body.surname)
+    val emailCheck: ValidatedOrErrorString[CreateAccountBody] = {
 
-      val communicationPreferenceCheck: ValidatedOrErrorString[String] =
-        validationFromBoolean(body.contactDetails.communicationPreference)(_ === "00", c ⇒ s"Unknown communication preference: $c")
+        def checkEmail(body: CreateAccountBody): Boolean = {
+          if (body.contactDetails.communicationPreference === "02") {
+            body.contactDetails.email.exists(emailValidation.validate(_).isValid)
+          } else {
+            true
+          }
+        }
 
-      val registrationChannelCheck: ValidatedOrErrorString[String] =
-        validationFromBoolean(body.registrationChannel)(_ === "callCentre", r ⇒ s"Unknown registration channel: $r")
-
-      (forenameCheck, surnameCheck,
-        communicationPreferenceCheck, registrationChannelCheck,
-        phoneNumberValidation(body.contactDetails.phoneNumber)).mapN { case _ ⇒ body }
+      validationFromBoolean(body)(checkEmail, _ ⇒ "invalid email provided with communicationPreference = 02")
     }
+
+    (forenameCheck, surnameCheck,
+      communicationPreferenceCheck, registrationChannelCheck,
+      phoneNumberValidation(body.contactDetails.phoneNumber),
+      emailCheck).mapN { case _ ⇒ body }
   }
 
   private val versionRegex: String ⇒ Matcher = "^(\\d\\.)+\\d+$".r.pattern.matcher _
 
   private val clientCodeRegex: String ⇒ Matcher = "^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$".r.pattern.matcher _
 
-  implicit class CreateAccountHeaderOps(val header: CreateAccountHeader) extends AnyVal {
-    def validate(): ValidatedOrErrorString[CreateAccountHeader] = {
-      val versionCheck: ValidatedOrErrorString[String] =
-        validationFromBoolean(header.version)(versionRegex(_).matches(), v ⇒ s"version has incorrect format: $v")
+  def validateHeaders(header: CreateAccountHeader): ValidatedOrErrorString[CreateAccountHeader] = {
+    val versionCheck: ValidatedOrErrorString[String] =
+      validationFromBoolean(header.version)(versionRegex(_).matches(), v ⇒ s"version has incorrect format: $v")
 
-      val versionLengthCheck: ValidatedOrErrorString[String] =
-        validationFromBoolean(header.version)(_.length <= 10, v ⇒ s"max length for version should be 10: $v")
+    val versionLengthCheck: ValidatedOrErrorString[String] =
+      validationFromBoolean(header.version)(_.length <= 10, v ⇒ s"max length for version should be 10: $v")
 
-      val clientCodeCheck: ValidatedOrErrorString[String] =
-        validationFromBoolean(header.clientCode)(clientCodeRegex(_).matches(), c ⇒ s"unknown client code $c")
+    val clientCodeCheck: ValidatedOrErrorString[String] =
+      validationFromBoolean(header.clientCode)(clientCodeRegex(_).matches(), c ⇒ s"unknown client code $c")
 
-      val clientCodeLengthCheck: ValidatedOrErrorString[String] =
-        validationFromBoolean(header.clientCode)(_.length <= 20, v ⇒ s"max length for clientCode should be 20: $v")
+    val clientCodeLengthCheck: ValidatedOrErrorString[String] =
+      validationFromBoolean(header.clientCode)(_.length <= 20, v ⇒ s"max length for clientCode should be 20: $v")
 
-      (versionCheck, versionLengthCheck, clientCodeCheck, clientCodeLengthCheck).mapN { case _ ⇒ header }
-    }
+    (versionCheck, versionLengthCheck, clientCodeCheck, clientCodeLengthCheck).mapN { case _ ⇒ header }
   }
 
   private def forenameValidation(name: String): ValidatedNel[String, String] =
-    (commonNameChecks(name, "forename"), forenameNoApostrophe(name)).mapN { case _ ⇒ name }
+    (commonNameChecks(name, "forename"), forenameNoApostrophe(name)).mapN {
+      case _ ⇒ name
+    }
 
   private def surnameValidation(name: String): ValidatedNel[String, String] = {
     val lastCharacterNonSpecial: ValidatedOrErrorString[String] =
       validatedFromBoolean(name)(!_.lastOption.exists(isSpecial(_)), "surname ended with special character")
 
-    (commonNameChecks(name, "surname"), lastCharacterNonSpecial).mapN { case _ ⇒ name }
+    (commonNameChecks(name, "surname"), lastCharacterNonSpecial).mapN {
+      case _ ⇒ name
+    }
   }
 
   private def phoneNumberValidation(phoneNumber: Option[String]): ValidatedOrErrorString[Option[String]] = {
@@ -111,7 +120,9 @@ object CreateAccountRequestValidator {
         _.forall(!_.exists(_.isLetter)),
         _ ⇒ "phone number contained letters")
 
-    (hasDigit, specialCharacterCheck, letterCheck).mapN{ case _ ⇒ phoneNumber }
+    (hasDigit, specialCharacterCheck, letterCheck).mapN {
+      case _ ⇒ phoneNumber
+    }
   }
 
   private[validators] val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
@@ -136,7 +147,9 @@ object CreateAccountRequestValidator {
     val noDigits: ValidatedOrErrorString[String] =
       validatedFromBoolean(name)(!_.exists(c ⇒ c.isDigit), s"$nameType contained a digit")
 
-    (firstCharacterNonSpecial, consecutiveSpecialCharacters, specialCharacterCheck, noDigits).mapN { case _ ⇒ name }
+    (firstCharacterNonSpecial, consecutiveSpecialCharacters, specialCharacterCheck, noDigits).mapN {
+      case _ ⇒ name
+    }
   }
 
   private def forenameNoApostrophe(name: String): ValidatedOrErrorString[String] = {
@@ -179,6 +192,7 @@ object CreateAccountRequestValidator {
             loop(tail, head, 0)
           }
       }
+
     if (n === 1) {
       s.exists(predicate)
     } else if (n > 1) {
@@ -203,6 +217,10 @@ object CreateAccountRequestValidator {
    */
   private def isSpecial(c: Char, ignore: List[Char] = List.empty[Char]): Boolean =
     !(c === ' ' || c.isLetterOrDigit || ignore.contains(c))
+
+  private val validChannels: Set[String] = Set("online", "callCentre")
+
+  private val validCommunicationPreferences: Set[String] = Set("00", "02")
 
 }
 
