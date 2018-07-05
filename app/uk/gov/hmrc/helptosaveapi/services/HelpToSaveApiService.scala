@@ -37,13 +37,13 @@ import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountE
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
-import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType, StoreEmailResponseType}
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCheckResponse
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, PagerDutyAlerting, base64Encode, toFuture}
-import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator, EmailValidation}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, PagerDutyAlerting, toFuture}
+import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -69,16 +69,15 @@ object HelpToSaveApiService {
   type CreateAccountResponseType = Future[Either[ApiError, CreateAccountSuccess]]
   type CheckEligibilityResponseType = Future[Either[ApiError, EligibilityResponse]]
   type GetAccountResponseType = Future[Either[ApiError, Option[Account]]]
-  type StoreEmailResponseType = Future[Either[ApiError, Unit]]
 }
 
 @Singleton
-class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector:           HelpToSaveConnector,
+class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToSaveConnector,
                                           metrics:                       Metrics,
-                                          pagerDutyAlerting:             PagerDutyAlerting,
+                                          val pagerDutyAlerting:         PagerDutyAlerting,
                                           createAccountRequestValidator: CreateAccountRequestValidator)(implicit config: Configuration,
                                                                                                         logMessageTransformer: LogMessageTransformer)
-  extends HelpToSaveApiService with CreateAccountBehaviour with Logging {
+  extends HelpToSaveApiService with CreateAccountBehaviour with EmailBehaviour with Logging {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
@@ -141,7 +140,7 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector:           HelpToS
 
         if (retrievedNINO.forall(_ === body.nino)) {
 
-          storeEmail(body, header.requestCorrelationId).flatMap {
+          storeEmail(body.nino, body.contactDetails.email, body.contactDetails.communicationPreference, header.requestCorrelationId).flatMap {
             case Left(error) ⇒ Left(error)
             case Right(_)    ⇒ createAccount(body, header, request)
           }
@@ -263,40 +262,6 @@ class HelpToSaveApiServiceImpl @Inject() (helpToSaveConnector:           HelpToS
               logger.warn(s"Call to get account via the connector failed, error message: ${e.getMessage}")
               Left(ApiBackendError())
           }
-    }
-  }
-
-  //store email in mongo if the communicationPreference is set to 02
-  private def storeEmail(body: CreateAccountBody, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): StoreEmailResponseType = {
-    if (body.contactDetails.communicationPreference === "02") {
-      body.contactDetails.email match {
-        case Some(email) ⇒
-          val correlationIdHeader = "requestCorrelationId" -> correlationId.toString
-          helpToSaveConnector.storeEmail(base64Encode(email), correlationId).map[Either[ApiError, Unit]] {
-            response ⇒
-              response.status match {
-                case Status.OK ⇒
-                  logger.info("successfully stored email for the api user, proceeding with create account", body.nino, correlationIdHeader)
-                  Right(())
-                case other: Int ⇒
-                  logger.warn(s"could not store email in mongo for the api user, not creating account, status: $other", body.nino, correlationIdHeader)
-                  pagerDutyAlerting.alert("unexpected status during storing email for the api user")
-                  Left(ApiBackendError())
-              }
-          }.recover {
-            case e ⇒
-              logger.warn(s"error during storing email for the api user, error=${e.getMessage}")
-              pagerDutyAlerting.alert("could not store email in mongo for the api user")
-              Left(ApiBackendError())
-          }
-
-        case None ⇒ //should never happen as we already validate the email if communicationPreference is 02
-          logger.warn("no email found in the request body but communicationPreference is 02")
-          Left(ApiValidationError("no email found in the request body but communicationPreference is 02"))
-
-      }
-    } else {
-      Right(())
     }
   }
 
