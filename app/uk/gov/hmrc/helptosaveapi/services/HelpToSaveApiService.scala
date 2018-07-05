@@ -139,10 +139,14 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
       case CreateAccountRequest(header, body) ⇒
 
         if (retrievedNINO.forall(_ === body.nino)) {
-
-          storeEmail(body.nino, body.contactDetails.email, body.contactDetails.communicationPreference, header.requestCorrelationId).flatMap {
-            case Left(error) ⇒ Left(error)
-            case Right(_)    ⇒ createAccount(body, header, request)
+          if (body.contactDetails.communicationPreference === "02") {
+            (for {
+              email ← EitherT.fromOption(body.contactDetails.email, ApiValidationError("no email found in the request body but communicationPreference is 02"))
+              _ ← EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
+              r ← EitherT(createAccount(body, header, request))
+            } yield r).value
+          } else {
+            createAccount(body, header, request)
           }
         } else {
           logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth")
