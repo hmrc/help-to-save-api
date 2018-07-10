@@ -25,7 +25,7 @@ import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
-import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport}
+import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport, base64Encode}
 import uk.gov.hmrc.http.HttpResponse
 
 // scalastyle:off magic.number
@@ -38,6 +38,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
     val nino = "AE123456C"
     val systemId = "systemId"
     val correlationId = UUID.randomUUID()
+    val headers = Map("X-Correlation-ID" → correlationId.toString)
 
     "creating an account" must {
 
@@ -58,7 +59,6 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
     "handling eligibility requests" must {
 
       val eligibilityUrl = s"http://localhost:7001/help-to-save/api/eligibility-check/$nino"
-      val headers = Map("X-Correlation-ID" -> correlationId.toString)
 
       val eligibilityJson = """{"result": "eligible","resultCode": 1,"reason": "receiving UC","reasonCode": 5}"""
       val json = Json.parse(eligibilityJson)
@@ -75,8 +75,6 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
     "handling get account requests" must {
 
       val getAccountUrl = s"http://localhost:7001/help-to-save/$nino/account?systemId=$systemId&correlationId=$correlationId"
-      val headers = Map("X-Correlation-ID" → correlationId.toString)
-
       val account =
         """{
            |"accountNumber":"1100000000001",
@@ -110,5 +108,20 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
         result.json shouldBe json
       }
     }
+
+    "handling store email requests" must {
+
+        def storeEmailUrl(encodedEmail: String, nino: String) = s"http://localhost:7001/help-to-save/store-email?email=$encodedEmail&nino=$nino"
+
+      "call the correct url and return the response as is" in {
+        val email = base64Encode("email@email.com")
+
+        mockGet(storeEmailUrl(email, nino), headers)(Some(HttpResponse(200)))
+        val result = await(connector.storeEmail(email, nino, correlationId))
+        result.status shouldBe 200
+      }
+
+    }
+
   }
 }

@@ -42,7 +42,7 @@ private[services] trait EmailBehaviour {
                                       logMessageTransformer: LogMessageTransformer): StoreEmailResponseType = {
 
     val correlationIdHeader = "requestCorrelationId" -> correlationId.toString
-    helpToSaveConnector.storeEmail(base64Encode(email), correlationId).map[Either[ApiError, Unit]] {
+    helpToSaveConnector.storeEmail(base64Encode(email), nino, correlationId).map[Either[ApiError, Unit]] {
       response ⇒
         response.status match {
           case Status.OK ⇒
