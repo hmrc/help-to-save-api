@@ -28,6 +28,7 @@ import play.mvc.Http.Status._
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport, base64Encode}
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceSpec.CreateAccountRequestOps
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator, EmailValidation}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
@@ -87,9 +88,9 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         Future.successful
       ))
 
-  def mockStoreEmail(encodedEmail: String, correlationId: UUID)(response: Either[String, HttpResponse]): CallHandler4[String, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (helpToSaveConnector.storeEmail(_: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(encodedEmail, correlationId, *, *)
+  def mockStoreEmail(encodedEmail: String, nino: String, correlationId: UUID)(response: Either[String, HttpResponse]): CallHandler5[String, String, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
+    (helpToSaveConnector.storeEmail(_: String, _: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(encodedEmail, nino, correlationId, *, *)
       .returning(response.fold(
         e ⇒ Future.failed(new Exception(e)),
         Future.successful
@@ -166,9 +167,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           FakeRequest().withJsonBody(minimalJson(registrationChannel))
 
       "create an account with retrieved details" when {
-        var request = createAccountRequest.copy(body = createAccountRequest.body.copy(registrationChannel = "online"))
-        request = createAccountRequest.copy(body = request.body.copy(contactDetails = request.body.contactDetails.copy(communicationPreference = "02")))
-        request = request.copy(body = request.body.copy(contactDetails = request.body.contactDetails.copy(email = Some(validEmail))))
+        val request = createAccountRequest.withRegistrationChannel("online").withCommunicationsPreference("02").withEmail(Some(validEmail))
         val fakeRequestWithBody = FakeRequest().withJsonBody(Json.toJson(request))
 
         "there are no missing mandatory fields and stores email too" in {
@@ -176,7 +175,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
             mockCreateAccountRequestValidator(request)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), request.header.requestCorrelationId)(Right(HttpResponse(200)))
+            mockStoreEmail(base64Encode(validEmail), request.body.nino, request.header.requestCorrelationId)(Right(HttpResponse(200)))
             mockCreateAccountService(request.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -189,7 +188,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
             mockCreateAccountRequestValidator(request)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), request.header.requestCorrelationId)(Left("error string email"))
+            mockStoreEmail(base64Encode(validEmail), request.body.nino, request.header.requestCorrelationId)(Left("error string email"))
             mockPagerDutyAlert("could not store email in mongo for the api user")
           }
 
@@ -202,7 +201,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
             mockCreateAccountRequestValidator(request)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), request.header.requestCorrelationId)(Right(HttpResponse(400)))
+            mockStoreEmail(base64Encode(validEmail), request.body.nino, request.header.requestCorrelationId)(Right(HttpResponse(400)))
             mockPagerDutyAlert("unexpected status during storing email for the api user")
           }
 
@@ -217,7 +216,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
             mockCreateAccountRequestValidator(request)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), request.header.requestCorrelationId)(Right(HttpResponse(400)))
+            mockStoreEmail(base64Encode(validEmail), request.body.nino, request.header.requestCorrelationId)(Right(HttpResponse(400)))
             mockPagerDutyAlert("unexpected status during storing email for the api user")
           }
 
@@ -232,7 +231,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(200)))
+            mockStoreEmail(base64Encode(validEmail), "retrievedNINO", correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -242,10 +241,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         "the email is missing and the email cannot be retrieved but the registration channel is not " +
           "online and the other missing mandatory details can be retrieved" in {
-            val generatedCreateAccountRequest = {
-              val request = createAccountRequestWithRetrievedDetails(createAccountHeader, "callCentre", "00")
-              request.copy(body = request.body.copy(contactDetails = request.body.contactDetails.copy(email = None)))
-            }
+            val generatedCreateAccountRequest =
+              createAccountRequestWithRetrievedDetails(createAccountHeader, "callCentre", "00").withEmail(None)
 
             inSequence {
               mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
@@ -263,7 +260,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(200)))
+            mockStoreEmail(base64Encode(validEmail), "retrievedNINO", correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -272,10 +269,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         "the communication preference is missing and the registration channel is callCentre" in {
-          val generatedCreateAccountRequest = {
-            val request = createAccountRequestWithRetrievedDetails(createAccountHeader, "callCentre", "00")
-            request.copy(body = request.body.copy(contactDetails = request.body.contactDetails.copy(email = None)))
-          }
+          val generatedCreateAccountRequest =
+            createAccountRequestWithRetrievedDetails(createAccountHeader, "callCentre", "00").withEmail(None)
 
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
@@ -288,11 +283,10 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         "the nino is given in the request and the nino can be retrieved and they match" in {
-          val generatedCreateAccountRequest = {
-            val request = createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02")
-            val p = request.copy(body = request.body.copy(contactDetails = request.body.contactDetails.copy(email = Some(validEmail))))
-            p.copy(body = p.body.copy(nino = "nino"))
-          }
+          val generatedCreateAccountRequest =
+            createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02")
+              .withEmail(Some(validEmail)).withNINO("nino")
+
           val request =
             FakeRequest().withJsonBody(
               minimalJson("online").as[JsObject].deepMerge(
@@ -302,7 +296,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockStoreEmail(base64Encode(validEmail), correlationId)(Right(HttpResponse(200)))
+            mockStoreEmail(base64Encode(validEmail), "nino", correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -331,10 +325,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         "the email is given in the request" in {
-          val generatedCreateAccountRequest = {
-            val request = createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02")
-            request.copy(body = request.body.copy(contactDetails = request.body.contactDetails.copy(email = Some("email"))))
-          }
+          val generatedCreateAccountRequest =
+            createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02").withEmail(Some("email"))
 
           val request =
             FakeRequest().withJsonBody(
@@ -345,7 +337,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockStoreEmail(base64Encode("email"), correlationId)(Right(HttpResponse(200)))
+            mockStoreEmail(base64Encode("email"), "retrievedNINO", correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
@@ -698,6 +690,25 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
     }
+  }
+
+}
+
+object HelpToSaveApiServiceSpec {
+
+  implicit class CreateAccountRequestOps(val r: CreateAccountRequest) extends AnyVal {
+
+    def withRegistrationChannel(channel: String): CreateAccountRequest =
+      r.copy(body = r.body.copy(registrationChannel = channel))
+
+    def withEmail(email: Option[String]): CreateAccountRequest =
+      r.copy(body = r.body.copy(contactDetails = r.body.contactDetails.copy(email = email)))
+
+    def withCommunicationsPreference(preference: String): CreateAccountRequest =
+      r.copy(body = r.body.copy(contactDetails = r.body.contactDetails.copy(communicationPreference = preference)))
+
+    def withNINO(nino: String): CreateAccountRequest =
+      r.copy(body = r.body.copy(nino = nino))
   }
 
 }

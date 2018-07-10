@@ -38,7 +38,7 @@ trait HelpToSaveConnector {
 
   def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
-  def storeEmail(encodedEmail: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
 }
 
@@ -55,8 +55,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   val createAccountUrl: String = s"$htsBaseUrl/create-account"
 
-  private def storeEmailURL(encodedEmail: String) =
-    s"$htsBaseUrl/store-email?email=$encodedEmail"
+  private def storeEmailURL(encodedEmail: String, nino: String) =
+    s"$htsBaseUrl/store-email?email=$encodedEmail&nino=$nino"
 
   def eligibilityCheckUrl(nino: String): String = s"$htsBaseUrl/api/eligibility-check/$nino"
 
@@ -73,8 +73,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
   override def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(getAccountUrl(nino, systemId, correlationId.toString), Map(correlationIdHeaderName -> correlationId.toString))
 
-  override def storeEmail(encodedEmail: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(storeEmailURL(encodedEmail), Map(correlationIdHeaderName -> correlationId.toString))
+  override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    http.get(storeEmailURL(encodedEmail, nino), Map(correlationIdHeaderName -> correlationId.toString))
 }
 
 object HelpToSaveConnectorImpl {
