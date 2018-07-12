@@ -25,6 +25,7 @@ import cats.instances.string._
 import cats.syntax.apply._
 import cats.syntax.eq._
 import com.google.inject.{Inject, Singleton}
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.BankDetails
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.ValidatedOrErrorString
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
@@ -63,10 +64,14 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
       validationFromBoolean(body)(checkEmail, _ ⇒ "invalid email provided with communicationPreference = 02")
     }
 
+    val bankDetailsCheck: ValidatedOrErrorString[Option[BankDetails]] =
+      validationFromBoolean(body.bankDetails)(_.isEmpty, _ ⇒ "can not accept bank details in the request at the moment")
+
     (forenameCheck, surnameCheck,
       communicationPreferenceCheck, registrationChannelCheck,
       phoneNumberValidation(body.contactDetails.phoneNumber),
-      emailCheck).mapN { case _ ⇒ body }
+      emailCheck,
+      bankDetailsCheck).mapN { case _ ⇒ body }
   }
 
   private val versionRegex: String ⇒ Matcher = "^(\\d\\.)+\\d+$".r.pattern.matcher _

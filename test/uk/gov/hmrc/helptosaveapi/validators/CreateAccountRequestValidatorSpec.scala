@@ -22,7 +22,7 @@ import java.util.UUID
 import cats.data.Validated.Invalid
 import cats.data.NonEmptyList
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
@@ -93,6 +93,14 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
 
         def testIsInvalid(request: CreateAccountRequest): Unit =
           validator.validateRequest(request).isInvalid shouldBe true
+
+      "have bank details in the body" in {
+        testIsInvalid(
+          CreateAccountRequest(
+            validCreateAccountHeader,
+            validCreateAccountBody.copy(bankDetails = Some(BankDetails("12345678", "01-01-23", "test user name", None)))
+          ))
+      }
 
       "have a phone number" which {
 
