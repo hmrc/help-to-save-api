@@ -22,7 +22,7 @@ import java.time.format.DateTimeFormatter
 import play.api.libs.json.Reads.localDateReads
 import play.api.libs.json.Writes.temporalWrites
 import play.api.libs.json._
-import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
 
 case class CreateAccountBody(
     nino:                String,
@@ -30,10 +30,22 @@ case class CreateAccountBody(
     surname:             String,
     dateOfBirth:         LocalDate,
     contactDetails:      ContactDetails,
-    registrationChannel: String
+    registrationChannel: String,
+    bankDetails:         Option[BankDetails] = None
 )
 
 object CreateAccountBody {
+
+  case class BankDetails(
+      accountNumber: String,
+      sortCode:      String,
+      accountName:   String,
+      rollNumber:    Option[String]
+  )
+
+  object BankDetails {
+    implicit val format: Format[BankDetails] = Json.format[BankDetails]
+  }
 
   case class ContactDetails(
       address1:                String,
