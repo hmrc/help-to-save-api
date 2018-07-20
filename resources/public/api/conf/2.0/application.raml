@@ -33,28 +33,6 @@ traits:
   headers:
    Authorization:
      description: Bearer [SERVER-TOKEN]
-   Gov-Client-Public-IP:
-     description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-   Gov-Client-Public-port:
-     description: The port of the server making the API call
-   Gov-Client-Device-ID:
-     description: This can be the MAC address of the network interface on the server making the API call
-   Gov-Client-User-ID:
-     description: The NINO of the person for which the eligibility check is being performed
-   Gov-Client-Timezone:
-     description: The timezone of the server making the API call
-   Gov-Client-Local-IP:
-     description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-   Gov-Client-User-Agent:
-     example: Windows Server/2016 (Dell PowerEdge R6415)
-     description: The operating system and hardware description of the server making the API call
-   Gov-Vendor-Version:
-     description: The version of the software making the API call
-   Gov-Vendor-Instance-ID:
-     example: app-server-1
-     description: An identifier to differentiate between the various server instances
-   Gov-Vendor-Public-IP:
-     description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
 
  eligibility_responses:
   responses:
@@ -113,28 +91,6 @@ traits:
         headers:
           Authorization:
             description: Bearer [SERVER-TOKEN]
-          Gov-Client-Public-IP:
-            description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-          Gov-Client-Public-port:
-            description: The port of the server making the API call
-          Gov-Client-Device-ID:
-            description: This can be the MAC address of the network interface on the server making the API call
-          Gov-Client-User-ID:
-            description: The NINO of the person whose account is to be created
-          Gov-Client-Timezone:
-            description: The timezone of the server making the API call
-          Gov-Client-Local-IP:
-            description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-          Gov-Client-User-Agent:
-            example: Windows Server/2016 (Dell PowerEdge R6415)
-            description: The operating system and hardware description of the server making the API call
-          Gov-Vendor-Version:
-            description: The version of the software making the API call
-          Gov-Vendor-Instance-ID:
-            example: app-server-1
-            description: An identifier to differentiate between the various server instances
-          Gov-Vendor-Public-IP:
-            description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
         responses:
           200:
             body:
@@ -163,28 +119,6 @@ traits:
         headers:
           Authorization:
             description: Bearer [SERVER-TOKEN]
-          Gov-Client-Public-IP:
-            description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-          Gov-Client-Public-port:
-            description: The port of the server making the API call
-          Gov-Client-Device-ID:
-            description: This can be the MAC address of the network interface on the server making the API call
-          Gov-Client-User-ID:
-           description: The NINO of the person whose account is to be created
-          Gov-Client-Timezone:
-           description: The timezone of the server making the API call
-          Gov-Client-Local-IP:
-           description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
-          Gov-Client-User-Agent:
-           example: Windows Server/2016 (Dell PowerEdge R6415)
-           description: The operating system and hardware description of the server making the API call
-          Gov-Vendor-Version:
-           description: The version of the software making the API call
-          Gov-Vendor-Instance-ID:
-           example: app-server-1
-           description: An identifier to differentiate between the various server instances
-          Gov-Vendor-Public-IP:
-           description: The IP of the server making the API call (can be a non-routable internal datacentre IP)
         body:
           application/json:
             type: !include schemas/CreateAccount.json
