@@ -323,7 +323,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
   }
 
   private def toAccount(account: HtsAccount): Account =
-    Account(account.accountNumber, account.canPayInThisMonth, account.isClosed)
+    Account(account.accountNumber, account.canPayInThisMonth, account.isClosed, account.blocked.unspecified, account.balance)
 
 }
 

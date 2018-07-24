@@ -508,12 +508,12 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "return a success response along with some json if getting the account is successful" in {
         inSequence{
           mockAuthResultWithSuccess(Retrievals.nino)(Some(nino))
-          mockGetAccount(nino)(Right(Some(Account("1100000000001", 40.00, false))))
+          mockGetAccount(nino)(Right(Some(Account("1100000000001", 40.00, false, false, 100.00))))
         }
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe OK
-        contentAsString(result) shouldBe """{"accountNumber":"1100000000001","headroom":40,"closed":false}"""
+        contentAsString(result) shouldBe """{"accountNumber":"1100000000001","headroom":40,"closed":false,"blockedFromPayment":false,"balance":100}"""
       }
 
       "return an Internal Server Error when getting an account is unsuccessful" in {

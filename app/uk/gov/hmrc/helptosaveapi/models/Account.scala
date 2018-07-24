@@ -18,9 +18,11 @@ package uk.gov.hmrc.helptosaveapi.models
 
 import play.api.libs.json.{Format, Json}
 
-case class Account(accountNumber: String,
-                   headroom:      BigDecimal,
-                   closed:        Boolean)
+case class Account(accountNumber:      String,
+                   headroom:           BigDecimal,
+                   closed:             Boolean,
+                   blockedFromPayment: Boolean,
+                   balance:            BigDecimal)
 
 object Account {
 

@@ -15,11 +15,21 @@
     "closed": {
       "type": "boolean",
       "description": "Whether or not the account is closed"
+    },
+    "blockedFromPayment": {
+      "type": "boolean",
+      "description": "Whether or not the account is blocked from payments"
+    },
+    "balance": {
+      "type": "number",
+      "description": "The balance of the account"
     }
   },
   "required": [
     "accountNumber",
     "headroom",
-    "closed"
+    "closed",
+    "blockedFromPayment",
+    "balance"
   ]
 }
