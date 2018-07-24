@@ -513,7 +513,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe OK
-        contentAsString(result) shouldBe """{"accountNumber":"1100000000001","headroom":40,"closed":false,"blocked":false,"balance":100}"""
+        contentAsString(result) shouldBe """{"accountNumber":"1100000000001","headroom":40,"closed":false,"blockedFromPayment":false,"balance":100}"""
       }
 
       "return an Internal Server Error when getting an account is unsuccessful" in {
