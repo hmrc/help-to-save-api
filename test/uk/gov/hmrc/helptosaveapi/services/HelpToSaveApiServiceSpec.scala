@@ -651,7 +651,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
            |"accountNumber":"1100000000001",
            |"isClosed": false,
            |"blocked": {
-           |  "unspecified": true
+           |  "unspecified": false
            |},
            |"balance": "100.00",
            |"paidInThisMonth": "10.00",
@@ -676,7 +676,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         val result = await(service.getAccount(nino))
-        result shouldBe Right(Some(Account("1100000000001", 40.00, false)))
+        result shouldBe Right(Some(Account("1100000000001", 40.00, false, false, 100.00)))
       }
 
       "return an Api Error when an INTERNAL SERVER ERROR status is returned from the connector" in {
