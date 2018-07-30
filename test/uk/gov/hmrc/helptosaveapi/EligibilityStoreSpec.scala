@@ -26,14 +26,7 @@ import uk.gov.hmrc.mongo.MongoSpecSupport
 
 class EligibilityStoreSpec extends TestSupport with MongoSpecSupport {
 
-  val conf = ConfigFactory.parseString(
-    """
-      | mongo-cache {
-      |    collectionName = "api-eligibility"
-      |    expireAfter = 2 seconds
-      |}
-    """.stripMargin
-  )
+  val conf = ConfigFactory.parseString("mongo-cache.expireAfter = 2 seconds")
 
   val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
 
