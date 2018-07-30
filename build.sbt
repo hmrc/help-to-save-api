@@ -15,7 +15,9 @@ val dependencies = Seq(
   "org.typelevel" %% "cats-core" % "1.1.0",
   "uk.gov.hmrc" %% "bootstrap-play-25" % "1.7.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
-  "uk.gov.hmrc" %% "auth-client" % "2.6.0"
+  "uk.gov.hmrc" %% "auth-client" % "2.6.0",
+  "uk.gov.hmrc" %% "mongo-caching" % "5.4.0",
+  "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0"
 )
 
 val testDependencies = Seq(
@@ -23,7 +25,8 @@ val testDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.0.5" % "test",
   "com.typesafe.play" %% "play-test" % PlayVersion.current % "test",
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
-  "uk.gov.hmrc" %% "stub-data-generator" % "0.5.3" % "test"
+  "uk.gov.hmrc" %% "stub-data-generator" % "0.5.3" % "test",
+  "uk.gov.hmrc" %% "reactivemongo-test" % "3.1.0" % "test"
 )
 
 lazy val appDependencies: Seq[ModuleID] = dependencies ++ testDependencies
