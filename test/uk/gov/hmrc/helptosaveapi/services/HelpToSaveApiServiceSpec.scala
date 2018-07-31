@@ -281,7 +281,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockEligibilityStoreGet(generatedCreateAccountRequest.header.requestCorrelationId)(Right(Some(Eligibility(true, true, true))))
+            mockEligibilityStoreGet(generatedCreateAccountRequest.header.requestCorrelationId)(Right(Some(Eligibility(true, false, true))))
             mockStoreEmail(base64Encode(validEmail), "retrievedNINO", correlationId)(Right(HttpResponse(200)))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
@@ -297,7 +297,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           inSequence {
             mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
             mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-            mockEligibilityStoreGet(generatedCreateAccountRequest.header.requestCorrelationId)(Right(Some(Eligibility(true, true, true))))
+            mockEligibilityStoreGet(generatedCreateAccountRequest.header.requestCorrelationId)(Right(Some(Eligibility(true, true, false))))
             mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
           }
 
