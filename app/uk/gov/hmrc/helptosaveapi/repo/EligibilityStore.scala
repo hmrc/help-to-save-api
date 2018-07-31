@@ -20,10 +20,10 @@ import java.util.UUID
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.typesafe.config.Config
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.cache.model.Id
-import uk.gov.hmrc.cache.repository.CacheMongoRepository
+import uk.gov.hmrc.cache.repository.{CacheMongoRepository, CacheRepository}
 import uk.gov.hmrc.helptosaveapi.models.Eligibility
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,10 +43,10 @@ class MongoEligibilityStore @Inject() (config: Config,
 
   private val expireAfterSeconds = config.getDuration("mongo-cache.expireAfter").getSeconds
 
-  private val cacheRepository = new CacheMongoRepository("api-eligibility", expireAfterSeconds)(mongo.mongoConnector.db, ec)
+  private lazy val cacheRepository = new CacheMongoRepository("api-eligibility", expireAfterSeconds)(mongo.mongoConnector.db, ec)
 
   override def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[Eligibility]]] = {
-    cacheRepository.findById(Id(correlationId.toString)).map { maybeCache ⇒
+    doFindById(Id(correlationId.toString)).map { maybeCache ⇒
       Right(maybeCache.flatMap(_.data.map(value ⇒ (value \ "eligibility").as[Eligibility])))
     }.recover {
       case e ⇒
@@ -55,7 +55,7 @@ class MongoEligibilityStore @Inject() (config: Config,
   }
 
   override def put(correlationId: UUID, eligibility: Eligibility)(implicit ec: ExecutionContext): Future[Either[String, Unit]] = {
-    cacheRepository.createOrUpdate(Id(correlationId.toString), "eligibility", Json.toJson(eligibility)).map[Either[String, Unit]] {
+    doCreateOrUpdate(Id(correlationId.toString), "eligibility", Json.toJson(eligibility)).map[Either[String, Unit]] {
       dbUpdate ⇒
         if (dbUpdate.writeResult.inError) {
           Left(dbUpdate.writeResult.errMsg.getOrElse("unknown error during inserting eligibility document"))
@@ -67,4 +67,10 @@ class MongoEligibilityStore @Inject() (config: Config,
         Left(e.getMessage)
     }
   }
+
+  private[repo] def doFindById(id: Id) =
+    cacheRepository.findById(id)
+
+  private[repo] def doCreateOrUpdate(id: Id, key: String, toCache: JsValue) =
+    cacheRepository.createOrUpdate(id, key, toCache)
 }
