@@ -43,5 +43,5 @@ case class AccountAlreadyExists() extends EligibilityResponse
 case class Eligibility(isEligible: Boolean, hasWTC: Boolean, hasUC: Boolean)
 
 object Eligibility {
-  implicit val eligibilityWrites: Writes[Eligibility] = Json.writes[Eligibility]
+  implicit val eligibilityFormat: Format[Eligibility] = Json.format[Eligibility]
 }

@@ -37,6 +37,7 @@ import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountE
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
+import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCheckResponse
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
@@ -75,8 +76,9 @@ object HelpToSaveApiService {
 class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToSaveConnector,
                                           metrics:                       Metrics,
                                           val pagerDutyAlerting:         PagerDutyAlerting,
-                                          createAccountRequestValidator: CreateAccountRequestValidator)(implicit config: Configuration,
-                                                                                                        logMessageTransformer: LogMessageTransformer)
+                                          createAccountRequestValidator: CreateAccountRequestValidator,
+                                          eligibilityStore:              EligibilityStore)(implicit config: Configuration,
+                                                                                           logMessageTransformer: LogMessageTransformer)
   extends HelpToSaveApiService with CreateAccountBehaviour with EmailBehaviour with Logging {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
@@ -141,12 +143,17 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
         if (retrievedNINO.forall(_ === body.nino)) {
           if (body.contactDetails.communicationPreference === "02") {
             (for {
+              eligibility ← EitherT(validateCorrelationId(header.requestCorrelationId))
               email ← EitherT.fromOption(body.contactDetails.email, ApiValidationError("no email found in the request body but communicationPreference is 02"))
               _ ← EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
-              r ← EitherT(createAccount(body, header, request))
+              r ← EitherT(createAccount(body, header, request, eligibility))
             } yield r).value
           } else {
-            createAccount(body, header, request)
+            (for {
+              eligibility ← EitherT(validateCorrelationId(header.requestCorrelationId))
+              r ← EitherT(createAccount(body, header, request, eligibility))
+            } yield r).value
+
           }
         } else {
           logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth")
@@ -155,11 +162,20 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
         }
     }
 
-  private def createAccount(body: CreateAccountBody, header: CreateAccountHeader, request: Request[_])(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
+  private def createAccount(body: CreateAccountBody, header: CreateAccountHeader, request: Request[_], eligibility: Eligibility)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
     val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
     logger.info(s"Create Account Request has been made with headers: ${header.show}")
 
-    helpToSaveConnector.createAccount(body, header.requestCorrelationId, header.clientCode).map[Either[ApiError, CreateAccountSuccess]] { response ⇒
+    val reasonCode: Int =
+      if (eligibility.hasUC && eligibility.hasWTC) {
+        8
+      } else if (eligibility.hasWTC) {
+        7
+      } else {
+        6
+      }
+
+    helpToSaveConnector.createAccount(body, header.requestCorrelationId, header.clientCode, reasonCode).map[Either[ApiError, CreateAccountSuccess]] { response ⇒
       response.status match {
         case Status.CREATED ⇒
           logger.info("successfully created account via API", body.nino, correlationIdHeader)
@@ -202,7 +218,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
     val result = validateCheckEligibilityRequest(nino, correlationIdHeader, timer) {
       _ ⇒
         helpToSaveConnector.checkEligibility(nino, correlationId)
-          .map {
+          .map[CheckEligibilityResponseType] {
             response ⇒
               response.status match {
                 case OK ⇒
@@ -212,10 +228,12 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
                     e ⇒
                       logger.warn(s"Could not parse JSON response from eligibility check, received 200 (OK): $e", nino, correlationIdHeader)
                       pagerDutyAlerting.alert("Could not parse JSON in eligibility check response")
-                  }, _ ⇒
+                      Left(ApiBackendError())
+                  }, res ⇒ {
                     logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
+                    storeEligibilityResultInMongo(res, correlationId, nino, correlationIdHeader)
+                  }
                   )
-                  result.leftMap(e ⇒ ApiBackendError())
 
                 case other: Int ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
@@ -229,12 +247,32 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
               metrics.apiEligibilityCallErrorCounter.inc()
               logger.warn(s"Call to check eligibility failed, error: ${e.getMessage}", nino, correlationIdHeader)
               pagerDutyAlerting.alert("Failed to make call to check eligibility")
-              Left(ApiBackendError())
-          }
+              toFuture(Left(ApiBackendError()))
+          }.flatMap(identity)
     }
 
     val _ = timer.stop()
     result
+  }
+
+  private def storeEligibilityResultInMongo(result:              EligibilityResponse,
+                                            correlationId:       UUID,
+                                            nino:                String,
+                                            correlationIdHeader: (String, String))(implicit ex: ExecutionContext): Future[Either[ApiBackendError, EligibilityResponse]] = {
+    result match {
+      case aer: ApiEligibilityResponse ⇒
+        eligibilityStore.put(correlationId, aer.eligibility).map[Either[ApiBackendError, EligibilityResponse]] {
+          res ⇒
+            res.fold[Either[ApiBackendError, EligibilityResponse]](
+              error ⇒ {
+                logger.warn(s"error storing api eligibility result in mongo, cause=$error", nino, correlationIdHeader)
+                Left(ApiBackendError())
+              },
+              _ ⇒ Right(result)
+            )
+        }
+      case _ ⇒ Right(result)
+    }
   }
 
   override def getAccount(nino: String)(implicit request: Request[AnyContent],
@@ -290,6 +328,25 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
         logger.warn(s"Could not parse JSON in request body: $errorString")
         Left(ApiValidationError(s"Could not parse JSON in request: $errorString"))
 
+    }
+
+  private def validateCorrelationId(cId: UUID)(implicit ec: ExecutionContext): Future[Either[ApiError, Eligibility]] =
+    eligibilityStore.get(cId).map[Either[ApiError, Eligibility]] {
+      res ⇒
+        res.fold(
+          error ⇒ {
+            logger.warn(s"error during retrieving api- eligibility from mongo, error=$error")
+            Left(ApiBackendError())
+          }, {
+            case None ⇒ Left(ApiValidationError(s"requestCorrelationId($cId) is not valid"))
+            case Some(eligibility) ⇒
+              if (eligibility.isEligible) {
+                Right(eligibility)
+              } else {
+                Left(ApiValidationError(s"invalid api createAccount request, user is not eligible"))
+              }
+          }
+        )
     }
 
   private def validateCheckEligibilityRequest(nino:                String,
