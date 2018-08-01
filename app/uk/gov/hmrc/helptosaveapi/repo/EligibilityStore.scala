@@ -19,11 +19,11 @@ package uk.gov.hmrc.helptosaveapi.repo
 import java.util.UUID
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import com.typesafe.config.Config
+import play.api.Configuration
 import play.api.libs.json.{JsValue, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.cache.model.Id
-import uk.gov.hmrc.cache.repository.{CacheMongoRepository, CacheRepository}
+import uk.gov.hmrc.cache.repository.CacheMongoRepository
 import uk.gov.hmrc.helptosaveapi.models.Eligibility
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,10 +38,10 @@ trait EligibilityStore {
 }
 
 @Singleton
-class MongoEligibilityStore @Inject() (config: Config,
+class MongoEligibilityStore @Inject() (config: Configuration,
                                        mongo:  ReactiveMongoComponent)(implicit ec: ExecutionContext) extends EligibilityStore {
 
-  private val expireAfterSeconds = config.getDuration("mongo-cache.expireAfter").getSeconds
+  private val expireAfterSeconds = config.underlying.getDuration("mongo-cache.expireAfter").getSeconds
 
   private lazy val cacheRepository = new CacheMongoRepository("api-eligibility", expireAfterSeconds)(mongo.mongoConnector.db, ec)
 

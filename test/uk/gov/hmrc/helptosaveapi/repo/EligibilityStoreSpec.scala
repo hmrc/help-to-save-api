@@ -19,6 +19,7 @@ package uk.gov.hmrc.helptosaveapi.repo
 import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
+import play.api.Configuration
 import play.api.libs.json.{JsValue, Json}
 import reactivemongo.core.commands.LastError
 import uk.gov.hmrc.cache.model.{Cache, Id}
@@ -28,7 +29,12 @@ import uk.gov.hmrc.mongo.{DatabaseUpdate, Saved}
 
 class EligibilityStoreSpec extends TestSupport with MongoTestSupport[Eligibility, EligibilityStore] {
 
-  val conf = ConfigFactory.parseString("mongo-cache.expireAfter = 2 seconds")
+  val conf = Configuration(
+    ConfigFactory.parseString(
+      """
+        | mongo-cache.expireAfter =  2 seconds
+      """.stripMargin)
+  )
 
   override def newMongoStore() = new MongoEligibilityStore(conf, mockMongo) {
 
