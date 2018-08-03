@@ -23,7 +23,7 @@ import play.api.Configuration
 import play.api.libs.json.{JsValue, Json}
 import reactivemongo.core.commands.LastError
 import uk.gov.hmrc.cache.model.{Cache, Id}
-import uk.gov.hmrc.helptosaveapi.models.Eligibility
+import uk.gov.hmrc.helptosaveapi.models.{AccountAlreadyExists, ApiEligibilityResponse, Eligibility}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 import uk.gov.hmrc.mongo.{DatabaseUpdate, Saved}
 
@@ -48,7 +48,7 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport[Eligibility
   "The EligibilityStoreSpec" when {
 
     val cId = UUID.randomUUID()
-    val eligibility = Eligibility(true, true, true)
+    val eligibility = ApiEligibilityResponse(Eligibility(true, true, true), false)
 
     "storing api eligibility" must {
 
@@ -56,6 +56,12 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport[Eligibility
 
         mockDoCreateOrUpdate(Id(cId.toString), "eligibility", Json.toJson(eligibility))(Right(DatabaseUpdate[Cache](LastError(true, None, None, None, None, 1, false), Saved[Cache](Cache(Id(cId.toString))))))
         await(newMongoStore().put(cId, eligibility)) shouldBe Right(())
+      }
+
+      "store the AccountAlreadyExists result and return success result" in {
+
+        mockDoCreateOrUpdate(Id(cId.toString), "eligibility", Json.toJson(AccountAlreadyExists()))(Right(DatabaseUpdate[Cache](LastError(true, None, None, None, None, 1, false), Saved[Cache](Cache(Id(cId.toString))))))
+        await(newMongoStore().put(cId, AccountAlreadyExists())) shouldBe Right(())
       }
 
       "handle unexpected future failures" in {
@@ -73,6 +79,15 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport[Eligibility
              }""".stripMargin
         mockDoFindById(Id(cId.toString))(Right(Some(Cache(Id(cId.toString), Some(Json.parse(json))))))
         await(newMongoStore().get(cId)) shouldBe Right(Some(eligibility))
+      }
+
+      "be able to read the  AccountAlreadyExists result and return success result" in {
+        val json =
+          s"""{
+             | "eligibility":${Json.toJson(AccountAlreadyExists())}
+             }""".stripMargin
+        mockDoFindById(Id(cId.toString))(Right(Some(Cache(Id(cId.toString), Some(Json.parse(json))))))
+        await(newMongoStore().get(cId)) shouldBe Right(Some(AccountAlreadyExists()))
       }
 
       "handle unexpected future failures" in {

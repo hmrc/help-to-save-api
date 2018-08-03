@@ -22,15 +22,32 @@ sealed trait EligibilityResponse
 
 object EligibilityResponse {
 
-  implicit val apiEligibilityResponseWrites: Writes[ApiEligibilityResponse] = Json.writes[ApiEligibilityResponse]
+  private val accountAlreadyExistsJson = Json.parse("""{"accountExists": true}""")
 
   implicit val writes: Writes[EligibilityResponse] = new Writes[EligibilityResponse] {
+    implicit val apiEligibilityResponseWrites: Writes[ApiEligibilityResponse] = Json.writes[ApiEligibilityResponse]
+
     override def writes(response: EligibilityResponse): JsValue = {
       response match {
         case a: ApiEligibilityResponse ⇒
           Json.toJson(a)
         case b: AccountAlreadyExists ⇒
-          Json.parse("""{"accountExists": true}""")
+          accountAlreadyExistsJson
+      }
+    }
+  }
+
+  implicit val reads: Reads[EligibilityResponse] = new Reads[EligibilityResponse] {
+    implicit val apiEligibilityResponseReads: Reads[ApiEligibilityResponse] = Json.reads[ApiEligibilityResponse]
+
+    override def reads(json: JsValue): JsResult[EligibilityResponse] = {
+      json.asOpt[ApiEligibilityResponse] match {
+        case Some(eligibilityResponse) ⇒ JsSuccess(eligibilityResponse)
+        case None ⇒
+          json.\ ("accountExists").asOpt[Boolean] match {
+            case Some(true)  ⇒ JsSuccess(AccountAlreadyExists())
+            case _ ⇒ JsError(s"couldn't parse eligibility json from mongo, json=$json")
+          }
       }
     }
   }
