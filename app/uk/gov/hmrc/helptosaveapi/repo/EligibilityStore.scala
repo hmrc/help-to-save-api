@@ -24,16 +24,16 @@ import play.api.libs.json.{JsValue, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.cache.model.Id
 import uk.gov.hmrc.cache.repository.CacheMongoRepository
-import uk.gov.hmrc.helptosaveapi.models.Eligibility
+import uk.gov.hmrc.helptosaveapi.models.{Eligibility, EligibilityResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[MongoEligibilityStore])
 trait EligibilityStore {
 
-  def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[Eligibility]]]
+  def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponse]]]
 
-  def put(correlationId: UUID, eligibility: Eligibility)(implicit ec: ExecutionContext): Future[Either[String, Unit]]
+  def put(correlationId: UUID, eligibility: EligibilityResponse)(implicit ec: ExecutionContext): Future[Either[String, Unit]]
 
 }
 
@@ -45,16 +45,16 @@ class MongoEligibilityStore @Inject() (config: Configuration,
 
   private lazy val cacheRepository = new CacheMongoRepository("api-eligibility", expireAfterSeconds)(mongo.mongoConnector.db, ec)
 
-  override def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[Eligibility]]] = {
+  override def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponse]]] = {
     doFindById(Id(correlationId.toString)).map { maybeCache ⇒
-      Right(maybeCache.flatMap(_.data.map(value ⇒ (value \ "eligibility").as[Eligibility])))
+      Right(maybeCache.flatMap(_.data.map(value ⇒ (value \ "eligibility").as[EligibilityResponse])))
     }.recover {
       case e ⇒
         Left(e.getMessage)
     }
   }
 
-  override def put(correlationId: UUID, eligibility: Eligibility)(implicit ec: ExecutionContext): Future[Either[String, Unit]] = {
+  override def put(correlationId: UUID, eligibility: EligibilityResponse)(implicit ec: ExecutionContext): Future[Either[String, Unit]] = {
     doCreateOrUpdate(Id(correlationId.toString), "eligibility", Json.toJson(eligibility)).map[Either[String, Unit]] {
       dbUpdate ⇒
         if (dbUpdate.writeResult.inError) {
