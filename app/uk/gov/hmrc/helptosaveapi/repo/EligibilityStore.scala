@@ -18,22 +18,36 @@ package uk.gov.hmrc.helptosaveapi.repo
 
 import java.util.UUID
 
+import cats.data.OptionT
+import cats.instances.either._
+import cats.syntax.either._
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{Format, JsValue, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.cache.model.Id
 import uk.gov.hmrc.cache.repository.CacheMongoRepository
-import uk.gov.hmrc.helptosaveapi.models.{Eligibility, EligibilityResponse}
+import uk.gov.hmrc.helptosaveapi.models.EligibilityResponse
+import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[MongoEligibilityStore])
 trait EligibilityStore {
 
-  def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponse]]]
+  def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponseWithNINO]]]
 
-  def put(correlationId: UUID, eligibility: EligibilityResponse)(implicit ec: ExecutionContext): Future[Either[String, Unit]]
+  def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(implicit ec: ExecutionContext): Future[Either[String, Unit]]
+
+}
+
+object EligibilityStore {
+
+  case class EligibilityResponseWithNINO(eligibilityResponse: EligibilityResponse, nino: String)
+
+  object EligibilityResponseWithNINO {
+    implicit val format: Format[EligibilityResponseWithNINO] = Json.format[EligibilityResponseWithNINO]
+  }
 
 }
 
@@ -45,27 +59,37 @@ class MongoEligibilityStore @Inject() (config: Configuration,
 
   private lazy val cacheRepository = new CacheMongoRepository("api-eligibility", expireAfterSeconds)(mongo.mongoConnector.db, ec)
 
-  override def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponse]]] = {
+  private type EitherStringOr[A] = Either[String, A]
+
+  override def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponseWithNINO]]] = {
     doFindById(Id(correlationId.toString)).map { maybeCache ⇒
-      Right(maybeCache.flatMap(_.data.map(value ⇒ (value \ "eligibility").as[EligibilityResponse])))
+      val response: OptionT[EitherStringOr, EligibilityResponseWithNINO] = for {
+        cache ← OptionT.fromOption[EitherStringOr](maybeCache)
+        data ← OptionT.fromOption[EitherStringOr](cache.data)
+        result ← OptionT.liftF[EitherStringOr, EligibilityResponseWithNINO](
+          (data \ "eligibility").validate[EligibilityResponseWithNINO].asEither.leftMap(e ⇒ s"Could not parse data: ${e.mkString("; ")}"))
+      } yield result
+
+      response.value
     }.recover {
       case e ⇒
         Left(e.getMessage)
     }
   }
 
-  override def put(correlationId: UUID, eligibility: EligibilityResponse)(implicit ec: ExecutionContext): Future[Either[String, Unit]] = {
-    doCreateOrUpdate(Id(correlationId.toString), "eligibility", Json.toJson(eligibility)).map[Either[String, Unit]] {
-      dbUpdate ⇒
-        if (dbUpdate.writeResult.inError) {
-          Left(dbUpdate.writeResult.errMsg.getOrElse("unknown error during inserting eligibility document"))
-        } else {
-          Right(())
-        }
-    }.recover {
-      case e ⇒
-        Left(e.getMessage)
-    }
+  override def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(implicit ec: ExecutionContext): Future[Either[String, Unit]] = {
+    doCreateOrUpdate(Id(correlationId.toString), "eligibility", Json.toJson(EligibilityResponseWithNINO(eligibility, nino)))
+      .map[Either[String, Unit]] {
+        dbUpdate ⇒
+          if (dbUpdate.writeResult.inError) {
+            Left(dbUpdate.writeResult.errMsg.getOrElse("unknown error during inserting eligibility document"))
+          } else {
+            Right(())
+          }
+      }.recover {
+        case e ⇒
+          Left(e.getMessage)
+      }
   }
 
   private[repo] def doFindById(id: Id) =

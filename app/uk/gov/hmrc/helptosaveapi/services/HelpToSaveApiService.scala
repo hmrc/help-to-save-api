@@ -38,6 +38,7 @@ import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
+import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCheckResponse
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
@@ -141,26 +142,24 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
       case CreateAccountRequest(header, body) ⇒
 
         if (retrievedNINO.forall(_ === body.nino)) {
-          validateCorrelationId(header.requestCorrelationId).flatMap { res ⇒
-            res match {
-              case Right(eligibilityResponse) ⇒ eligibilityResponse match {
-                case aer: ApiEligibilityResponse ⇒
-                  if (body.contactDetails.communicationPreference === "02") {
-                    (for {
-                      email ← EitherT.fromOption(body.contactDetails.email, ApiValidationError("no email found in the request body but communicationPreference is 02"))
-                      _ ← EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
-                      r ← EitherT(createAccount(body, header, request, aer))
-                    } yield r).value
-                  } else {
-                    (for {
-                      r ← EitherT(createAccount(body, header, request, aer))
-                    } yield r).value
-                  }
-                case ale: AccountAlreadyExists ⇒
-                  Future.successful(Right(CreateAccountSuccess(alreadyHadAccount = true)))
-              }
-              case Left(apiError) ⇒ Future.successful(Left(apiError))
+          validateCorrelationId(header.requestCorrelationId, body.nino).flatMap {
+            case Right(eligibilityResponse) ⇒ eligibilityResponse match {
+              case aer: ApiEligibilityResponse ⇒
+                if (body.contactDetails.communicationPreference === "02") {
+                  (for {
+                    email ← EitherT.fromOption(body.contactDetails.email, ApiValidationError("no email found in the request body but communicationPreference is 02"))
+                    _ ← EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
+                    r ← EitherT(createAccount(body, header, request, aer))
+                  } yield r).value
+                } else {
+                  (for {
+                    r ← EitherT(createAccount(body, header, request, aer))
+                  } yield r).value
+                }
+              case ale: AccountAlreadyExists ⇒
+                Future.successful(Right(CreateAccountSuccess(alreadyHadAccount = true)))
             }
+            case Left(apiError) ⇒ Future.successful(Left(apiError))
           }
         } else {
           logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth")
@@ -268,7 +267,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
                                             correlationId:       UUID,
                                             nino:                String,
                                             correlationIdHeader: (String, String))(implicit ex: ExecutionContext): Future[Either[ApiBackendError, EligibilityResponse]] = {
-    eligibilityStore.put(correlationId, result).map[Either[ApiBackendError, EligibilityResponse]] {
+    eligibilityStore.put(correlationId, result, nino).map[Either[ApiBackendError, EligibilityResponse]] {
       res ⇒
         res.fold[Either[ApiBackendError, EligibilityResponse]](
           error ⇒ {
@@ -335,7 +334,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
 
     }
 
-  private def validateCorrelationId(cId: UUID)(implicit ec: ExecutionContext): Future[Either[ApiError, EligibilityResponse]] =
+  private def validateCorrelationId(cId: UUID, nino: String)(implicit ec: ExecutionContext): Future[Either[ApiError, EligibilityResponse]] =
     eligibilityStore.get(cId).map[Either[ApiError, EligibilityResponse]] {
       res ⇒
         res.fold(
@@ -344,14 +343,19 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
             Left(ApiBackendError())
           }, {
             case None ⇒ Left(ApiValidationError(s"requestCorrelationId($cId) is not valid"))
-            case Some(eligibility) ⇒
+            case Some(EligibilityResponseWithNINO(eligibility, n)) ⇒
               eligibility match {
                 case a: ApiEligibilityResponse ⇒
-                  if (a.eligibility.isEligible) {
-                    Right(a)
+                  if (nino === n) {
+                    if (a.eligibility.isEligible) {
+                      Right(a)
+                    } else {
+                      Left(ApiValidationError(s"invalid api createAccount request, user is not eligible"))
+                    }
                   } else {
-                    Left(ApiValidationError(s"invalid api createAccount request, user is not eligible"))
+                    Left(ApiValidationError(s"nino was not compatible with correlation Id"))
                   }
+
                 case b: AccountAlreadyExists ⇒ Right(b)
               }
           }

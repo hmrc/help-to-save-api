@@ -45,8 +45,8 @@ object EligibilityResponse {
         case Some(eligibilityResponse) ⇒ JsSuccess(eligibilityResponse)
         case None ⇒
           json.\ ("accountExists").asOpt[Boolean] match {
-            case Some(true)  ⇒ JsSuccess(AccountAlreadyExists())
-            case _ ⇒ JsError(s"couldn't parse eligibility json from mongo, json=$json")
+            case Some(true) ⇒ JsSuccess(AccountAlreadyExists())
+            case _          ⇒ JsError(s"couldn't parse eligibility json from mongo, json=$json")
           }
       }
     }
