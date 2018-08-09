@@ -1,5 +1,7 @@
 {
   "accountNumber": "1100000000001",
   "headroom": 40.00,
-  "closed": false
+  "closed": false,
+  "blockedFromPayment": false,
+  "balance": 123.45
 }
