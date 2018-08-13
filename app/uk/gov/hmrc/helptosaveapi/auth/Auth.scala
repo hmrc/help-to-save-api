@@ -38,8 +38,8 @@ class Auth(val authConnector: AuthConnector) extends BaseController with Authori
     }
 
   def handleFailure(): PartialFunction[Throwable, Result] = {
-    case _: NoActiveSession ⇒
-      logger.warn("no logged in session was found for api user")
+    case e: NoActiveSession ⇒
+      logger.warn(s"no active session was found for api user, reason: ${e.reason}")
       Unauthorized
 
     case e: InternalError ⇒
