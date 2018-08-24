@@ -18,12 +18,14 @@ package uk.gov.hmrc.helptosaveapi.validators
 
 import cats.data.ValidatedNel
 import cats.instances.list._
+import cats.instances.string._
 import cats.syntax.apply._
+import cats.syntax.eq._
 import cats.syntax.traverse._
 import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc.{Headers, Request}
-import uk.gov.hmrc.helptosaveapi.util.{Logging, ValidatedOrErrorString}
 import uk.gov.hmrc.helptosaveapi.util.Validation._
+import uk.gov.hmrc.helptosaveapi.util.{Logging, ValidatedOrErrorString}
 
 class APIHttpHeaderValidator extends Logging {
 
@@ -34,8 +36,8 @@ class APIHttpHeaderValidator extends Logging {
     contentType ⇒ s"content type was not JSON: ${contentType.getOrElse("")}")
 
   def acceptCheck(implicit request: Request[_]): ValidatedOrErrorString[Headers] = validationFromBoolean(request.headers)(
-    _.get(HeaderNames.ACCEPT).exists(expectedAcceptTypes.contains(_)),
-    _ ⇒ s"accept did not contain one of expected mime types: '${expectedAcceptTypes.mkString(", ")}'")
+    _.get(HeaderNames.ACCEPT).exists(_ === expectedAcceptType),
+    _ ⇒ s"accept header should match: '$expectedAcceptType'")
 
   def txmHeadersCheck(implicit request: Request[_]): ValidatedOrErrorString[List[String]] = {
     val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(expectedKey ⇒
@@ -71,6 +73,6 @@ object APIHttpHeaderValidator {
     "Gov-Vendor-Instance-ID"
   )
 
-  private val expectedAcceptTypes: List[String] = List("application/vnd.hmrc.1.0+json", "application/vnd.hmrc.2.0+json")
+  private val expectedAcceptType: String = "application/vnd.hmrc.2.0+json"
 
 }

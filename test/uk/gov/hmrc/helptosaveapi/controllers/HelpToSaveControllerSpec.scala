@@ -27,7 +27,6 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
@@ -136,26 +135,6 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
           status(result) shouldBe FORBIDDEN
           contentAsJson(result) shouldBe Json.toJson(ApiAccessError())
-        }
-
-        "change the error JSON format if the API call is v1.0" in {
-          val (errorCode, errorMessage) = "CODE" → "message"
-          val request = fakeRequest.withHeaders(HeaderNames.ACCEPT → "application/vnd.hmrc.1.0+json")
-
-          List[ApiError](
-            ApiBackendError(errorCode, errorMessage),
-            ApiValidationError(errorCode, errorMessage),
-            ApiAccessError(errorCode, errorMessage)
-          ).foreach { e ⇒
-              inSequence {
-                mockAuthResultWithSuccess(Retrievals.authProviderId)(privilegedCredentials)
-                mockCreateAccountPrivileged(request)(Left(e))
-              }
-
-              val result = controller.createAccount()(request)
-              contentAsJson(result) shouldBe Json.toJson(CreateAccountErrorOldFormat(errorCode, "error", errorMessage))
-            }
-
         }
       }
 
@@ -279,29 +258,6 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
           status(result) shouldBe FORBIDDEN
           contentAsJson(result) shouldBe Json.toJson(ApiAccessError())
-        }
-
-        "change the error JSON format if the API call is v1.0" in {
-          val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
-          val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
-          val (errorCode, errorMessage) = "CODE" → "message"
-          val request = fakeRequest.withHeaders(HeaderNames.ACCEPT → "application/vnd.hmrc.1.0+json")
-
-          List[ApiError](
-            ApiBackendError(errorCode, errorMessage),
-            ApiValidationError(errorCode, errorMessage),
-            ApiAccessError(errorCode, errorMessage)
-          ).foreach { e ⇒
-              inSequence {
-                mockAuthResultWithSuccess(Retrievals.authProviderId)(ggCredentials)
-                mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-                mockCreateAccountUserRestricted(request, retrievedUserDetails)(Left(e))
-              }
-
-              val result = controller.createAccount()(request)
-              contentAsJson(result) shouldBe Json.toJson(CreateAccountErrorOldFormat(errorCode, "error", errorMessage))
-            }
-
         }
       }
 

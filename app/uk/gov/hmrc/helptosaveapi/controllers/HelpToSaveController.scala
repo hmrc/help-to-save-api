@@ -24,15 +24,12 @@ import cats.syntax.eq._
 import com.google.inject.Inject
 import org.joda.time.{LocalDate ⇒ JodaLocalDate}
 import play.api.Configuration
-import play.api.http.HeaderNames
-import play.api.libs.json.{Format, JsValue, Json}
 import play.api.libs.json.Json._
+import play.api.libs.json.{Format, Json}
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.auth.core.retrieve.{Name ⇒ RetrievedName}
+import uk.gov.hmrc.auth.core.retrieve.{Name ⇒ RetrievedName, _}
 import uk.gov.hmrc.helptosaveapi.auth.Auth
-import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
 import uk.gov.hmrc.helptosaveapi.models.AccessType.{PrivilegedAccess, UserRestricted}
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
@@ -57,23 +54,14 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
       Retrievals.email
 
   def createAccount(): Action[AnyContent] = authorised(Retrievals.authProviderId) { implicit request ⇒ credentials ⇒
-    def toJson(error: ApiError)(implicit request: Request[_]): JsValue = {
-        if (request.headers.get(HeaderNames.ACCEPT).exists(_.contains("1.0"))) {
-          // use old format for errors if API call is for is v1.0
-          Json.toJson(CreateAccountErrorOldFormat(error))
-        } else {
-          Json.toJson(error)
-        }
-      }
-
-      def toJavaDate(jodaDate: JodaLocalDate): LocalDate =
+    def toJavaDate(jodaDate: JodaLocalDate): LocalDate =
         LocalDate.of(jodaDate.getYear, jodaDate.getMonthOfYear, jodaDate.getDayOfMonth)
 
       def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
         result match {
-          case Left(e: ApiAccessError)                        ⇒ Forbidden(toJson(e))
-          case Left(a: ApiValidationError)                    ⇒ BadRequest(toJson(a))
-          case Left(b: ApiBackendError)                       ⇒ InternalServerError(toJson(b))
+          case Left(e: ApiAccessError)                        ⇒ Forbidden(Json.toJson(e))
+          case Left(a: ApiValidationError)                    ⇒ BadRequest(Json.toJson(a))
+          case Left(b: ApiBackendError)                       ⇒ InternalServerError(Json.toJson(b))
           case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒ if (alreadyHadAccount) { Conflict } else { Created }
         }
 
@@ -194,18 +182,4 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
 
   val unsupportedCredentialsProviderResult: Result =
     Forbidden(Json.toJson(ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised")))
-}
-
-object HelpToSaveController {
-
-  case class CreateAccountErrorOldFormat(errorMessageId: String, errorMessage: String, errorDetail: String)
-
-  object CreateAccountErrorOldFormat {
-
-    def apply(apiError: ApiError): CreateAccountErrorOldFormat = CreateAccountErrorOldFormat(apiError.code, "error", apiError.message)
-
-    implicit val format: Format[CreateAccountErrorOldFormat] = Json.format[CreateAccountErrorOldFormat]
-
-  }
-
 }
