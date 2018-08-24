@@ -33,12 +33,11 @@ import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccou
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
-import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
-import uk.gov.hmrc.helptosaveapi.models
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountFieldSpec.TestCreateAccountRequest
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.CreateAccountErrorResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -582,8 +581,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle 400 responses" in {
-        val error = CreateAccountErrorOldFormat("", "", "details")
-        val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(error)))
+        val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(CreateAccountErrorResponse("error", "details"))), Map.empty, None)
 
         inSequence {
           mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))

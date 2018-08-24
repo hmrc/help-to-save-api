@@ -11,14 +11,8 @@
       "requiresTrust": false,
       "versions":[
         {
-          "version":"1.0",
-          "status":"STABLE",
-          "access":@Json.toJson(access("""1.0""")),
-          "endpointsEnabled":@enabled("""1.0""")
-        },
-        {
           "version":"2.0",
-          "status":"BETA",
+          "status":"STABLE",
           "access":@Json.toJson(access("""2.0""")),
           "endpointsEnabled":@enabled("""2.0""")
         }

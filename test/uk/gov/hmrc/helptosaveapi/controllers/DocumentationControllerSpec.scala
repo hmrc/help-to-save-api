@@ -33,12 +33,9 @@ class DocumentationControllerSpec extends TestSupport {
   val whiteList: List[String] = List("abc", "def")
 
   val configuration: Configuration = Configuration(
-    "api.access.version-1.0.type" → access,
-    "api.access.version-1.0.whitelistedApplicationIds" → whiteList,
-    "api.access.version-1.0.enabled" → true,
     "api.access.version-2.0.type" → access,
     "api.access.version-2.0.whitelistedApplicationIds" → whiteList,
-    "api.access.version-2.0.enabled" → false
+    "api.access.version-2.0.enabled" → true
   )
   val controller = new DocumentationController(httpErrorHandler, configuration)
 
@@ -50,15 +47,15 @@ class DocumentationControllerSpec extends TestSupport {
 
       status(result) shouldBe OK
       contentAsJson(result) shouldBe Json.parse(
-        uk.gov.hmrc.helptosaveapi.views.txt.definition(apiAccess, _ === "1.0").body
+        uk.gov.hmrc.helptosaveapi.views.txt.definition(apiAccess, _ === "2.0").body
       )
     }
   }
 
   "raml" must {
     "return the raml documentation when called" in {
-      val result: Future[Result] = controller.raml("1.0", "application.raml")(FakeRequest())
-      val raml = Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/1.0/application.raml")).mkString
+      val result: Future[Result] = controller.raml("2.0", "application.raml")(FakeRequest())
+      val raml = Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/2.0/application.raml")).mkString
       status(result) shouldBe OK
       contentAsString(result) shouldBe raml
     }

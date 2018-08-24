@@ -33,14 +33,13 @@ import play.api.libs.json._
 import play.api.mvc.{AnyContent, Request}
 import play.mvc.Http.Status
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
-import uk.gov.hmrc.helptosaveapi.controllers.HelpToSaveController.CreateAccountErrorOldFormat
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
-import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCheckResponse
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.{CreateAccountErrorResponse, EligibilityCheckResponse}
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
@@ -194,14 +193,15 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
           Right(CreateAccountSuccess(alreadyHadAccount = true))
 
         case Status.BAD_REQUEST ⇒
-          logger.warn(s"validation of create account request failed: ${request.body}", body.nino, correlationIdHeader)
-          val error = response.parseJson[CreateAccountErrorOldFormat].fold({
+          logger.warn("validation of api create account request failed", body.nino, correlationIdHeader)
+          val error = response.parseJson[CreateAccountErrorResponse].fold({
             e ⇒
               logger.warn(s"Create account response body was in unexpected format: $e")
               ApiValidationError("request contained invalid or missing details")
           }, { e ⇒
             ApiValidationError(e.errorDetail)
           })
+
           Left(error)
 
         case other: Int ⇒
@@ -423,6 +423,17 @@ object HelpToSaveApiServiceImpl {
       }
 
     // scalastyle:on magic.number
+
+  }
+
+  case class CreateAccountErrorResponse(errorMessage: String, errorDetail: String)
+
+  object CreateAccountErrorResponse {
+    implicit val format: Format[CreateAccountErrorResponse] = Json.format[CreateAccountErrorResponse]
+
+    implicit class CreateAccountErrorResponseOps(val errorResponse: CreateAccountErrorResponse) extends AnyVal {
+      def toJson(): JsValue = format.writes(errorResponse)
+    }
 
   }
 
