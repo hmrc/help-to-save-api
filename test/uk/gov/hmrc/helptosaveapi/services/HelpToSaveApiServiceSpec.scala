@@ -37,6 +37,7 @@ import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountFieldSpec.Tes
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.CreateAccountErrorResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -580,7 +581,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle 400 responses" in {
-        val response = HttpResponse(BAD_REQUEST, None, Map.empty, Some("details"))
+        val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(CreateAccountErrorResponse("error", "details"))), Map.empty, None)
 
         inSequence {
           mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
@@ -591,7 +592,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         val result = await(service.createAccountPrivileged(fakeRequestWithBody))
-        result shouldBe Left(ApiValidationError("request contained invalid or missing details"))
+        result shouldBe Left(ApiValidationError("details"))
       }
 
       "handle 400 responses with unrecognised JSON response format" in {
