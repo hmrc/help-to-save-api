@@ -20,15 +20,11 @@ import java.util.UUID
 
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
-import play.api.libs.json.{JsValue, Json}
-import reactivemongo.core.commands.LastError
-import uk.gov.hmrc.cache.model.{Cache, Id}
 import uk.gov.hmrc.helptosaveapi.models.{AccountAlreadyExists, ApiEligibilityResponse, Eligibility}
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
-import uk.gov.hmrc.mongo.{DatabaseUpdate, Saved}
 
-class EligibilityStoreSpec extends TestSupport with MongoTestSupport[Eligibility, EligibilityStore] {
+class EligibilityStoreSpec extends TestSupport with MongoSupport {
 
   val conf = Configuration(
     ConfigFactory.parseString(
@@ -37,16 +33,9 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport[Eligibility
       """.stripMargin)
   )
 
-  override def newMongoStore() = new MongoEligibilityStore(conf, mockMongo) {
-
-    override private[repo] def doCreateOrUpdate(id: Id, key: String, toCache: JsValue) =
-      mockDBFunctions.doCreateOrUpdate(id, key, toCache)
-
-    override private[repo] def doFindById(id: Id) =
-      mockDBFunctions.doFindById(id)
-  }
-
   "The EligibilityStoreSpec" when {
+
+    val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
 
     val cId = UUID.randomUUID()
     val nino = "nino"
@@ -56,52 +45,38 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport[Eligibility
     "storing api eligibility" must {
 
       "store the eligibility result and return success result" in {
-
-        mockDoCreateOrUpdate(Id(cId.toString), "eligibility", Json.toJson(eligibilityWithNINO))(Right(DatabaseUpdate[Cache](LastError(true, None, None, None, None, 1, false), Saved[Cache](Cache(Id(cId.toString))))))
-        await(newMongoStore().put(cId, eligibility, nino)) shouldBe Right(())
+        await(store.put(UUID.randomUUID(), eligibility, nino)) shouldBe Right(())
       }
 
       "store the AccountAlreadyExists result and return success result" in {
-
-        mockDoCreateOrUpdate(Id(cId.toString), "eligibility", Json.toJson(EligibilityResponseWithNINO(AccountAlreadyExists(), nino)))(Right(DatabaseUpdate[Cache](LastError(true, None, None, None, None, 1, false), Saved[Cache](Cache(Id(cId.toString))))))
-        await(newMongoStore().put(cId, AccountAlreadyExists(), nino)) shouldBe Right(())
+        await(store.put(UUID.randomUUID(), AccountAlreadyExists(), nino)) shouldBe Right(())
       }
 
       "handle unexpected future failures" in {
-        mockDoCreateOrUpdate(Id(cId.toString), "eligibility", Json.toJson(eligibilityWithNINO))(Left("error"))
-        await(newMongoStore().put(cId, eligibility, nino)) shouldBe Left("error")
+        withBrokenMongo { reactiveMongoComponent ⇒
+          val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
+          await(store.put(UUID.randomUUID(), eligibility, nino)) shouldBe Left("error")
+        }
       }
     }
 
     "getting api eligibility" must {
 
       "get the eligibility result and return success result" in {
-        val json =
-          s"""{
-             |  "eligibility" : {
-             |    "eligibilityResponse" : ${Json.toJson(eligibility)},
-             |    "nino" : "$nino"
-             |  }
-             }""".stripMargin
-        mockDoFindById(Id(cId.toString))(Right(Some(Cache(Id(cId.toString), Some(Json.parse(json))))))
-        await(newMongoStore().get(cId)) shouldBe Right(Some(eligibilityWithNINO))
+        await(store.put(cId, eligibility, nino))
+        await(store.get(cId)) shouldBe Right(Some(eligibilityWithNINO))
       }
 
       "be able to read the  AccountAlreadyExists result and return success result" in {
-        val json =
-          s"""{
-             |  "eligibility" : {
-             |    "eligibilityResponse" : ${Json.toJson(AccountAlreadyExists())},
-             |    "nino" : "$nino"
-             |  }
-             }""".stripMargin
-        mockDoFindById(Id(cId.toString))(Right(Some(Cache(Id(cId.toString), Some(Json.parse(json))))))
-        await(newMongoStore().get(cId)) shouldBe Right(Some(EligibilityResponseWithNINO(AccountAlreadyExists(), nino)))
+        await(store.put(cId, AccountAlreadyExists(), nino)) shouldBe Right(())
+        await(store.get(cId)) shouldBe Right(Some(EligibilityResponseWithNINO(AccountAlreadyExists(), nino)))
       }
 
       "handle unexpected future failures" in {
-        mockDoFindById(Id(cId.toString))(Left("error"))
-        await(newMongoStore().get(cId)) shouldBe Left("error")
+        withBrokenMongo { reactiveMongoComponent ⇒
+          val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
+          await(store.get(cId)) shouldBe Left("error")
+        }
       }
     }
   }
