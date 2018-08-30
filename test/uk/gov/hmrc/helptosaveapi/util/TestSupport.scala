@@ -27,7 +27,6 @@ import play.api.Configuration
 import play.api.http.HttpErrorHandler
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Writes
-import play.modules.reactivemongo.ReactiveMongoComponent
 import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.validators.EmailValidation
@@ -44,7 +43,7 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
         ConfigFactory.parseString(
           """
             | metrics.enabled       = false
-            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveapi.RegistrationModule" ]
+            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveapi.RegistrationModule", "play.modules.reactivemongo.ReactiveMongoHmrcModule" ]
           """.stripMargin)
       ))
       .build()
@@ -56,8 +55,6 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
   implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
 
   implicit lazy val config: Configuration = fakeApplication.injector.instanceOf[Configuration]
-
-  implicit lazy val reactiveMongoComponent: ReactiveMongoComponent = fakeApplication.injector.instanceOf[ReactiveMongoComponent]
 
   val http: WSHttp = mock[WSHttp]
 
