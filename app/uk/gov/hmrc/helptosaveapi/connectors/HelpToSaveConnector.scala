@@ -22,10 +22,11 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
 import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
-import uk.gov.hmrc.helptosaveapi.http.WSHttp
+import uk.gov.hmrc.helptosaveapi.http.HttpClient.HttpClientOps
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
 import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,7 +45,7 @@ trait HelpToSaveConnector {
 
 @Singleton
 class HelpToSaveConnectorImpl @Inject() (config: Configuration,
-                                         http:   WSHttp)(implicit transformer: LogMessageTransformer)
+                                         http:   HttpClient)(implicit transformer: LogMessageTransformer)
   extends HelpToSaveConnector with Logging {
 
   private val htsBaseUrl = {
@@ -55,26 +56,28 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   val createAccountUrl: String = s"$htsBaseUrl/create-account"
 
-  private def storeEmailURL(encodedEmail: String, nino: String) =
-    s"$htsBaseUrl/store-email?email=$encodedEmail&nino=$nino"
+  private val storeEmailURL = s"$htsBaseUrl/store-email"
 
   def eligibilityCheckUrl(nino: String): String = s"$htsBaseUrl/api/eligibility-check/$nino"
 
-  def getAccountUrl(nino: String, systemId: String, correlationId: String): String = s"$htsBaseUrl/$nino/account?systemId=$systemId&correlationId=$correlationId"
+  def getAccountUrl(nino: String): String = s"$htsBaseUrl/$nino/account"
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
+
+  private val emptyQueryParameters: Map[String, String] = Map.empty[String, String]
 
   override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.post(createAccountUrl, CreateAccountInfo(body, eligibilityReason, clientCode), Map(correlationIdHeaderName -> correlationId.toString))
 
   override def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(eligibilityCheckUrl(nino), Map(correlationIdHeaderName -> correlationId.toString))
+    http.get(eligibilityCheckUrl(nino), emptyQueryParameters, Map(correlationIdHeaderName -> correlationId.toString))
 
   override def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(getAccountUrl(nino, systemId, correlationId.toString), Map(correlationIdHeaderName -> correlationId.toString))
+    http.get(getAccountUrl(nino), Map("systemId" -> systemId, "correlationId" -> correlationId.toString), Map(correlationIdHeaderName -> correlationId.toString)
+    )
 
   override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(storeEmailURL(encodedEmail, nino), Map(correlationIdHeaderName -> correlationId.toString))
+    http.get(storeEmailURL, Map("email" -> encodedEmail, "nino" -> nino), Map(correlationIdHeaderName -> correlationId.toString))
 }
 
 object HelpToSaveConnectorImpl {

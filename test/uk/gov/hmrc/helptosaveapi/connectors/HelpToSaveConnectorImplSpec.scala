@@ -28,9 +28,9 @@ import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSuppor
 import uk.gov.hmrc.http.HttpResponse
 
 // scalastyle:off magic.number
-class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with GeneratorDrivenPropertyChecks with EitherValues {
+class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with GeneratorDrivenPropertyChecks with EitherValues with HttpSupport {
 
-  val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, http)
+  val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, mockHttp)
 
   "The HelpToSaveConnectorImpl" when {
 
@@ -64,7 +64,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
       "call correct url and return the response as is" in {
 
-        mockGet(eligibilityUrl, headers)(Some(HttpResponse(200, Some(json))))
+        mockGet(eligibilityUrl, emptyMap, headers)(Some(HttpResponse(200, Some(json))))
         val result = await(connector.checkEligibility(nino, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
@@ -73,7 +73,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
     "handling get account requests" must {
 
-      val getAccountUrl = s"http://localhost:7001/help-to-save/$nino/account?systemId=$systemId&correlationId=$correlationId"
+      val getAccountUrl = s"http://localhost:7001/help-to-save/$nino/account"
       val account =
         """{
            |"accountNumber":"1100000000001",
@@ -101,7 +101,7 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
       "call the correct url and return the response as is" in {
 
-        mockGet(getAccountUrl, headers)(Some(HttpResponse(200, Some(json))))
+        mockGet(getAccountUrl, Map("systemId" -> systemId, "correlationId" -> correlationId.toString), headers)(Some(HttpResponse(200, Some(json))))
         val result = await(connector.getAccount(nino, systemId, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
@@ -110,12 +110,12 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
     "handling store email requests" must {
 
-        def storeEmailUrl(encodedEmail: String, nino: String) = s"http://localhost:7001/help-to-save/store-email?email=$encodedEmail&nino=$nino"
+      val storeEmailUrl = "http://localhost:7001/help-to-save/store-email"
 
       "call the correct url and return the response as is" in {
         val email = base64Encode("email@email.com")
 
-        mockGet(storeEmailUrl(email, nino), headers)(Some(HttpResponse(200)))
+        mockGet(storeEmailUrl, Map("email" -> email, "nino" -> nino), headers)(Some(HttpResponse(200)))
         val result = await(connector.storeEmail(email, nino, correlationId))
         result.status shouldBe 200
       }

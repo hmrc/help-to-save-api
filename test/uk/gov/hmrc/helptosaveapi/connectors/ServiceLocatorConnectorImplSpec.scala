@@ -17,14 +17,11 @@
 package uk.gov.hmrc.helptosaveapi.connectors
 
 import play.api.{Configuration, Environment}
-import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveapi.models.Registration
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 import uk.gov.hmrc.http.HttpResponse
 
-import scala.concurrent.Future
-
-class ServiceLocatorConnectorImplSpec extends TestSupport {
+class ServiceLocatorConnectorImplSpec extends TestSupport with HttpSupport {
 
   val appName: String = "testApp"
   val appUrl: String = "www.test.com"
@@ -35,7 +32,7 @@ class ServiceLocatorConnectorImplSpec extends TestSupport {
     "appName" → appName,
     "appUrl" → appUrl)
 
-  lazy val connector = new ServiceLocatorConnectorImpl(configuration, http, fakeApplication.injector.instanceOf[Environment])
+  lazy val connector = new ServiceLocatorConnectorImpl(configuration, mockHttp, fakeApplication.injector.instanceOf[Environment])
 
   val registration = Registration(appName, appUrl, Some(Map("third-party-api" -> "true")))
 
