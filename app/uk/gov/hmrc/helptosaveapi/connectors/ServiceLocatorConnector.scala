@@ -17,15 +17,15 @@
 package uk.gov.hmrc.helptosaveapi.connectors
 
 import javax.inject.Inject
-
 import cats.instances.int._
 import cats.syntax.eq._
 import com.google.inject.{ImplementedBy, Singleton}
 import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.helptosaveapi.http.WSHttp
+import uk.gov.hmrc.helptosaveapi.http.HttpClient.HttpClientOps
 import uk.gov.hmrc.helptosaveapi.models.Registration
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,7 +38,7 @@ trait ServiceLocatorConnector {
 
 @Singleton
 class ServiceLocatorConnectorImpl @Inject() (config:      Configuration,
-                                             http:        WSHttp,
+                                             http:        HttpClient,
                                              environment: Environment) extends ServiceLocatorConnector with ServicesConfig {
 
   val mode: Mode = environment.mode

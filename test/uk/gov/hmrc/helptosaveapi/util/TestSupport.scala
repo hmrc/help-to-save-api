@@ -20,20 +20,17 @@ import akka.stream.Materializer
 import com.codahale.metrics.{Counter, Timer}
 import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
 import com.typesafe.config.ConfigFactory
-import org.scalamock.handlers.CallHandler6
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Writes
-import uk.gov.hmrc.helptosaveapi.http.WSHttp
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.validators.EmailValidation
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory with WithFakeApplication {
 
@@ -56,8 +53,6 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
 
   implicit lazy val config: Configuration = fakeApplication.injector.instanceOf[Configuration]
 
-  val http: WSHttp = mock[WSHttp]
-
   val httpErrorHandler: HttpErrorHandler = mock[HttpErrorHandler]
 
   val mockMetrics = new Metrics(stub[PlayMetrics]) {
@@ -73,18 +68,4 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
       "email-validation.max-total-length" → Int.MaxValue,
       "email-validation.max-local-length" → Int.MaxValue,
       "email-validation.max-domain-length" → Int.MaxValue))
-
-  def mockPost[A](expectedUrl:  String,
-                  expectedBody: A,
-                  headers:      Map[String, String])(response: Option[HttpResponse]): CallHandler6[String, A, Map[String, String], Writes[A], HeaderCarrier, ExecutionContext, Future[HttpResponse]] =
-    (http.post[A](_: String, _: A, _: Map[String, String])(_: Writes[A], _: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedUrl, expectedBody, headers, *, *, *)
-      .returning(response.fold(Future.failed[HttpResponse](new Exception("")))(Future.successful))
-
-  def mockGet[A](expectedUrl: String,
-                 headers:     Map[String, String])(response: Option[HttpResponse]) =
-    (http.get(_: String, _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(expectedUrl, headers, *, *)
-      .returning(response.fold(Future.failed[HttpResponse](new Exception("")))(Future.successful))
-
 }
