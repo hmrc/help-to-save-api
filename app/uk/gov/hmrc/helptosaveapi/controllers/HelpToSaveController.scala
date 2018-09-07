@@ -25,7 +25,7 @@ import com.google.inject.Inject
 import org.joda.time.{LocalDate ⇒ JodaLocalDate}
 import play.api.Configuration
 import play.api.libs.json.Json._
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.retrieve.{Name ⇒ RetrievedName, _}
@@ -34,13 +34,14 @@ import uk.gov.hmrc.helptosaveapi.models.AccessType.{PrivilegedAccess, UserRestri
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
-import uk.gov.hmrc.helptosaveapi.util.{WithMdcExecutionContext, toFuture}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, WithMdcExecutionContext, toFuture}
+import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
 class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiService,
-                                      override val authConnector: AuthConnector)(implicit config: Configuration)
+                                      override val authConnector: AuthConnector)(implicit config: Configuration, t: LogMessageTransformer)
   extends Auth(authConnector) with WithMdcExecutionContext {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
@@ -130,7 +131,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
               if (retrievedNino === urlNino) {
                 getEligibility(retrievedNino, correlationId)
               } else {
-                logger.warn(s"NINO from the api url doesn't match with auth retrieved nino, $correlationId")
+                logger.warn(s"NINO from the api url doesn't match with auth retrieved nino, $correlationId", s"retrieved NINO [$retrievedNino], request NINO $urlNino")
                 Forbidden
               }
             }
@@ -177,7 +178,6 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
         Forbidden
 
     }
-
   }
 
   val unsupportedCredentialsProviderResult: Result =
