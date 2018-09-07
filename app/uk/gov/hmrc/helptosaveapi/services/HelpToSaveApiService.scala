@@ -161,8 +161,8 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
             case Left(apiError) ⇒ Future.successful(Left(apiError))
           }
         } else {
-          val ninoString = s"retrievedNINO [$retrievedNINO], requestNINO [${body.nino}]"
-          logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth", ninoString)
+          logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth",
+            s"retrieved [$retrievedNINO], request [${body.nino}]")
           pagerDutyAlerting.alert("NINOs in create account request do not match")
           Left(ApiAccessError())
         }

@@ -131,7 +131,9 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
               if (retrievedNino === urlNino) {
                 getEligibility(retrievedNino, correlationId)
               } else {
-                logger.warn(s"NINO from the api url doesn't match with auth retrieved nino, $correlationId", s"retrieved NINO [$retrievedNino], request NINO $urlNino")
+                logger.warn(s"NINO from the api url doesn't match with auth retrieved nino",
+                  s"retrieved [$retrievedNino], request [$urlNino]",
+                  "CorrelationId" → correlationId.toString)
                 Forbidden
               }
             }
