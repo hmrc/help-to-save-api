@@ -65,7 +65,7 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     }
 
     val bankDetailsCheck: ValidatedOrErrorString[Option[BankDetails]] =
-      validationFromBoolean(body.bankDetails)(_.isEmpty, _ ⇒ "can not accept bank details in the request at the moment")
+      validationFromBoolean(body.nbaDetails)(_.isEmpty, _ ⇒ "can not accept bank details in the request at the moment")
 
     (forenameCheck, surnameCheck,
       communicationPreferenceCheck, registrationChannelCheck,

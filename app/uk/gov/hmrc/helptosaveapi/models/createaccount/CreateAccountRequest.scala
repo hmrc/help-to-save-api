@@ -16,13 +16,21 @@
 
 package uk.gov.hmrc.helptosaveapi.models.createaccount
 
-import play.api.libs.json.{Format, JsLookupResult, JsValue, Json}
+import play.api.libs.json._
 
 case class CreateAccountRequest(header: CreateAccountHeader, body: CreateAccountBody)
 
 object CreateAccountRequest {
 
-  implicit val format: Format[CreateAccountRequest] = Json.format[CreateAccountRequest]
+  implicit val writes: Writes[CreateAccountRequest] = Json.writes[CreateAccountRequest]
+
+  implicit val reads: Reads[CreateAccountRequest] = Reads[CreateAccountRequest]{ jsValue ⇒
+    println(jsValue.toString + "\n\n")
+    for {
+      header ← (jsValue \ "header").validate[CreateAccountHeader]
+      body ← (jsValue \ "body").validate[CreateAccountBody](CreateAccountBody.reads(header.clientCode))
+    } yield CreateAccountRequest(header, body)
+  }
 
   private def toOption(j: JsLookupResult): Option[JsValue] = j.toOption
 

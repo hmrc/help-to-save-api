@@ -120,12 +120,16 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   "The HelpToSaveApiService" when {
 
     val nino = "AE123456C"
-    val systemId = "MDTP"
+    val systemId = "MDTP-API-client"
+    val version = "2.0"
     val correlationId = UUID.randomUUID()
     val validEmail = "test@user.com"
 
     val fakeRequest = FakeRequest()
-    val createAccountRequest = DataGenerators.random(DataGenerators.validCreateAccountRequestGen)
+    val createAccountRequest = {
+      val request = DataGenerators.random(DataGenerators.validCreateAccountRequestGen)
+      request.withSystemID("MDTP-API-" + request.header.clientCode)
+    }
     val fakeRequestWithBody = FakeRequest().withJsonBody(Json.toJson(createAccountRequest))
 
     "handling user-restricted CreateAccount requests" must {
@@ -161,7 +165,10 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
                 None,
                 Some(validEmail)
               ),
-              registrationChannel
+              registrationChannel,
+              None,
+              version,
+              systemId
             )
           )
 
@@ -176,14 +183,19 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           Json.parse(
             s"""{
              |"header" : ${Json.toJson(createAccountHeader)},
-             |"body" : { "registrationChannel" : "$registrationChannel" }
+             |"body" : { "registrationChannel" : "$registrationChannel", "version" : "2.0" }
              |}""".stripMargin)
 
         def minimalJsonRequest(registrationChannel: String) =
           FakeRequest().withJsonBody(minimalJson(registrationChannel))
 
         def apiEligibilityResponseWithNINO(nino: String) = EligibilityResponseWithNINO(ApiEligibilityResponse(Eligibility(true, true, true), false), nino)
-      val onlineRequestWithEmail = createAccountRequest.withRegistrationChannel("online").withCommunicationsPreference("02").withEmail(Some(validEmail))
+
+      val onlineRequestWithEmail = createAccountRequest
+        .withRegistrationChannel("online")
+        .withCommunicationsPreference("02")
+        .withEmail(Some(validEmail))
+        .withSystemID("MDTP-API-" + createAccountRequest.header.clientCode)
       val fakeRequestWithOnlineRequestWithEmail = FakeRequest().withJsonBody(Json.toJson(onlineRequestWithEmail))
 
       "create an account with retrieved details" when {
@@ -817,6 +829,9 @@ object HelpToSaveApiServiceSpec {
 
     def withNINO(nino: String): CreateAccountRequest =
       r.copy(body = r.body.copy(nino = nino))
+
+    def withSystemID(systemId: String): CreateAccountRequest =
+      r.copy(body = r.body.copy(systemId = systemId))
   }
 
 }

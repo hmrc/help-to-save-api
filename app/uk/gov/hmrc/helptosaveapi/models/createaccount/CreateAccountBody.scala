@@ -31,7 +31,9 @@ case class CreateAccountBody(
     dateOfBirth:         LocalDate,
     contactDetails:      ContactDetails,
     registrationChannel: String,
-    bankDetails:         Option[BankDetails] = None
+    nbaDetails:          Option[BankDetails],
+    version:             String,
+    systemId:            String
 )
 
 object CreateAccountBody {
@@ -71,5 +73,19 @@ object CreateAccountBody {
   }
 
   implicit val format: Format[CreateAccountBody] = Json.format[CreateAccountBody]
+
+  def reads(clientCode: String): Reads[CreateAccountBody] = Reads[CreateAccountBody]{ jsValue ⇒
+    for {
+      nino ← (jsValue \ "nino").validate[String]
+      forename ← (jsValue \ "forename").validate[String]
+      surname ← (jsValue \ "surname").validate[String]
+      dateOfBirth ← (jsValue \ "dateOfBirth").validate[LocalDate]
+      contactDetails ← (jsValue \ "contactDetails").validate[ContactDetails]
+      registrationChannel ← (jsValue \ "registrationChannel").validate[String]
+      nbaDetails ← (jsValue \ "nbaDetails").validateOpt[BankDetails]
+      version ← (jsValue \ "version").validate[String]
+      systemId ← JsSuccess("MDTP-API-" + clientCode)
+    } yield CreateAccountBody(nino, forename, surname, dateOfBirth, contactDetails, registrationChannel, nbaDetails, version, systemId)
+  }
 
 }

@@ -27,11 +27,13 @@ object DataGenerators {
 
   def random[A](gen: Gen[A]): A = gen.sample.getOrElse(sys.error("Could not generate data"))
 
+  val clientCode = Gen.identifier.map(_.take(5))
+
   val createAccountHeaderGen: Gen[CreateAccountHeader] =
     for {
       version ← Gen.identifier
       date ← Gen.choose(0L, 100L).map(t ⇒ ZonedDateTime.ofInstant(Instant.ofEpochSecond(t), ZoneId.of("UTC")))
-      clientCode ← Gen.identifier
+      clientCode ← clientCode
       correlationId ← Gen.uuid
     } yield CreateAccountHeader(version, date, clientCode, correlationId)
 
@@ -57,7 +59,9 @@ object DataGenerators {
       dob ← Gen.choose(1L, 100L).map(LocalDate.ofEpochDay)
       contactDetails ← contactDetailsGen
       registrationChannel ← Gen.alphaStr
-    } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel)
+      version ← Gen.identifier
+      systemId ← clientCode.map(code ⇒ "MDTP-API-" + code)
+    } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel, None, version, systemId)
 
   val validCreateAccountRequestGen: Gen[CreateAccountRequest] =
     for {
