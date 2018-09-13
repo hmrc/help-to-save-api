@@ -95,14 +95,6 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
         def testIsInvalid(request: CreateAccountRequest): Unit =
           validator.validateRequest(request).isInvalid shouldBe true
 
-      "have bank details in the body" in {
-        testIsInvalid(
-          CreateAccountRequest(
-            validCreateAccountHeader,
-            validCreateAccountBody.copy(nbaDetails = Some(BankDetails("12345678", "01-01-23", "test user name", None)))
-          ))
-      }
-
       "have a phone number" which {
 
         "does not contain any digits" in {
