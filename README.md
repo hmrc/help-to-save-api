@@ -1,4 +1,4 @@
-# help-to-save-api 
+# help-to-save-api
 
 ### Testing the RAML documentation locally
 To test the RAML documentation, run this command to use service manager to start the prerequisite microservices:
