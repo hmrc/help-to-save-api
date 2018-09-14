@@ -32,7 +32,6 @@ case class CreateAccountBody(
     contactDetails:      ContactDetails,
     registrationChannel: String,
     nbaDetails:          Option[BankDetails],
-    version:             String,
     systemId:            String
 )
 
@@ -83,9 +82,8 @@ object CreateAccountBody {
       contactDetails ← (jsValue \ "contactDetails").validate[ContactDetails]
       registrationChannel ← (jsValue \ "registrationChannel").validate[String]
       nbaDetails ← (jsValue \ "nbaDetails").validateOpt[BankDetails]
-      version ← (jsValue \ "version").validate[String]
       systemId ← JsSuccess("MDTP-API-" + clientCode)
-    } yield CreateAccountBody(nino, forename, surname, dateOfBirth, contactDetails, registrationChannel, nbaDetails, version, systemId)
+    } yield CreateAccountBody(nino, forename, surname, dateOfBirth, contactDetails, registrationChannel, nbaDetails, systemId)
   }
 
 }

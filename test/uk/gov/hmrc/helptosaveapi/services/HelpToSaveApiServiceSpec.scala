@@ -121,7 +121,6 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
     val nino = "AE123456C"
     val systemId = "MDTP-API-client"
-    val version = "2.0"
     val correlationId = UUID.randomUUID()
     val validEmail = "test@user.com"
 
@@ -167,7 +166,6 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
               ),
               registrationChannel,
               None,
-              version,
               systemId
             )
           )

@@ -35,7 +35,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
   val validCreateAccountBody: CreateAccountBody =
     CreateAccountBody("", "forename", "surname", LocalDate.now(),
                                                  ContactDetails("", "", None, None, None, "", None, "00", Some("07841000000"), Some("test@gmail.com")),
-      "callCentre", None, "version", "systemId"
+      "callCentre", None, "systemId"
     )
 
   val validCreateAccountRequest: CreateAccountRequest = CreateAccountRequest(

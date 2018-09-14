@@ -59,9 +59,8 @@ object DataGenerators {
       dob ← Gen.choose(1L, 100L).map(LocalDate.ofEpochDay)
       contactDetails ← contactDetailsGen
       registrationChannel ← Gen.alphaStr
-      version ← Gen.identifier
       systemId ← clientCode.map(code ⇒ "MDTP-API-" + code)
-    } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel, None, version, systemId)
+    } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel, None, systemId)
 
   val validCreateAccountRequestGen: Gen[CreateAccountRequest] =
     for {
