@@ -39,7 +39,9 @@ class CreateAccountBodySpec extends TestSupport {
              |     "countryCode" : "country",
              |     "communicationPreference" : "preference"
              | },
-             | "registrationChannel" : "channel"
+             | "registrationChannel" : "channel",
+             | "version" : "2.0",
+             | "systemId" : "MDTP-API-ClientID"
              |}
            """.stripMargin
 
