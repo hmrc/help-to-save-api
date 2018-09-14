@@ -23,6 +23,7 @@ import scala.concurrent.ExecutionContext
 
 trait WithMdcExecutionContext {
 
-  implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext = MdcLoggingExecutionContext.fromLoggingDetails
+  implicit def mdcExecutionContext(implicit loggingDetails: LoggingDetails): ExecutionContext =
+    MdcLoggingExecutionContext.fromLoggingDetails
 
 }

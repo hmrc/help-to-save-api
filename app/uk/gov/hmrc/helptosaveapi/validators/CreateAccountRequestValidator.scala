@@ -64,14 +64,10 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
       validationFromBoolean(body)(checkEmail, _ ⇒ "invalid email provided with communicationPreference = 02")
     }
 
-    val bankDetailsCheck: ValidatedOrErrorString[Option[BankDetails]] =
-      validationFromBoolean(body.bankDetails)(_.isEmpty, _ ⇒ "can not accept bank details in the request at the moment")
-
     (forenameCheck, surnameCheck,
       communicationPreferenceCheck, registrationChannelCheck,
       phoneNumberValidation(body.contactDetails.phoneNumber),
-      emailCheck,
-      bankDetailsCheck).mapN { case _ ⇒ body }
+      emailCheck).mapN { case _ ⇒ body }
   }
 
   private val versionRegex: String ⇒ Matcher = "^(\\d\\.)+\\d+$".r.pattern.matcher _

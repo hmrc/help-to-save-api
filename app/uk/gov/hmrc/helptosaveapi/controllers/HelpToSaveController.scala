@@ -119,7 +119,6 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
 
   def checkEligibility(urlNino: String): Action[AnyContent] = authorised(Retrievals.authProviderId) { implicit request ⇒ credentials ⇒
     val correlationId = UUID.randomUUID()
-
     val result: Future[Result] =
       AccessType.fromLegacyCredentials(credentials) match {
         case Right(UserRestricted) ⇒
