@@ -82,7 +82,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
 object HelpToSaveConnectorImpl {
 
-  case class CreateAccountInfo(userInfo: CreateAccountBody, eligibilityReason: Int, source: String)
+  case class CreateAccountInfo(payload: CreateAccountBody, eligibilityReason: Int, source: String)
 
   implicit val createAccountInfoFormat: Format[CreateAccountInfo] = Json.format[CreateAccountInfo]
 }

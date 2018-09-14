@@ -34,7 +34,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
 
   val validCreateAccountBody: CreateAccountBody =
     CreateAccountBody("", "forename", "surname", LocalDate.now(),
-                                                 ContactDetails("", "", None, None, None, "", None, "00", Some("07841000000"), Some("test@gmail.com")), "callCentre"
+                                                 ContactDetails("", "", None, None, None, "", None, "00", Some("07841000000"), Some("test@gmail.com")),
+      "callCentre", None, "systemId"
     )
 
   val validCreateAccountRequest: CreateAccountRequest = CreateAccountRequest(
@@ -93,14 +94,6 @@ class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDriven
 
         def testIsInvalid(request: CreateAccountRequest): Unit =
           validator.validateRequest(request).isInvalid shouldBe true
-
-      "have bank details in the body" in {
-        testIsInvalid(
-          CreateAccountRequest(
-            validCreateAccountHeader,
-            validCreateAccountBody.copy(bankDetails = Some(BankDetails("12345678", "01-01-23", "test user name", None)))
-          ))
-      }
 
       "have a phone number" which {
 
