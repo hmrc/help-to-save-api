@@ -13,7 +13,7 @@ val appName = "help-to-save-api"
 val dependencies = Seq(
   ws,
   "org.typelevel" %% "cats-core" % "1.1.0",
-  "uk.gov.hmrc" %% "bootstrap-play-25" % "1.7.0",
+  "uk.gov.hmrc" %% "bootstrap-play-25" % "3.5.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
   "uk.gov.hmrc" %% "auth-client" % "2.6.0",
   "uk.gov.hmrc" %% "mongo-caching" % "5.4.0",
