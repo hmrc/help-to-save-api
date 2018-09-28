@@ -22,9 +22,10 @@ import cats.syntax.eq._
 import com.google.inject.{ImplementedBy, Singleton}
 import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.helptosaveapi.http.HttpClient
+import uk.gov.hmrc.helptosaveapi.http.HttpClient.HttpClientOps
 import uk.gov.hmrc.helptosaveapi.models.Registration
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.{ExecutionContext, Future}
