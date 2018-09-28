@@ -19,41 +19,32 @@ package uk.gov.hmrc.helptosaveapi.connectors
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers
 import play.api.libs.json.Writes
-import play.api.libs.ws.WSClient
-import uk.gov.hmrc.helptosaveapi.http.HttpClient
-import uk.gov.hmrc.helptosaveapi.util.TestSupport
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait HttpSupport {
-  this: MockFactory with TestSupport with Matchers ⇒
+trait HttpSupport { this: MockFactory with Matchers ⇒
+
+  val mockHttp: HttpClient = mock[HttpClient]
 
   val emptyMap: Map[String, String] = Map.empty
 
-  private val mockAuditor = mock[AuditConnector]
-  private val mockWsClient = mock[WSClient]
-
-  class FakedHttpClient extends HttpClient(mockAuditor, config, mockWsClient)
-
-  val mockHttp: HttpClient = mock[FakedHttpClient]
-
-  def mockGet(url: String, queryParams: Map[String, String] = emptyMap, headers: Map[String, String] = emptyMap)(response: Option[HttpResponse]) =
-    (mockHttp.get(_: String, _: Map[String, String], _: Map[String, String])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(where { (u: String, q: Map[String, String], h: Map[String, String], hc: HeaderCarrier, _: ExecutionContext) ⇒
+  def mockGet[A](url: String, queryParams: Map[String, String] = emptyMap, headers: Map[String, String] = emptyMap)(response: Option[A]) =
+    (mockHttp.GET(_: String, _: Seq[(String, String)])(_: HttpReads[A], _: HeaderCarrier, _: ExecutionContext))
+      .expects(where{ (u: String, q: Seq[(String, String)], _: HttpReads[A], h: HeaderCarrier, _: ExecutionContext) ⇒
         // use matchers here to get useful error messages when the following predicates
         // are not satisfied - otherwise it is difficult to tell in the logs what went wrong
         u shouldBe url
-        q shouldBe queryParams
-        h shouldBe headers
+        q shouldBe queryParams.toSeq
+        h.extraHeaders shouldBe headers.toSeq
         true
       })
-      .returning(response.fold(Future.failed[HttpResponse](new Exception("Test exception message")))(Future.successful))
+      .returning(response.fold(Future.failed[A](new Exception("Test exception message")))(Future.successful))
 
   def mockPost[A](url: String, body: A, headers: Map[String, String])(result: Option[HttpResponse]): Unit =
-    (mockHttp.post(_: String, _: A, _: Map[String, String])(_: Writes[A], _: HeaderCarrier, _: ExecutionContext))
-      .expects(url, body, headers, *, *, *)
+    (mockHttp.POST(_: String, _: A, _: Seq[(String, String)])(_: Writes[A], _: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext))
+      .expects(url, body, headers.toSeq, *, *, *, *)
       .returning(result.fold[Future[HttpResponse]](Future.failed(new Exception("Test exception message")))(Future.successful))
 
 }
