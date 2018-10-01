@@ -2,6 +2,7 @@
 
 ### Testing the RAML documentation locally   
 To test the RAML documentation, run this command to use service manager to start the prerequisite microservices:
+
 ```
 sm --start API_DOCUMENTATION API_DOCUMENTATION_FRONTEND SERVICE_LOCATOR THIRD_PARTY_DEVELOPER_FRONTEND API_DEFINITION ASSETS_FRONTEND -f
 ```
