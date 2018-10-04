@@ -206,7 +206,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
           Left(error)
 
         case other: Int ⇒
-          logger.warn(s"Received unexpected http status in response to create account, status=$other, body=${request.body}", body.nino, correlationIdHeader)
+          logger.warn(s"Received unexpected http status in response to create account, status=$other", body.nino, correlationIdHeader)
           pagerDutyAlerting.alert("Received unexpected http status in response to create account")
           Left(ApiBackendError())
       }
@@ -246,7 +246,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
 
                 case other: Int ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
-                  logger.warn(s"Call to check eligibility returned status: $other, with response body: ${response.body}", nino, correlationIdHeader)
+                  logger.warn(s"Call to check eligibility returned status: $other", nino, correlationIdHeader)
                   pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check: $other")
                   Left(ApiBackendError())
 
@@ -301,7 +301,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
                   logger.warn(s"NS&I have returned a status of NOT FOUND, response body: ${response.body}")
                   Right(None)
                 case other ⇒
-                  logger.warn(s"An error occurred when trying to get the account via the connector, status: $other and body: ${response.body}")
+                  logger.warn(s"An error occurred when trying to get the account via the connector, status: $other")
                   Left(ApiBackendError())
               }
           }.recover {
