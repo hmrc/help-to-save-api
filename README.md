@@ -5,7 +5,7 @@ To test the RAML documentation, run this command to use service manager to start
 
 ```
 sm --start API_DOCUMENTATION API_DOCUMENTATION_FRONTEND SERVICE_LOCATOR THIRD_PARTY_DEVELOPER_FRONTEND API_DEFINITION ASSETS_FRONTEND -f
-```
+``` 
 
 then start up `help-to-save-api` on port `7004`. Go to `http://127.0.0.1:9680/api-documentation/docs/api`
 and go to `PreviewRAML` on the left. In the box to enter the URL put in `http://127.0.0.1:7004/api/conf/1.0/application.raml`.
