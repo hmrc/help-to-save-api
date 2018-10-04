@@ -49,9 +49,10 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
   extends HelpToSaveConnector with Logging {
 
   private val htsBaseUrl = {
+    val protocol = config.underlying.getString("microservice.services.help-to-save.protocol")
     val host = config.underlying.getString("microservice.services.help-to-save.host")
     val port = config.underlying.getInt("microservice.services.help-to-save.port")
-    s"http://$host:$port/help-to-save"
+    s"$protocol://$host:$port/help-to-save"
   }
 
   val createAccountUrl: String = s"$htsBaseUrl/create-account"
