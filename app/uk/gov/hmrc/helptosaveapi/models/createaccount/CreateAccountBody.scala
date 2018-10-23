@@ -71,7 +71,7 @@ object CreateAccountBody {
     Format[LocalDate](localDateReads(formatter), temporalWrites[LocalDate, DateTimeFormatter](formatter))
   }
 
-  implicit val format: Format[CreateAccountBody] = Json.format[CreateAccountBody]
+  implicit val writes: Writes[CreateAccountBody] = Json.writes[CreateAccountBody]
 
   def reads(clientCode: String): Reads[CreateAccountBody] = Reads[CreateAccountBody]{ jsValue ⇒
     for {
@@ -81,7 +81,7 @@ object CreateAccountBody {
       dateOfBirth ← (jsValue \ "dateOfBirth").validate[LocalDate]
       contactDetails ← (jsValue \ "contactDetails").validate[ContactDetails]
       registrationChannel ← (jsValue \ "registrationChannel").validate[String]
-      nbaDetails ← (jsValue \ "nbaDetails").validateOpt[BankDetails]
+      nbaDetails ← (jsValue \ "bankDetails").validateOpt[BankDetails]
       systemId ← JsSuccess("MDTP-API-" + clientCode)
     } yield CreateAccountBody(nino, forename, surname, dateOfBirth, contactDetails, registrationChannel, nbaDetails, systemId)
   }

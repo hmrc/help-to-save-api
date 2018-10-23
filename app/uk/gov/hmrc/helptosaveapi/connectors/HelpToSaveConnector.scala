@@ -20,7 +20,7 @@ import java.util.UUID
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.http.HttpClient.HttpClientOps
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
@@ -85,5 +85,5 @@ object HelpToSaveConnectorImpl {
 
   case class CreateAccountInfo(payload: CreateAccountBody, eligibilityReason: Int, source: String)
 
-  implicit val createAccountInfoFormat: Format[CreateAccountInfo] = Json.format[CreateAccountInfo]
+  implicit val createAccountInfoWrites: Writes[CreateAccountInfo] = Json.writes[CreateAccountInfo]
 }

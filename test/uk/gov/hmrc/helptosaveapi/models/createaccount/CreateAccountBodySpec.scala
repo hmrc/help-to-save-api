@@ -16,7 +16,10 @@
 
 package uk.gov.hmrc.helptosaveapi.models.createaccount
 
+import java.time.LocalDate
+
 import play.api.libs.json.{JsError, JsSuccess, Json}
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
 class CreateAccountBodySpec extends TestSupport {
@@ -35,17 +38,34 @@ class CreateAccountBodySpec extends TestSupport {
              | "contactDetails" : {
              |     "address1" : "1",
              |     "address2" : "2",
+             |     "address3" : "3",
+             |     "address4" : "4",
+             |     "address5" : "5",
              |     "postcode": "postcode",
              |     "countryCode" : "country",
-             |     "communicationPreference" : "preference"
+             |     "communicationPreference" : "preference",
+             |     "email" : "email"
              | },
              | "registrationChannel" : "channel",
-             | "version" : "2.0",
-             | "systemId" : "MDTP-API-ClientID"
+             | "bankDetails": {
+             |    "accountNumber": "123",
+             |    "sortCode": "123456",
+             |    "accountName": "accountName",
+             |    "rollNumber": "rollNumber"
+             |  }
              |}
            """.stripMargin
 
-        Json.parse(jsonString("\"19920423\"")).validate[CreateAccountBody] shouldBe a[JsSuccess[_]]
+        val reads = CreateAccountBody.reads("code")
+
+        Json.parse(jsonString("\"19920423\"")).validate[CreateAccountBody](reads) shouldBe JsSuccess(
+          CreateAccountBody(
+            "nino", "name", "surname",
+            LocalDate.of(1992, 4, 23),
+            ContactDetails("1", "2", Some("3"), Some("4"), Some("5"), "postcode", Some("country"), "preference", None, Some("email")),
+            "channel", Some(BankDetails("123", "123456", "accountName", Some("rollNumber"))),
+            "MDTP-API-code"
+          ))
 
         List(
           "\"1992-04-23\"",
@@ -53,7 +73,7 @@ class CreateAccountBodySpec extends TestSupport {
           "\"23-04-1992\"",
           "true"
         ).foreach(s ⇒
-            Json.parse(jsonString(s)).validate[CreateAccountBody] shouldBe a[JsError]
+            Json.parse(jsonString(s)).validate[CreateAccountBody](reads) shouldBe a[JsError]
           )
       }
 
