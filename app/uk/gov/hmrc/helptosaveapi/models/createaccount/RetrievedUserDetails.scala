@@ -24,11 +24,11 @@ case class RetrievedUserDetails(
     forename:    Option[String],
     surname:     Option[String],
     dateOfBirth: Option[LocalDate],
-    address:     ItmpAddress,
+    address:     Option[ItmpAddress],
     email:       Option[String]
 )
 
 object RetrievedUserDetails {
   def empty(): RetrievedUserDetails =
-    RetrievedUserDetails(None, None, None, None, ItmpAddress(None, None, None, None, None, None, None, None), None)
+    RetrievedUserDetails(None, None, None, None, None, None)
 }

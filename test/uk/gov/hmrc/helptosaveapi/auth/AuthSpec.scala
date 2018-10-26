@@ -20,7 +20,8 @@ import play.api.http.Status
 import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AuthorisationException.fromString
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, Retrievals, ~}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, nino ⇒ v2Nino}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.helptosaveapi.util.AuthSupport
 
 import scala.concurrent.duration._
@@ -30,7 +31,7 @@ class AuthSpec extends AuthSupport {
 
   val auth = new Auth(mockAuthConnector)
 
-  val retrieve: Retrieval[Option[String] ~ Credentials] = Retrievals.nino and Retrievals.credentials
+  val retrieve: Retrieval[Option[String] ~ Option[Credentials]] = v2Nino and credentials
 
   private def callAuth = auth.authorised(retrieve) { implicit request ⇒
     {
@@ -43,7 +44,7 @@ class AuthSpec extends AuthSupport {
 
     "return after successful authentication" in {
       val ggCredentials = Credentials("id", "GovernmentGateway")
-      val ggRetrievals: Option[String] ~ Credentials = new ~(Some(nino), ggCredentials)
+      val ggRetrievals: Option[String] ~ Option[Credentials] = new ~(Some(nino), Some(ggCredentials))
       mockAuthResultWithSuccess(retrieve)(ggRetrievals)
 
       val result = Await.result(callAuth(FakeRequest()), 5.seconds)
