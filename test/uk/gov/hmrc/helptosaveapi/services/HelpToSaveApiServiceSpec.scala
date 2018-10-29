@@ -139,7 +139,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       val fullRetrievedUserDetails = RetrievedUserDetails(
         Some("retrievedNINO"), Some("retrievedForename"), Some("retrievedSurname"),
-        Some(LocalDate.of(1900, 1, 1)), fullRetrievedItmpAddress,
+        Some(LocalDate.of(1900, 1, 1)), Some(fullRetrievedItmpAddress),
         Some(validEmail))
 
         def createAccountRequestWithRetrievedDetails(createAccountHeader:     CreateAccountHeader,
@@ -531,19 +531,19 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         "address line 1 is not given in the request and cannot be retrieved" in {
           val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(line1 = None))))
+                                                                 fullRetrievedUserDetails.copy(address = Some(fullRetrievedItmpAddress.copy(line1 = None)))))
           checkIsBackendError(result, "Address")
         }
 
         "address line 2 is not given in the request and cannot be retrieved" in {
           val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(line2 = None))))
+                                                                 fullRetrievedUserDetails.copy(address = Some(fullRetrievedItmpAddress.copy(line2 = None)))))
           checkIsBackendError(result, "Address")
         }
 
         "the postcode is not given in the request and cannot be retrieved" in {
           val result = await(service.createAccountUserRestricted(minimalJsonRequest("online"),
-                                                                 fullRetrievedUserDetails.copy(address = fullRetrievedItmpAddress.copy(postCode = None))))
+                                                                 fullRetrievedUserDetails.copy(address = Some(fullRetrievedItmpAddress.copy(postCode = None)))))
           checkIsBackendError(result, "Address")
         }
 
