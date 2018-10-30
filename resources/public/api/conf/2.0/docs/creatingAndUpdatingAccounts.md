@@ -25,14 +25,19 @@ The exception to the above is `registrationChannel` - for all create account req
 in the request body.
 
 In an update account request, only requests will be accepted where updates to the fields given are supported.
-This currently comprises of:
-- `email`
-- `backDetails`
+Currently, there are no update requests supported.
 If update requests are received where other fields are populated a `400 (Bad Request)` will be given and no attempt
 to update any details will be made.
 
 
 **For create and update account requests using privileged access, the NINO is a mandatory field.**
+
+
+### Bank Details
+When bank details are supplied, they will be checked against an internal HMRC service to check their validity. The
+checks done by Help to Save are a modulus check on the bank account and sort code and also a check to see if the sort
+code actually exists. If these checks fail a `400 (Bad Request)`  response will be returned.
+
 
 
 #### Errors

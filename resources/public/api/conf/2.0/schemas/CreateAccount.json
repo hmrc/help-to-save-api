@@ -3,12 +3,20 @@
   "description": "A JSON schema to validate a Help To Save - Create or Update Account JSON payload",
   "type": "object",
   "additionalProperties": true,
-  "required": ["header", "body"],
+  "required": [
+    "header",
+    "body"
+  ],
   "properties": {
     "header": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["version", "createdTimestamp", "clientCode", "requestCorrelationId"],
+      "required": [
+        "version",
+        "createdTimestamp",
+        "clientCode",
+        "requestCorrelationId"
+      ],
       "properties": {
         "version": {
           "type": "string",
@@ -28,7 +36,7 @@
         "requestCorrelationId": {
           "type": "string",
           "maxLength": 36,
-          "pattern": "^[0-9a-f-]+$",
+          "pattern": "^[0-9a-f-]{1,36}$",
           "description": "If the help-to-save create account API is called after a call to this eligibility check API, the X-Correlation-ID value from the eligibility check response should be passed as the requestCorrelationId value in the request to the create account API."
         }
       }
@@ -36,7 +44,9 @@
     "body": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["registrationChannel"],
+      "required": [
+        "registrationChannel"
+      ],
       "properties": {
         "nino": {
           "type": "string",
@@ -47,12 +57,14 @@
         "forename": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 26
+          "maxLength": 26,
+          "pattern": "^.{1,26}$"
         },
         "surname": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 300
+          "maxLength": 300,
+          "pattern": "^.{1,300}$"
         },
         "dateOfBirth": {
           "type": "string",
@@ -66,27 +78,33 @@
           "properties": {
             "address1": {
               "type": "string",
-              "maxLength": 35
+              "maxLength": 35,
+              "pattern": "^.{1,35}$"
             },
             "address2": {
               "type": "string",
-              "maxLength": 35
+              "maxLength": 35,
+              "pattern": "^.{1,35}$"
             },
             "address3": {
               "type": "string",
-              "maxLength": 35
+              "maxLength": 35,
+              "pattern": "^.{1,35}$"
             },
             "address4": {
               "type": "string",
-              "maxLength": 35
+              "maxLength": 35,
+              "pattern": "^.{1,35}$"
             },
             "address5": {
               "type": "string",
-              "maxLength": 35
+              "maxLength": 35,
+              "pattern": "^.{1,35}$"
             },
             "postcode": {
               "type": "string",
-              "maxLength": 10
+              "maxLength": 10,
+              "pattern": "^.{1,10}$"
             },
             "countryCode": {
               "type": "string",
@@ -102,7 +120,8 @@
             },
             "phoneNumber": {
               "type": "string",
-              "maxLength": 15
+              "maxLength": 15,
+              "pattern": "^.{1,15}$"
             },
             "email": {
               "type": "string",
@@ -119,23 +138,36 @@
         "bankDetails": {
           "type": "object",
           "additionalProperties": true,
-          "required": ["accountNumber", "sortCode", "accountName"],
-          "properties" : {
+          "required": [
+            "accountNumber",
+            "sortCode",
+            "accountName"
+          ],
+          "properties": {
             "accountNumber": {
               "type": "string",
-              "minLength": 8,
-              "maxLength": 8
+              "minLength": 1,
+              "maxLength": 8,
+              "pattern": "^.{1,8}$"
             },
             "sortCode": {
               "type": "string",
               "minLength": 6,
-              "maxLength": 6
+              "maxLength": 6,
+              "pattern": "^[0-9]{6}$",
+              "example": "123456"
             },
-            "accountName" : {
-              "type" : "string"
+            "accountName": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 35,
+              "pattern": "^.{2,35}$"
             },
-            "rollNumber" : {
-              "type" : "string"
+            "rollNumber": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 18,
+              "pattern": "^([0-9a-zA-Z\\/\\.-]{4,18})$"
             }
           }
         }
