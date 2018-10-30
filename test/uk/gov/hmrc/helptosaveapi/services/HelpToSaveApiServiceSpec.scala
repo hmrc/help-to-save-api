@@ -674,10 +674,13 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         def eligibilityJson(resultCode: Int, reasonCode: Int) =
           s"""{
-           |"result": "eligible",
-           |"resultCode": $resultCode,
-           |"reason": "receiving UC",
-           |"reasonCode": $reasonCode
+           |"eligibilityCheckResult": {
+           |  "result": "eligible",
+           |  "resultCode": $resultCode,
+           |  "reason": "receiving UC",
+           |  "reasonCode": $reasonCode
+             },
+             "threshold": 123.45
             }
           """.stripMargin
 
