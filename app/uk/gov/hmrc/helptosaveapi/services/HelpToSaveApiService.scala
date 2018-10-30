@@ -400,7 +400,13 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
 
 object HelpToSaveApiServiceImpl {
 
-  private[HelpToSaveApiServiceImpl] case class EligibilityCheckResponse(result: String, resultCode: Int, reason: String, reasonCode: Int)
+  private[HelpToSaveApiServiceImpl] case class EligibilityCheckResult(result: String, resultCode: Int, reason: String, reasonCode: Int)
+
+  private[HelpToSaveApiServiceImpl] object EligibilityCheckResult {
+    implicit val format: Format[EligibilityCheckResult] = Json.format[EligibilityCheckResult]
+  }
+
+  private[HelpToSaveApiServiceImpl] case class EligibilityCheckResponse(eligibilityCheckResult: EligibilityCheckResult, threshold: Option[Double])
 
   private[HelpToSaveApiServiceImpl] object EligibilityCheckResponse {
     implicit val format: Format[EligibilityCheckResponse] = Json.format[EligibilityCheckResponse]
@@ -409,7 +415,7 @@ object HelpToSaveApiServiceImpl {
   // scalastyle:off magic.number
   private implicit class EligibilityCheckResponseOps(val r: EligibilityCheckResponse) extends AnyVal {
     def toApiEligibility(): Either[String, EligibilityResponse] =
-      (r.resultCode, r.reasonCode) match {
+      (r.eligibilityCheckResult.resultCode, r.eligibilityCheckResult.reasonCode) match {
         case (1, 6) ⇒ Right(ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = false, hasUC = true), accountExists = false))
         case (1, 7) ⇒ Right(ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = false), accountExists = false))
         case (1, 8) ⇒ Right(ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = true), accountExists = false))
