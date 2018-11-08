@@ -31,7 +31,7 @@ case class CreateAccountBody(
     dateOfBirth:         LocalDate,
     contactDetails:      ContactDetails,
     registrationChannel: String,
-    nbaDetails:          Option[BankDetails],
+    bankDetails:         Option[BankDetails],
     systemId:            String
 )
 

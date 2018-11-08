@@ -38,5 +38,9 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
 
   val apiEligibilityCallErrorCounter: Counter = counter("api.eligibility.errors.count")
 
+  val apiValidateBankDetailsTimer: Timer = timer("api.validate-bank-details-timer")
+
+  val apiValidateBankDetailsErrorCounter: Counter = counter("api.validate-bank-details-error.count")
+
 }
 

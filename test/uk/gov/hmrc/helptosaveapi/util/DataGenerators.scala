@@ -19,7 +19,7 @@ package uk.gov.hmrc.helptosaveapi.util
 import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
 
 import org.scalacheck.Gen
-import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest, RetrievedUserDetails}
 import uk.gov.hmrc.smartstub.AutoGen
 
@@ -51,6 +51,14 @@ object DataGenerators {
       email ← Gen.option(Gen.alphaStr)
     } yield ContactDetails(line1, line2, line3, line4, line5, postcode, countryCode, communicationPreference, phoneNumber, email)
 
+  val bankDetailsGen: Gen[BankDetails] =
+    for {
+      sortCode ← Gen.numStr
+      accountNumber ← Gen.numStr
+      accountName ← Gen.alphaStr
+      rollNumber ← Gen.option(Gen.identifier)
+    } yield BankDetails(accountNumber, sortCode, accountName, rollNumber)
+
   val validCreateAccountBodyGen: Gen[CreateAccountBody] =
     for {
       nino ← Gen.identifier
@@ -59,8 +67,9 @@ object DataGenerators {
       dob ← Gen.choose(1L, 100L).map(LocalDate.ofEpochDay)
       contactDetails ← contactDetailsGen
       registrationChannel ← Gen.alphaStr
+      bankDetails ← Gen.option(bankDetailsGen)
       systemId ← clientCode.map(code ⇒ "MDTP-API-" + code)
-    } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel, None, systemId)
+    } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel, bankDetails, systemId)
 
   val validCreateAccountRequestGen: Gen[CreateAccountRequest] =
     for {

@@ -25,6 +25,7 @@ import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccoun
 import uk.gov.hmrc.helptosaveapi.http.HttpClient.HttpClientOps
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
 import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging}
+import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
@@ -41,6 +42,7 @@ trait HelpToSaveConnector {
 
   def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
+  def validateBankDetails(request: ValidateBankDetailsRequest)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse]
 }
 
 @Singleton
@@ -79,6 +81,9 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(storeEmailURL, Map("email" -> encodedEmail, "nino" -> nino), Map(correlationIdHeaderName -> correlationId.toString))
+
+  override def validateBankDetails(request: ValidateBankDetailsRequest)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse] =
+    http.post(s"$htsBaseUrl/validate-bank-details", request)
 }
 
 object HelpToSaveConnectorImpl {

@@ -43,11 +43,12 @@ import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.{CreateAccoun
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps._
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, PagerDutyAlerting, toFuture}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, toFuture}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[HelpToSaveApiServiceImpl])
 trait HelpToSaveApiService {
@@ -77,8 +78,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
                                           metrics:                       Metrics,
                                           val pagerDutyAlerting:         PagerDutyAlerting,
                                           createAccountRequestValidator: CreateAccountRequestValidator,
-                                          eligibilityStore:              EligibilityStore)(implicit config: Configuration,
-                                                                                           logMessageTransformer: LogMessageTransformer)
+                                          eligibilityStore:              EligibilityStore)(implicit config: Configuration, logMessageTransformer: LogMessageTransformer)
   extends HelpToSaveApiService with CreateAccountBehaviour with EmailBehaviour with Logging {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
@@ -141,24 +141,34 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
       case CreateAccountRequest(header, body) ⇒
 
         if (retrievedNINO.forall(_ === body.nino)) {
-          validateCorrelationId(header.requestCorrelationId, body.nino).flatMap {
+
+          val eligibilityCheckResponseFuture = validateCorrelationId(header.requestCorrelationId, body.nino)
+          val validateBankDetailsFuture = validateBankDetails(body.nino, body.bankDetails)
+
+          eligibilityCheckResponseFuture.flatMap {
             case Right(eligibilityResponse) ⇒ eligibilityResponse match {
               case aer: ApiEligibilityResponse ⇒
-                if (body.contactDetails.communicationPreference === "02") {
-                  (for {
-                    email ← EitherT.fromOption(body.contactDetails.email, ApiValidationError("no email found in the request body but communicationPreference is 02"))
-                    _ ← EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
-                    r ← EitherT(createAccount(body, header, request, aer))
-                  } yield r).value
-                } else {
-                  (for {
-                    r ← EitherT(createAccount(body, header, request, aer))
-                  } yield r).value
+                validateBankDetailsFuture.flatMap {
+                  case Right(_) ⇒
+                    if (body.contactDetails.communicationPreference === "02") {
+                      (for {
+                        email ← EitherT.fromOption(body.contactDetails.email, ApiValidationError("no email found in the request body but communicationPreference is 02"))
+                        _ ← EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
+                        r ← EitherT(createAccount(body, header, aer))
+                      } yield r).value
+                    } else {
+                      (for {
+                        r ← EitherT(createAccount(body, header, aer))
+                      } yield r).value
+                    }
+
+                  case Left(apiError) ⇒ Left(apiError)
                 }
-              case ale: AccountAlreadyExists ⇒
-                Future.successful(Right(CreateAccountSuccess(alreadyHadAccount = true)))
+
+              case _: AccountAlreadyExists ⇒ Right(CreateAccountSuccess(alreadyHadAccount = true))
             }
-            case Left(apiError) ⇒ Future.successful(Left(apiError))
+
+            case Left(apiError) ⇒ Left(apiError)
           }
         } else {
           logger.warn("Received create account request where NINO in request body did not match NINO retrieved from auth",
@@ -168,7 +178,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
         }
     }
 
-  private def createAccount(body: CreateAccountBody, header: CreateAccountHeader, request: Request[_], eligibilityResponse: ApiEligibilityResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
+  private def createAccount(body: CreateAccountBody, header: CreateAccountHeader, eligibilityResponse: ApiEligibilityResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
 
     val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
     logger.info(s"Create Account Request has been made with headers: ${header.show}")
@@ -362,6 +372,39 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
           }
         )
     }
+
+  private def validateBankDetails(nino:             NINO,
+                                  maybeBankDetails: Option[CreateAccountBody.BankDetails])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[ApiError, Boolean]] = {
+
+    maybeBankDetails match {
+      case Some(bankDetails) ⇒
+        val timerContext = metrics.apiValidateBankDetailsTimer.time()
+        helpToSaveConnector.validateBankDetails(ValidateBankDetailsRequest(nino, bankDetails.sortCode, bankDetails.accountNumber)).map[Either[ApiError, Boolean]] { response ⇒
+          response.status match {
+            case Status.OK ⇒
+              val _ = timerContext.stop()
+              Try((response.json \ "isValid").as[Boolean]) match {
+                case Success(isvalid) ⇒
+                  if (isvalid) {
+                    Right(true)
+                  } else {
+                    Left(ApiValidationError("INVALID_BANK_DETAILS"))
+                  }
+                case Failure(error) ⇒
+                  metrics.apiValidateBankDetailsErrorCounter.inc()
+                  logger.warn(s"couldn't parse /validate-bank-details response from BE, error=${error.getMessage}. Body was ${response.body}")
+                  Left(ApiBackendError())
+              }
+            case other: Int ⇒
+              metrics.apiValidateBankDetailsErrorCounter.inc()
+              logger.warn(s"unexpected status($other) from /validate-bank-details endpoint from BE")
+              Left(ApiBackendError())
+          }
+        }
+
+      case None ⇒ Right(true)
+    }
+  }
 
   private def validateCheckEligibilityRequest(nino:                String,
                                               correlationIdHeader: (String, String),
