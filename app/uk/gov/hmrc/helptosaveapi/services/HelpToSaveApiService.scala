@@ -142,13 +142,12 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
 
         if (retrievedNINO.forall(_ === body.nino)) {
 
-          val eligibilityCheckResponseFuture = validateCorrelationId(header.requestCorrelationId, body.nino)
-          val validateBankDetailsFuture = validateBankDetails(body.nino, body.bankDetails)
+          val validateBankDetailsResult = validateBankDetails(body.nino, body.bankDetails)
 
-          eligibilityCheckResponseFuture.flatMap {
+          validateCorrelationId(header.requestCorrelationId, body.nino).flatMap {
             case Right(eligibilityResponse) ⇒ eligibilityResponse match {
               case aer: ApiEligibilityResponse ⇒
-                validateBankDetailsFuture.flatMap {
+                validateBankDetailsResult.flatMap {
                   case Right(_) ⇒
                     if (body.contactDetails.communicationPreference === "02") {
                       (for {
