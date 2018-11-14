@@ -142,26 +142,28 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
 
         if (retrievedNINO.forall(_ === body.nino)) {
 
-          val validateBankDetailsResult = validateBankDetails(body.nino, body.bankDetails)
+          val p: CheckEligibilityResponseType = validateCorrelationId(header.requestCorrelationId, body.nino)
+          val q: Future[Either[ApiError, Boolean]] = validateBankDetails(body.nino, body.bankDetails)
 
-          validateCorrelationId(header.requestCorrelationId, body.nino).flatMap {
+          val result: CheckEligibilityResponseType = (p, q).mapN[Either[ApiError, EligibilityResponse]]{
+            case (Right(eligibility), Right(_)) ⇒ Right(eligibility)
+            case (Left(apiError), _)                  ⇒ Left(apiError)
+            case (_, Left(apiError))                  ⇒ Left(apiError)
+          }
+
+          result.flatMap {
             case Right(eligibilityResponse) ⇒ eligibilityResponse match {
               case aer: ApiEligibilityResponse ⇒
-                validateBankDetailsResult.flatMap {
-                  case Right(_) ⇒
-                    if (body.contactDetails.communicationPreference === "02") {
-                      (for {
-                        email ← EitherT.fromOption(body.contactDetails.email, ApiValidationError("no email found in the request body but communicationPreference is 02"))
-                        _ ← EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
-                        r ← EitherT(createAccount(body, header, aer))
-                      } yield r).value
-                    } else {
-                      (for {
-                        r ← EitherT(createAccount(body, header, aer))
-                      } yield r).value
-                    }
-
-                  case Left(apiError) ⇒ Left(apiError)
+                if (body.contactDetails.communicationPreference === "02") {
+                  (for {
+                    email ← EitherT.fromOption(body.contactDetails.email, ApiValidationError("no email found in the request body but communicationPreference is 02"))
+                    _ ← EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
+                    r ← EitherT(createAccount(body, header, aer))
+                  } yield r).value
+                } else {
+                  (for {
+                    r ← EitherT(createAccount(body, header, aer))
+                  } yield r).value
                 }
 
               case _: AccountAlreadyExists ⇒ Right(CreateAccountSuccess(alreadyHadAccount = true))
