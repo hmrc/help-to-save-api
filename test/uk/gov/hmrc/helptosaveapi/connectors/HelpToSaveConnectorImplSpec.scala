@@ -23,6 +23,7 @@ import org.scalatest.EitherValues
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
+import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport, base64Encode}
 import uk.gov.hmrc.http.HttpResponse
@@ -120,6 +121,15 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
         result.status shouldBe 200
       }
 
+    }
+
+    "validating bank details" must {
+
+      "return http response as it is to the caller" in {
+        val response = HttpResponse(200, Some(Json.parse("""{"isValid":true}""")))
+        mockPost("http://localhost:7001/help-to-save/validate-bank-details", ValidateBankDetailsRequest(nino, "123456", "02012345"), Map.empty)(Some(response))
+        await(connector.validateBankDetails(ValidateBankDetailsRequest(nino, "123456", "02012345"))) shouldBe response
+      }
     }
 
   }
