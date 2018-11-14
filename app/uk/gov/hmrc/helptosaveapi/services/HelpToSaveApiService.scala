@@ -146,9 +146,10 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
           val q: Future[Either[ApiError, Boolean]] = validateBankDetails(body.nino, body.bankDetails)
 
           val result: CheckEligibilityResponseType = (p, q).mapN[Either[ApiError, EligibilityResponse]]{
-            case (Right(eligibility), Right(_)) ⇒ Right(eligibility)
-            case (Left(apiError), _)                  ⇒ Left(apiError)
-            case (_, Left(apiError))                  ⇒ Left(apiError)
+            case (Right(eligibility), Right(true)) ⇒ Right(eligibility)
+            case (Right(_), Right(false))          ⇒ Left(ApiValidationError("INVALID_BANK_DETAILS"))
+            case (Left(apiError), _)               ⇒ Left(apiError)
+            case (_, Left(apiError))               ⇒ Left(apiError)
           }
 
           result.flatMap {
@@ -385,12 +386,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
             case Status.OK ⇒
               val _ = timerContext.stop()
               Try((response.json \ "isValid").as[Boolean]) match {
-                case Success(isvalid) ⇒
-                  if (isvalid) {
-                    Right(true)
-                  } else {
-                    Left(ApiValidationError("INVALID_BANK_DETAILS"))
-                  }
+                case Success(isvalid) ⇒ Right(isvalid)
                 case Failure(error) ⇒
                   metrics.apiValidateBankDetailsErrorCounter.inc()
                   logger.warn(s"couldn't parse /validate-bank-details response from BE, error=${error.getMessage}. Body was ${response.body}")
