@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.helptosaveapi.auth
 
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.helptosaveapi.util.{Logging, WithMdcExecutionContext}
+import uk.gov.hmrc.helptosaveapi.util.Logging
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class Auth(val authConnector: AuthConnector) extends BaseController with AuthorisedFunctions with Logging with WithMdcExecutionContext {
+class Auth(val authConnector: AuthConnector)(implicit val ec: ExecutionContext) extends BaseController with AuthorisedFunctions with Logging {
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 

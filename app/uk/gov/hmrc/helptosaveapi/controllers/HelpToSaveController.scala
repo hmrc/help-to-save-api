@@ -36,14 +36,14 @@ import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, WithMdcExecutionContext, toFuture}
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, toFuture}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiService,
-                                      override val authConnector: AuthConnector)(implicit config: Configuration, t: LogMessageTransformer)
-  extends Auth(authConnector) with WithMdcExecutionContext {
+                                      override val authConnector: AuthConnector)(implicit config: Configuration, t: LogMessageTransformer, ec: ExecutionContext)
+  extends Auth(authConnector) {
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 

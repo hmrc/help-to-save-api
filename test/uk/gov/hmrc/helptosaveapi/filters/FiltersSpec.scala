@@ -18,15 +18,18 @@ package uk.gov.hmrc.helptosaveapi.filters
 
 import com.kenshoo.play.metrics.MetricsFilter
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
-import uk.gov.hmrc.play.bootstrap.filters.{AuditFilter, CacheControlFilter, LoggingFilter, MicroserviceFilters}
+import uk.gov.hmrc.play.bootstrap.filters._
 
 class FiltersSpec extends TestSupport {
+
+  val mockMDCFilter = new MDCFilter(fakeApplication.materializer, fakeApplication.configuration)
 
   class EmptyMicroserviceFilters extends MicroserviceFilters(
     stub[MetricsFilter],
     stub[AuditFilter],
     stub[LoggingFilter],
-    stub[CacheControlFilter]
+    stub[CacheControlFilter],
+    mockMDCFilter
   )
 
   val mockMicroServiceFilters = mock[MicroserviceFilters]
