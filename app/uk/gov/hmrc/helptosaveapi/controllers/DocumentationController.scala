@@ -29,18 +29,16 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import configs.syntax._
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess.Version
-import uk.gov.hmrc.helptosaveapi.util.WithMdcExecutionContext
-import uk.gov.hmrc.play.bootstrap.controller.ActionWithMdc
 
 @Singleton
 class DocumentationController @Inject() (httpErrorHandler: HttpErrorHandler, configuration: Configuration)
-  extends AssetsBuilder(httpErrorHandler) with BaseController with WithMdcExecutionContext {
+  extends AssetsBuilder(httpErrorHandler) with BaseController {
 
   val access: Version ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
   val versionEnabled: Version ⇒ Boolean = version ⇒ configuration.underlying.getBoolean(s"api.access.version-$version.enabled")
 
-  def definition(): Action[AnyContent] = ActionWithMdc {
+  def definition(): Action[AnyContent] = Action {
     Ok(txt.definition(access, versionEnabled)).as("application/json")
   }
 
