@@ -12,16 +12,16 @@ val appName = "help-to-save-api"
 
 val dependencies = Seq(
   ws,
-  "org.typelevel" %% "cats-core" % "1.1.0",
-  "uk.gov.hmrc" %% "bootstrap-play-25" % "4.4.0",
+  "org.typelevel" %% "cats-core" % "1.5.0",
+  "uk.gov.hmrc" %% "bootstrap-play-25" % "4.6.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
-  "uk.gov.hmrc" %% "auth-client" % "2.17.0-play-25",
-  "uk.gov.hmrc" %% "mongo-caching" % "5.4.0",
+  "uk.gov.hmrc" %% "auth-client" % "2.18.0-play-25",
+  "uk.gov.hmrc" %% "mongo-caching" % "5.6.0",
   "uk.gov.hmrc" %% "play-reactivemongo" % "6.2.0"
 )
 
 val testDependencies = Seq(
-  "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % "test",
+  "uk.gov.hmrc" %% "hmrctest" % "3.3.0" % "test",
   "org.scalatest" %% "scalatest" % "3.0.5" % "test",
   "com.typesafe.play" %% "play-test" % PlayVersion.current % "test",
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
