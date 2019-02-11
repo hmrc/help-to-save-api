@@ -61,7 +61,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   private val storeEmailURL = s"$htsBaseUrl/store-email"
 
-  def eligibilityCheckUrl(nino: String): String = s"$htsBaseUrl/eligibility-check"
+  def eligibilityCheckUrl(nino: String): String = s"$htsBaseUrl/eligibility-check?nino=$nino"
 
   def getAccountUrl(nino: String): String = s"$htsBaseUrl/$nino/account"
 
