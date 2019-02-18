@@ -119,6 +119,12 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       .returning(Future.successful(response.fold(e ⇒ HttpResponse(500), isValid ⇒ HttpResponse(200, Some(Json.parse(s"""{"isValid":$isValid}"""))))))
   }
 
+  def mockGetUserEnrolmentStatus(nino: String, correlationId: UUID)(enrolled: Boolean, itmpHtSFlag: Boolean): CallHandler4[String, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] = {
+    (helpToSaveConnector.getUserEnrolmentStatus(_: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(nino, correlationId, *, *)
+      .returning(Future.successful(HttpResponse(200, Some(Json.parse(s"""{"enrolled":$enrolled, "itmpHtSFlag":$itmpHtSFlag}""")))))
+  }
+
   val service = new HelpToSaveApiServiceImpl(helpToSaveConnector, mockMetrics, mockPagerDuty, mockCreateAccountRequestValidator, mockEligibilityStore) {
     override val httpHeaderValidator: APIHttpHeaderValidator = mockApiHttpHeaderValidator
     override val eligibilityRequestValidator: EligibilityRequestValidator = mockEligibilityRequestValidator
@@ -746,6 +752,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       "handle valid requests and return EligibilityResponse" in {
         inSequence {
+          mockGetUserEnrolmentStatus(nino, correlationId)(false, false)
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
           mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson(1, 6))))))
@@ -757,6 +764,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle when the request contains invalid headers" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(false, false)
         mockEligibilityCheckHeaderValidator(false)(Invalid(NonEmptyList[String]("accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json'", Nil)))
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
 
@@ -765,6 +773,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle when the request contains invalid nino" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(false, false)
         mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
         mockEligibilityCheckRequestValidator(nino)(Invalid(NonEmptyList[String]("NINO doesn't match the regex", Nil)))
 
@@ -773,6 +782,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle server errors during eligibility check" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(false, false)
         mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
         mockEligibilityCheck(nino, correlationId)(Left("internal server error"))
@@ -803,6 +813,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       "handle invalid eligibility result and reason code combination from help to save BE" in {
         val json = Json.parse(eligibilityJson(1, 11))
         inSequence {
+          mockGetUserEnrolmentStatus(nino, correlationId)(false, false)
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
           mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(json))))
@@ -813,7 +824,15 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
       }
 
+      "handle the case when a user is already enrolled" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(true, true)
+
+        val result = await(service.checkEligibility(nino, correlationId))
+        result shouldBe Right(AccountAlreadyExists())
+      }
+
         def test(eligibilityJson: String, apiResponse: EligibilityResponse) = {
+          mockGetUserEnrolmentStatus(nino, correlationId)(false, false)
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
           mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson)))))

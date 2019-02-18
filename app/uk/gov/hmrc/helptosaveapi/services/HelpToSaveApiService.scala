@@ -34,6 +34,7 @@ import play.api.mvc.{AnyContent, Request}
 import play.mvc.Http.Status
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
+import uk.gov.hmrc.helptosaveapi.models.EnrolmentStatus.Enrolled
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
@@ -233,47 +234,87 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
   override def checkEligibility(nino: String, correlationId: UUID)(implicit request: Request[AnyContent],
                                                                    hc: HeaderCarrier,
                                                                    ec: ExecutionContext): CheckEligibilityResponseType = {
-    val timer = metrics.apiEligibilityCallTimer.time()
-    val correlationIdHeader = correlationIdHeaderName -> correlationId.toString
 
-    val result = validateCheckEligibilityRequest(nino, correlationIdHeader, timer) {
-      _ ⇒
-        helpToSaveConnector.checkEligibility(nino, correlationId)
-          .map[CheckEligibilityResponseType] {
-            response ⇒
-              response.status match {
-                case OK ⇒
-                  val _ = timer.stop()
-                  val result = response.parseJson[EligibilityCheckResponse].flatMap(_.toApiEligibility)
-                  result.fold({
-                    e ⇒
-                      logger.warn(s"Could not parse JSON response from eligibility check, received 200 (OK): $e", nino, correlationIdHeader)
-                      pagerDutyAlerting.alert("Could not parse JSON in eligibility check response")
+    val result: EitherT[Future, ApiError, EligibilityResponse] =
+      for {
+        enrolmentStatus ← EitherT.liftF(getUserEnrolmentStatus(nino, correlationId))
+        ecResult ← EitherT(performCheckEligibility(nino, correlationId, enrolmentStatus))
+      } yield ecResult
+
+    result.value
+  }
+
+  private def performCheckEligibility(nino:            String,
+                                      correlationId:   UUID,
+                                      enrolmentStatus: Option[EnrolmentStatus])(implicit request: Request[AnyContent],
+                                                                                hc: HeaderCarrier,
+                                                                                ec: ExecutionContext): CheckEligibilityResponseType = {
+
+    enrolmentStatus match {
+      case Some(Enrolled(true)) | Some(Enrolled(false)) ⇒ Right(AccountAlreadyExists())
+      case other ⇒ {
+        val timer = metrics.apiEligibilityCallTimer.time()
+        val correlationIdHeader = correlationIdHeaderName -> correlationId.toString
+
+        val result = validateCheckEligibilityRequest(nino, correlationIdHeader, timer) {
+          _ ⇒
+            helpToSaveConnector.checkEligibility(nino, correlationId)
+              .map[CheckEligibilityResponseType] {
+                ecResponse ⇒
+                  ecResponse.status match {
+                    case OK ⇒
+                      val _ = timer.stop()
+                      val result = ecResponse.parseJson[EligibilityCheckResponse].flatMap(_.toApiEligibility)
+                      result.fold({
+                        e ⇒
+                          logger.warn(s"Could not parse JSON response from eligibility check, received 200 (OK): $e", nino, correlationIdHeader)
+                          pagerDutyAlerting.alert("Could not parse JSON in eligibility check response")
+                          Left(ApiBackendError())
+                      }, res ⇒ {
+                        logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
+                        storeEligibilityResultInMongo(res, correlationId, nino, correlationIdHeader)
+                      }
+                      )
+
+                    case other: Int ⇒
+                      metrics.apiEligibilityCallErrorCounter.inc()
+                      logger.warn(s"Call to check eligibility returned status: $other", nino, correlationIdHeader)
+                      pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check: $other")
                       Left(ApiBackendError())
-                  }, res ⇒ {
-                    logger.info(s"Call to check eligibility successful, received 200 (OK)", nino, correlationIdHeader)
-                    storeEligibilityResultInMongo(res, correlationId, nino, correlationIdHeader)
+
                   }
-                  )
-
-                case other: Int ⇒
+              }.recover {
+                case e ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
-                  logger.warn(s"Call to check eligibility returned status: $other", nino, correlationIdHeader)
-                  pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check: $other")
-                  Left(ApiBackendError())
+                  logger.warn(s"Call to check eligibility failed, error: ${e.getMessage}", nino, correlationIdHeader)
+                  pagerDutyAlerting.alert("Failed to make call to check eligibility")
+                  toFuture(Left(ApiBackendError()))
+              }.flatMap(identity)
+        }
 
-              }
-          }.recover {
-            case e ⇒
-              metrics.apiEligibilityCallErrorCounter.inc()
-              logger.warn(s"Call to check eligibility failed, error: ${e.getMessage}", nino, correlationIdHeader)
-              pagerDutyAlerting.alert("Failed to make call to check eligibility")
-              toFuture(Left(ApiBackendError()))
-          }.flatMap(identity)
+        val _ = timer.stop()
+        result
+
+      }
     }
 
-    val _ = timer.stop()
-    result
+  }
+
+  private def getUserEnrolmentStatus(nino: String, correlationId: UUID)(implicit ex: ExecutionContext, hc: HeaderCarrier): Future[Option[EnrolmentStatus]] = {
+    helpToSaveConnector.getUserEnrolmentStatus(nino, correlationId).map[Option[EnrolmentStatus]] {
+      res ⇒
+        res.status match {
+          case OK ⇒ res.parseJson[EnrolmentStatus].fold({
+            e ⇒
+              logger.warn(s"Get user enrolment status response body was in unexpected format: $e")
+              None
+          }, { enrolmentStatus ⇒ Some(enrolmentStatus)
+          })
+          case other: Int ⇒
+            logger.warn(s"Could not get user enrolment status from the back end, status: $other")
+            None
+        }
+    }
   }
 
   private def storeEligibilityResultInMongo(result:              EligibilityResponse,
