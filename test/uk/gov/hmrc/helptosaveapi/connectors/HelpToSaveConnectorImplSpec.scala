@@ -58,14 +58,14 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Ge
 
     "handling eligibility requests" must {
 
-      val eligibilityUrl = s"http://localhost:7001/help-to-save/api/eligibility-check/$nino"
+      val eligibilityUrl = s"http://localhost:7001/help-to-save/eligibility-check"
 
       val eligibilityJson = """{"result": "eligible","resultCode": 1,"reason": "receiving UC","reasonCode": 5}"""
       val json = Json.parse(eligibilityJson)
 
       "call correct url and return the response as is" in {
 
-        mockGet(eligibilityUrl, emptyMap, headers)(Some(HttpResponse(200, Some(json))))
+        mockGet(eligibilityUrl, Map("nino" → nino), headers)(Some(HttpResponse(200, Some(json))))
         val result = await(connector.checkEligibility(nino, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
