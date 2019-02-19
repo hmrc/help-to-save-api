@@ -64,8 +64,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
   private val storeEmailURL = s"$htsBaseUrl/store-email"
 
   private val getEnrolmentStatusURL = s"$htsBaseUrl/enrolment-status"
-
-  def eligibilityCheckUrl(nino: String): String = s"$htsBaseUrl/api/eligibility-check/$nino"
+    
+  val eligibilityCheckUrl: String = s"$htsBaseUrl/eligibility-check"
 
   def getAccountUrl(nino: String): String = s"$htsBaseUrl/$nino/account"
 
@@ -77,7 +77,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
     http.post(createAccountUrl, CreateAccountInfo(body, eligibilityReason, clientCode), Map(correlationIdHeaderName -> correlationId.toString))
 
   override def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(eligibilityCheckUrl(nino), emptyQueryParameters, Map(correlationIdHeaderName -> correlationId.toString))
+    http.get(eligibilityCheckUrl, Map("nino" → nino), Map(correlationIdHeaderName -> correlationId.toString))
 
   override def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(getAccountUrl(nino), Map("systemId" -> systemId, "correlationId" -> correlationId.toString), Map(correlationIdHeaderName -> correlationId.toString)
