@@ -43,6 +43,8 @@ trait HelpToSaveConnector {
   def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 
   def validateBankDetails(request: ValidateBankDetailsRequest)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse]
+
+  def getUserEnrolmentStatus(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
 }
 
 @Singleton
@@ -60,6 +62,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
   val createAccountUrl: String = s"$htsBaseUrl/create-account"
 
   private val storeEmailURL = s"$htsBaseUrl/store-email"
+
+  private val getEnrolmentStatusURL = s"$htsBaseUrl/enrolment-status"
 
   val eligibilityCheckUrl: String = s"$htsBaseUrl/eligibility-check"
 
@@ -84,6 +88,9 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   override def validateBankDetails(request: ValidateBankDetailsRequest)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse] =
     http.post(s"$htsBaseUrl/validate-bank-details", request)
+
+  override def getUserEnrolmentStatus(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    http.get(getEnrolmentStatusURL, Map("nino" → nino), Map(correlationIdHeaderName -> correlationId.toString))
 }
 
 object HelpToSaveConnectorImpl {

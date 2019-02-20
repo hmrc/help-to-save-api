@@ -28,10 +28,10 @@ import play.mvc.Http.Status._
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, NINO, TestSupport, base64Encode}
-import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceSpec.CreateAccountRequestOps
-import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator, EmailValidation}
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceSpec._
+import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import play.api.libs.json.{JsObject, JsString, JsValue, Json}
+import play.api.libs.json._
 import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.BankDetails
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountFieldSpec.TestCreateAccountRequest
@@ -117,6 +117,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
     (helpToSaveConnector.validateBankDetails(_: ValidateBankDetailsRequest)(_: HeaderCarrier, _: ExecutionContext))
       .expects(ValidateBankDetailsRequest(nino, bankDetails.sortCode, bankDetails.accountNumber), *, *)
       .returning(Future.successful(response.fold(e ⇒ HttpResponse(500), isValid ⇒ HttpResponse(200, Some(Json.parse(s"""{"isValid":$isValid}"""))))))
+  }
+
+  def mockGetUserEnrolmentStatus(nino: String, correlationId: UUID)(jsonResponse: Option[JsValue]): CallHandler4[String, UUID, HeaderCarrier, ExecutionContext, Future[HttpResponse]] = {
+    (helpToSaveConnector.getUserEnrolmentStatus(_: String, _: UUID)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(nino, correlationId, *, *)
+      .returning(
+        jsonResponse.fold[Future[HttpResponse]](Future.failed(new Exception("Oh no!"))){ body ⇒ Future.successful(HttpResponse(200, Some(body))) }
+      )
   }
 
   val service = new HelpToSaveApiServiceImpl(helpToSaveConnector, mockMetrics, mockPagerDuty, mockCreateAccountRequestValidator, mockEligibilityStore) {
@@ -746,6 +754,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       "handle valid requests and return EligibilityResponse" in {
         inSequence {
+          mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
           mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson(1, 6))))))
@@ -757,6 +766,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle when the request contains invalid headers" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
         mockEligibilityCheckHeaderValidator(false)(Invalid(NonEmptyList[String]("accept did not contain expected mime type: 'application/vnd.hmrc.1.0+json'", Nil)))
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
 
@@ -765,6 +775,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle when the request contains invalid nino" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
         mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
         mockEligibilityCheckRequestValidator(nino)(Invalid(NonEmptyList[String]("NINO doesn't match the regex", Nil)))
 
@@ -773,6 +784,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle server errors during eligibility check" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
         mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
         mockEligibilityCheck(nino, correlationId)(Left("internal server error"))
@@ -800,9 +812,20 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         test(eligibilityJson(3, 1), AccountAlreadyExists())
       }
 
+        def test(eligibilityJson: String, apiResponse: EligibilityResponse) = {
+          mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
+          mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+          mockEligibilityCheckRequestValidator(nino)(Valid(nino))
+          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson)))))
+          mockEligibilityStorePut(correlationId, apiResponse, nino)(Right(()))
+          val result = await(service.checkEligibility(nino, correlationId))
+          result shouldBe Right(apiResponse)
+        }
+
       "handle invalid eligibility result and reason code combination from help to save BE" in {
         val json = Json.parse(eligibilityJson(1, 11))
         inSequence {
+          mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
           mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(json))))
@@ -813,14 +836,26 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
       }
 
-        def test(eligibilityJson: String, apiResponse: EligibilityResponse) = {
+      "handle the case when a user is already enrolled" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(true, true))))
+
+        val result = await(service.checkEligibility(nino, correlationId))
+        result shouldBe Right(AccountAlreadyExists())
+      }
+
+      "check eligibility when the enrolment status cannot be obtained" in {
+        inSequence {
+          mockGetUserEnrolmentStatus(nino, correlationId)(None)
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
-          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson)))))
-          mockEligibilityStorePut(correlationId, apiResponse, nino)(Right(()))
-          val result = await(service.checkEligibility(nino, correlationId))
-          result shouldBe Right(apiResponse)
+          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson(1, 6))))))
+          mockEligibilityStorePut(correlationId, ApiEligibilityResponse(Eligibility(true, false, true), false), nino)(Right(()))
         }
+
+        val result = await(service.checkEligibility(nino, correlationId))
+        result shouldBe Right(ApiEligibilityResponse(Eligibility(true, false, true), false))
+      }
+
     }
 
     "handling getAccount requests" must {
@@ -876,6 +911,10 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 }
 
 object HelpToSaveApiServiceSpec {
+
+  case class EnrolmentStatusResponse(enrolled: Boolean, itmpHtSFlag: Boolean)
+
+  implicit val enrolmentStatusWrites: Writes[EnrolmentStatusResponse] = Json.writes[EnrolmentStatusResponse]
 
   implicit class CreateAccountRequestOps(val r: CreateAccountRequest) extends AnyVal {
 
