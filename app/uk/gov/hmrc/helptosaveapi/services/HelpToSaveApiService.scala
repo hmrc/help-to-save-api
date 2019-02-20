@@ -50,6 +50,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[HelpToSaveApiServiceImpl])
 trait HelpToSaveApiService {
@@ -181,7 +182,9 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
         }
     }
 
-  private def createAccount(body: CreateAccountBody, header: CreateAccountHeader, eligibilityResponse: ApiEligibilityResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
+  private def createAccount(body: CreateAccountBody,
+                            header: CreateAccountHeader,
+                            eligibilityResponse: ApiEligibilityResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
 
     val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
     logger.info(s"Create Account Request has been made with headers: ${header.show}")
@@ -224,7 +227,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
           Left(ApiBackendError())
       }
     }.recover {
-      case e ⇒
+      case NonFatal(e) ⇒
         logger.warn(s"Received unexpected error during create account, error=$e", body.nino, correlationIdHeader)
         pagerDutyAlerting.alert("Failed to make call to createAccount")
         Left(ApiBackendError())
@@ -251,7 +254,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
                                                                                 ec: ExecutionContext): CheckEligibilityResponseType = {
 
     enrolmentStatus match {
-      case Some(Enrolled(true)) | Some(Enrolled(false)) ⇒ Right(AccountAlreadyExists())
+      case Some(Enrolled(_)) ⇒ Right(AccountAlreadyExists())
       case other ⇒ {
         val timer = metrics.apiEligibilityCallTimer.time()
         val correlationIdHeader = correlationIdHeaderName -> correlationId.toString
@@ -284,7 +287,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
 
                   }
               }.recover {
-                case e ⇒
+                case NonFatal(e) ⇒
                   metrics.apiEligibilityCallErrorCounter.inc()
                   logger.warn(s"Call to check eligibility failed, error: ${e.getMessage}", nino, correlationIdHeader)
                   pagerDutyAlerting.alert("Failed to make call to check eligibility")
@@ -314,6 +317,10 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
             logger.warn(s"Could not get user enrolment status from the back end, status: $other")
             None
         }
+    }.recover{
+      case NonFatal(e) ⇒
+        logger.warn(s"Could not get user enrolment status, future failed: ${e.getMessage}")
+        None
     }
   }
 
@@ -358,7 +365,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
                   Left(ApiBackendError())
               }
           }.recover {
-            case e ⇒
+            case NonFatal(e) ⇒
               logger.warn(s"Call to get account via the connector failed, error message: ${e.getMessage}")
               Left(ApiBackendError())
           }
