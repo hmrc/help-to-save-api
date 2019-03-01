@@ -182,8 +182,8 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
         }
     }
 
-  private def createAccount(body: CreateAccountBody,
-                            header: CreateAccountHeader,
+  private def createAccount(body:                CreateAccountBody,
+                            header:              CreateAccountHeader,
                             eligibilityResponse: ApiEligibilityResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
 
     val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
