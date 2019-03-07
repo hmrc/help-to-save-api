@@ -82,7 +82,7 @@ class MongoEligibilityStore @Inject() (config: Configuration,
       .map[Either[String, Unit]] {
         dbUpdate ⇒
           if (dbUpdate.writeResult.inError) {
-            Left(dbUpdate.writeResult.errMsg.getOrElse("unknown error during inserting eligibility document"))
+            Left(dbUpdate.writeResult.errmsg.getOrElse("unknown error during inserting eligibility document"))
           } else {
             Right(())
           }
