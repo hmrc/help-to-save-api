@@ -16,7 +16,7 @@ val dependencies = Seq(
   "uk.gov.hmrc" %% "bootstrap-play-25" % "4.8.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
   "uk.gov.hmrc" %% "auth-client" % "2.19.0-play-25",
-  "uk.gov.hmrc" %% "mongo-caching" % "5.7.0",
+  "uk.gov.hmrc" %% "mongo-caching" % "6.1.0-play-25",
   "uk.gov.hmrc" %% "simple-reactivemongo" % "7.12.0-play-25"
 )
 
