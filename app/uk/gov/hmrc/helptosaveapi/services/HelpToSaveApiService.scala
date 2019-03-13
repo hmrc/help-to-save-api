@@ -36,6 +36,7 @@ import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models.EnrolmentStatus.Enrolled
 import uk.gov.hmrc.helptosaveapi.models._
+import uk.gov.hmrc.helptosaveapi.models.Account.fromHtsAccount
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
@@ -356,7 +357,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
                     logger.warn(s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}, error is: $e")
                     ApiBackendError()
                   },
-                    a ⇒ Some(toAccount(a)))
+                    a ⇒ Some(fromHtsAccount(a)))
                 case NOT_FOUND ⇒
                   logger.warn(s"NS&I have returned a status of NOT FOUND, response body: ${response.body}")
                   Right(None)
@@ -480,9 +481,6 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
         _ ⇒ f()
       )
   }
-
-  private def toAccount(account: HtsAccount): Account =
-    Account(account.accountNumber, account.canPayInThisMonth, account.isClosed, account.blocked.unspecified, account.balance)
 
 }
 

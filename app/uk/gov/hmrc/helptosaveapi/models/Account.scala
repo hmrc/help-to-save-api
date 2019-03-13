@@ -22,10 +22,16 @@ case class Account(accountNumber:      String,
                    headroom:           BigDecimal,
                    closed:             Boolean,
                    blockedFromPayment: Boolean,
-                   balance:            BigDecimal)
+                   balance:            BigDecimal,
+                   bonusTerms:         Seq[BonusTerm])
 
 object Account {
 
   implicit val format: Format[Account] = Json.format[Account]
+
+  def fromHtsAccount(account: HtsAccount): Account =
+    Account(account.accountNumber, account.canPayInThisMonth, account.isClosed, account.blocked.unspecified, account.balance,
+            account.bonusTerms.map(BonusTerm.fromHtsBonusTerm))
+
 }
 

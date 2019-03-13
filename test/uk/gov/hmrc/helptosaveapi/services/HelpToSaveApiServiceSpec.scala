@@ -877,8 +877,15 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
            |"bonusTerms": [ {
            |  "bonusEstimate": "50.00",
            |  "bonusPaid": "0.00",
+           |  "startDate": "2018-01-01",
            |  "endDate": "2019-12-31",
            |  "bonusPaidOnOrAfterDate": "2020-01-01"
+           |  }, {
+           |  "bonusEstimate": "100.00",
+           |  "bonusPaid": "0.00",
+           |  "startDate": "2020-01-01",
+           |  "endDate": "2021-12-31",
+           |  "bonusPaidOnOrAfterDate": "2022-01-01"
            |  }
            |],
            |"closureDate": "2022-01-01",
@@ -886,13 +893,16 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           }""".stripMargin
 
       "return OK status and an Account when the call to the connector is successful and there is an account to return" in {
+        val bonusTerms = Seq(BonusTerm(LocalDate.of(2018, 1, 1), LocalDate.of(2019, 12, 31), BigDecimal("50.00")),
+                             BonusTerm(LocalDate.of(2020, 1, 1), LocalDate.of(2021, 12, 31), BigDecimal("100.00")))
+
         inSequence {
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockGetAccount(nino, systemId)(Right(HttpResponse(200, Some(Json.parse(account)))))
         }
 
         val result = await(service.getAccount(nino))
-        result shouldBe Right(Some(Account("1100000000001", 40.00, false, false, 100.00)))
+        result shouldBe Right(Some(Account("1100000000001", 40.00, false, false, 100.00, bonusTerms)))
       }
 
       "return an Api Error when an INTERNAL SERVER ERROR status is returned from the connector" in {
