@@ -5,12 +5,12 @@
   "blockedFromPayment": false,
   "balance": 123.45,
   "bonusTerms": [ {
-    "startDate": "2018-01-01",
-    "endDate": "2019-12-31",
+    "startDate": "20180101",
+    "endDate": "20191231",
     "bonusEstimate": "50.00"
   }, {
-    "startDate": "2020-01-01",
-    "endDate": "2021-12-31",
+    "startDate": "20200101",
+    "endDate": "20211231",
     "bonusEstimate": "150.00"
   } ]
 }
