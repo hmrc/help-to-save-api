@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 import org.joda.time.LocalDate
+import java.time.{LocalDate ⇒ JavaLocalDate}
 import org.scalamock.handlers.{CallHandler3, CallHandler4, CallHandler5}
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -462,14 +463,17 @@ class HelpToSaveControllerSpec extends AuthSupport {
     "handling getAccount requests" must {
 
       "return a success response along with some json if getting the account is successful" in {
+        val bonusTerms = Seq(BonusTerm(JavaLocalDate.of(2018, 1, 1), JavaLocalDate.of(2019, 12, 31), BigDecimal("65.43")),
+                             BonusTerm(JavaLocalDate.of(2020, 1, 1), JavaLocalDate.of(2021, 12, 31), BigDecimal("125.43")))
         inSequence{
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
-          mockGetAccount(nino)(Right(Some(Account("1100000000001", 40.00, false, false, 100.00))))
+          mockGetAccount(nino)(Right(Some(Account("1100000000001", 40.00, false, false, 100.00, bonusTerms))))
         }
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe OK
-        contentAsString(result) shouldBe """{"accountNumber":"1100000000001","headroom":40,"closed":false,"blockedFromPayment":false,"balance":100}"""
+        contentAsString(result) shouldBe
+          """{"accountNumber":"1100000000001","headroom":40,"closed":false,"blockedFromPayment":false,"balance":100,"bonusTerms":[{"startDate":"20180101","endDate":"20191231","bonusEstimate":65.43},{"startDate":"20200101","endDate":"20211231","bonusEstimate":125.43}]}"""
       }
 
       "return an Internal Server Error when getting an account is unsuccessful" in {
