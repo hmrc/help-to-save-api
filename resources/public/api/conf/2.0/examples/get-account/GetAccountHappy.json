@@ -7,10 +7,10 @@
   "bonusTerms": [ {
     "startDate": "20180101",
     "endDate": "20191231",
-    "bonusEstimate": "50.00"
+    "bonusEstimate": 50.00
   }, {
     "startDate": "20200101",
     "endDate": "20211231",
-    "bonusEstimate": "150.00"
+    "bonusEstimate": 150.00
   } ]
 }
