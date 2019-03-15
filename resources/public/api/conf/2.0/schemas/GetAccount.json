@@ -23,6 +23,32 @@
     "balance": {
       "type": "number",
       "description": "The balance of the account"
+    },
+    "bonusTerms": {
+      "type": "array",
+      "description": "A list of bonus terms. There will always be two bonus terms",
+      "items": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "description": "The start date of the bonus term, in YYYMMdd format"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "The end date of the bonus term, in YYYMMdd format"
+          },
+          "bonusEstimate": {
+            "type": "number",
+            "description": "the estimate of the bonus to be paid to the customer in this bonus term"
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "bonusEstimate"
+        ]
+      }
     }
   },
   "required": [
@@ -30,6 +56,7 @@
     "headroom",
     "closed",
     "blockedFromPayment",
-    "balance"
+    "balance",
+    "bonusTerms"
   ]
 }
