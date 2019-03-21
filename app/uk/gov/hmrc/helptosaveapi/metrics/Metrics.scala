@@ -26,6 +26,8 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
 
   def counter(name: String): Counter = metrics.defaultRegistry.counter(name)
 
+  def apiCreateAccountCallCounter(source: String): Counter = counter(s"api.create-account.$source.count")
+
   val apiCreateAccountUserRestrictedCallTimer: Timer = timer("api.create-account.user-restricted.time")
 
   val apiCreateAccountUserRestrictedCallErrorCounter: Counter = counter("api.create-account.user-restricted.errors.count")

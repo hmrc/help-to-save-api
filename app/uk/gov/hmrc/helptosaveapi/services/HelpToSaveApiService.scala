@@ -138,7 +138,8 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
 
   private def storeEmailThenCreateAccount(json:          JsValue,
                                           retrievedNINO: Option[String],
-                                          request:       Request[_])(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType =
+                                          request:       Request[_]
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): CreateAccountResponseType =
     validateCreateAccountRequest(json, request) {
 
       case CreateAccountRequest(header, body) ⇒
@@ -186,6 +187,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
   private def createAccount(body:                CreateAccountBody,
                             header:              CreateAccountHeader,
                             eligibilityResponse: ApiEligibilityResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
+    metrics.apiCreateAccountCallCounter(header.clientCode).inc()
 
     val correlationIdHeader = "requestCorrelationId" -> header.requestCorrelationId.toString
     logger.info(s"Create Account Request has been made with headers: ${header.show}")
