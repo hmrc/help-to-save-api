@@ -212,6 +212,15 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       val fakeRequestWithOnlineRequestWithEmail = FakeRequest().withJsonBody(Json.toJson(onlineRequestWithEmail))
 
+      def minimalJson[A](registrationChannel: A): JsValue =
+        Json.parse(
+          s"""{
+             |"header" : ${Json.toJson(createAccountHeader)},
+             |"body" : { "registrationChannel" : "$registrationChannel", "version" : "2.0" }
+             |}""".stripMargin)
+
+      val fakeRequestWithIncorrectRegChannelDataType = FakeRequest().withJsonBody(minimalJson[Seq[String]](Seq("online")))
+
       "create an account with retrieved details" when {
 
         "there are no missing mandatory fields and stores email too" in {
@@ -506,6 +515,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
           val result = await(service.createAccountUserRestricted(fakeRequestWithOnlineRequestWithEmail, RetrievedUserDetails.empty()))
           result shouldBe Left(ApiValidationError("nino was not compatible with correlation Id"))
+        }
+
+        //////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////
+        ///////////////////////////////////
+        "the registrationChannel is not of the expected data type (String)" in {
+          val result = await(service.createAccountUserRestricted(fakeRequestWithIncorrectRegChannelDataType, RetrievedUserDetails.empty()))
+          result shouldBe Left(ApiValidationError("registration channel is not of expected type String"))
         }
 
       }

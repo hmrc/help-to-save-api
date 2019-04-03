@@ -47,8 +47,15 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
       case (Some(JsString(registrationChannel)), None, Some(nino)) ⇒
         collate(json, missingDetails, retrievedUserDetails, nino, registrationChannel)
 
+      case (Some(_), _, _) ⇒
+        Left(ApiValidationError("registration channel is not of expected type String"))
+
+      case (_, Some(_), _) ⇒
+        Left(ApiValidationError("nino is not of expected type String"))
+
       case (_, _, None) ⇒
         Left(ApiAccessError())
+
     }
 
   }
