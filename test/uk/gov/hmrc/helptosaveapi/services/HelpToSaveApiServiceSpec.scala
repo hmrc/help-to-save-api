@@ -212,14 +212,45 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       val fakeRequestWithOnlineRequestWithEmail = FakeRequest().withJsonBody(Json.toJson(onlineRequestWithEmail))
 
-      def minimalJson[A](registrationChannel: A): JsValue =
-        Json.parse(
-          s"""{
-             |"header" : ${Json.toJson(createAccountHeader)},
-             |"body" : { "registrationChannel" : "$registrationChannel", "version" : "2.0" }
-             |}""".stripMargin)
+      val createAccountRequestRegChannelIncorrectDataType =
+        s"""
+          |{
+          |        "header" :
+          |          {
+          |            "version": "version",
+          |            "createdTimestamp": "1970-01-01 00:00:00 Z",
+          |            "clientCode": "code",
+          |            "requestCorrelationId": "$correlationId"
+          |          },
+          |        "body" :
+          |          {
+          |            "nino": "nino",
+          |            "registrationChannel": 2,
+          |            "systemId": "systemId"
+          |         }
+          |}
+        """.stripMargin
 
-      val fakeRequestWithIncorrectRegChannelDataType = FakeRequest().withJsonBody(minimalJson[Seq[String]](Seq("online")))
+      val createAccountRequestNinoIncorrectDataType =
+        s"""
+           |{
+           |        "header" :
+           |          {
+           |            "version": "version",
+           |            "createdTimestamp": "1970-01-01 00:00:00 Z",
+           |            "clientCode": "code",
+           |            "requestCorrelationId": "$correlationId"
+           |          },
+           |        "body" :
+           |          {
+           |            "nino": false,
+           |            "registrationChannel": "02",
+           |            "systemId": "systemId"
+           |         }
+           |}
+        """.stripMargin
+
+        def fakeRequestWithIncorrectDataTypeField(createAccountRequestString: String) = FakeRequest().withJsonBody(Json.parse(createAccountRequestString))
 
       "create an account with retrieved details" when {
 
@@ -517,12 +548,14 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           result shouldBe Left(ApiValidationError("nino was not compatible with correlation Id"))
         }
 
-        //////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////
-        ///////////////////////////////////
         "the registrationChannel is not of the expected data type (String)" in {
-          val result = await(service.createAccountUserRestricted(fakeRequestWithIncorrectRegChannelDataType, RetrievedUserDetails.empty()))
+          val result = await(service.createAccountUserRestricted(fakeRequestWithIncorrectDataTypeField(createAccountRequestRegChannelIncorrectDataType), fullRetrievedUserDetails))
           result shouldBe Left(ApiValidationError("registration channel is not of expected type String"))
+        }
+
+        "the nino is not of the expected data type (String)" in {
+          val result = await(service.createAccountUserRestricted(fakeRequestWithIncorrectDataTypeField(createAccountRequestNinoIncorrectDataType), fullRetrievedUserDetails))
+          result shouldBe Left(ApiValidationError("nino is not of expected type String"))
         }
 
       }
