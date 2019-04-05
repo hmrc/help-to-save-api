@@ -448,7 +448,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             service.createAccountUserRestricted(
               FakeRequest().withJsonBody(Json.parse(s"""{ "header" : ${Json.toJson(createAccountHeader)} }""".stripMargin)), fullRetrievedUserDetails))
 
-          result shouldBe Left(ApiValidationError("No registration channel was given", ""))
+          result shouldBe Left(ApiValidationError("No registration channel was given"))
         }
 
         "there is no JSON in the request" in {
