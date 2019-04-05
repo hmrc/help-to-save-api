@@ -27,28 +27,36 @@ import uk.gov.hmrc.helptosaveapi.models.createaccount._
 
 private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
 
-  def fillInMissingDetailsGG(json:                 JsValue,
+  def fillInMissingDetailsGG(json:                 JsValue, // scalastyle:ignore cyclomatic.complexity
                              missingDetails:       Set[MandatoryCreateAccountField],
                              retrievedUserDetails: RetrievedUserDetails
   ): Either[ApiError, JsValue] = {
     import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountRequest._
 
-    (json.registrationChannel(), json.nino(), retrievedUserDetails.nino) match {
-      case (None, _, _) ⇒
-        Left(ApiValidationError("No registration channel was given", ""))
-
-      case (Some(JsString(registrationChannel)), Some(JsString(bodyNINO)), Some(retrievedNINO)) ⇒
-        if (bodyNINO =!= retrievedNINO) {
-          Left(ApiAccessError())
-        } else {
-          collate(json, missingDetails, retrievedUserDetails, retrievedNINO, registrationChannel)
+    json.registrationChannel() match {
+      case Some(JsString(registrationChannel)) ⇒
+        json.nino() match {
+          case Some(JsString(bodyNINO)) ⇒
+            retrievedUserDetails.nino match {
+              case Some(retrievedNINO) ⇒
+                if (bodyNINO =!= retrievedNINO) {
+                  Left(ApiAccessError())
+                } else {
+                  collate(json, missingDetails, retrievedUserDetails, retrievedNINO, registrationChannel)
+                }
+              case None ⇒ Left(ApiAccessError()) // No retrieved NINO
+            }
+          case Some(_) ⇒ Left(ApiValidationError("nino is not of expected type String"))
+          case None ⇒ // No bodyNINO
+            retrievedUserDetails.nino match {
+              case Some(nino) ⇒ collate(json, missingDetails, retrievedUserDetails, nino, registrationChannel)
+              case None       ⇒ Left(ApiAccessError())
+            }
         }
 
-      case (Some(JsString(registrationChannel)), None, Some(nino)) ⇒
-        collate(json, missingDetails, retrievedUserDetails, nino, registrationChannel)
+      case Some(_) ⇒ Left(ApiValidationError("registration channel is not of expected type String"))
 
-      case (_, _, None) ⇒
-        Left(ApiAccessError())
+      case None    ⇒ Left(ApiValidationError("No registration channel was given"))
     }
 
   }

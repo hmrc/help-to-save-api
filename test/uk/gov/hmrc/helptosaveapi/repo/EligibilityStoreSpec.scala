@@ -33,22 +33,23 @@ class EligibilityStoreSpec extends TestSupport with MongoSupport {
       """.stripMargin)
   )
 
+  class TestProps {
+    val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
+  }
+
   "The EligibilityStoreSpec" when {
 
-    val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
-
-    val cId = UUID.randomUUID()
     val nino = "nino"
     val eligibility = ApiEligibilityResponse(Eligibility(true, true, true), false)
     val eligibilityWithNINO = EligibilityResponseWithNINO(eligibility, nino)
 
     "storing api eligibility" must {
 
-      "store the eligibility result and return success result" in {
+      "store the eligibility result and return success result" in new TestProps {
         await(store.put(UUID.randomUUID(), eligibility, nino)) shouldBe Right(())
       }
 
-      "store the AccountAlreadyExists result and return success result" in {
+      "store the AccountAlreadyExists result and return success result" in new TestProps {
         await(store.put(UUID.randomUUID(), AccountAlreadyExists(), nino)) shouldBe Right(())
       }
 
@@ -62,17 +63,20 @@ class EligibilityStoreSpec extends TestSupport with MongoSupport {
 
     "getting api eligibility" must {
 
-      "get the eligibility result and return success result" in {
-        await(store.put(cId, eligibility, nino))
-        await(store.get(cId)) shouldBe Right(Some(eligibilityWithNINO))
-      }
-
-      "be able to read the  AccountAlreadyExists result and return success result" in {
+      "be able to read the  AccountAlreadyExists result and return success result" in new TestProps {
+        val cId = UUID.randomUUID()
         await(store.put(cId, AccountAlreadyExists(), nino)) shouldBe Right(())
         await(store.get(cId)) shouldBe Right(Some(EligibilityResponseWithNINO(AccountAlreadyExists(), nino)))
       }
 
+      "get the eligibility result and return success result" in new TestProps {
+        val cId = UUID.randomUUID()
+        await(store.put(cId, eligibility, nino)) shouldBe Right(())
+        await(store.get(cId)) shouldBe Right(Some(eligibilityWithNINO))
+      }
+
       "handle unexpected future failures" in {
+        val cId = UUID.randomUUID()
         withBrokenMongo { reactiveMongoComponent ⇒
           val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
           await(store.get(cId)) shouldBe Left("error")
