@@ -56,7 +56,7 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
 
       case Some(_) ⇒ Left(ApiValidationError("registration channel is not of expected type String"))
 
-      case None    ⇒ Left(ApiValidationError("No registration channel was given", ""))
+      case None    ⇒ Left(ApiValidationError("No registration channel was given"))
     }
 
   }

@@ -128,7 +128,7 @@ lazy val microservice = Project(appName, file("."))
     evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
     routesGenerator := StaticRoutesGenerator
   )
-  .settings(scalacOptions ++= Seq("-Xcheckinit", "-Ypatmat-exhaust-depth", "off"))
+  .settings(scalacOptions += "-Xcheckinit")
   .configs(IntegrationTest)
   .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(
