@@ -25,6 +25,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class XSSProtectionFilter @Inject() (val mat: Materializer)(implicit ec: ExecutionContext) extends Filter {
 
   override def apply(f: RequestHeader ⇒ Future[Result])(rh: RequestHeader): Future[Result] =
-    f(rh).map(_.withHeaders("X-XSS-Protection" → "1; mode=block"))
+    f(rh).map(_.withHeaders("X-XSS-Protection" → "1; mode=block", "X-Content-Type-Options" → "nosniff"))
 
 }
