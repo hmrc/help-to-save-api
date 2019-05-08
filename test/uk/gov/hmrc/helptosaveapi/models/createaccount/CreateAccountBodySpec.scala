@@ -77,6 +77,86 @@ class CreateAccountBodySpec extends TestSupport {
           )
       }
 
+      "strip out any spaces in the sortcode" in {
+        val jsonString: String =
+          s"""{
+             | "nino" : "nino",
+             | "forename" : "name",
+             | "surname" : "surname",
+             | "dateOfBirth" : "19920423",
+             | "contactDetails" : {
+             |     "address1" : "1",
+             |     "address2" : "2",
+             |     "address3" : "3",
+             |     "address4" : "4",
+             |     "address5" : "5",
+             |     "postcode": "postcode",
+             |     "countryCode" : "country",
+             |     "communicationPreference" : "preference",
+             |     "email" : "email"
+             | },
+             | "registrationChannel" : "channel",
+             | "bankDetails": {
+             |    "accountNumber": "123",
+             |    "sortCode": "12 34 56",
+             |    "accountName": "accountName",
+             |    "rollNumber": "rollNumber"
+             |  }
+             |}
+           """.stripMargin
+
+        val reads = CreateAccountBody.reads("code")
+
+        Json.parse(jsonString).validate[CreateAccountBody](reads) shouldBe JsSuccess(
+          CreateAccountBody(
+            "nino", "name", "surname",
+            LocalDate.of(1992, 4, 23),
+            ContactDetails("1", "2", Some("3"), Some("4"), Some("5"), "postcode", Some("country"), "preference", None, Some("email")),
+            "channel", Some(BankDetails("123", "123456", "accountName", Some("rollNumber"))),
+            "MDTP-API-code"
+          ))
+      }
+
+      "strip out any hyphens in the sortcode" in {
+        val jsonString: String =
+          s"""{
+             | "nino" : "nino",
+             | "forename" : "name",
+             | "surname" : "surname",
+             | "dateOfBirth" : "19920423",
+             | "contactDetails" : {
+             |     "address1" : "1",
+             |     "address2" : "2",
+             |     "address3" : "3",
+             |     "address4" : "4",
+             |     "address5" : "5",
+             |     "postcode": "postcode",
+             |     "countryCode" : "country",
+             |     "communicationPreference" : "preference",
+             |     "email" : "email"
+             | },
+             | "registrationChannel" : "channel",
+             | "bankDetails": {
+             |    "accountNumber": "123",
+             |    "sortCode": "12-34-56",
+             |    "accountName": "accountName",
+             |    "rollNumber": "rollNumber"
+             |  }
+             |}
+           """.stripMargin
+
+        val reads = CreateAccountBody.reads("code")
+
+        Json.parse(jsonString).validate[CreateAccountBody](reads) shouldBe JsSuccess(
+          CreateAccountBody(
+            "nino", "name", "surname",
+            LocalDate.of(1992, 4, 23),
+            ContactDetails("1", "2", Some("3"), Some("4"), Some("5"), "postcode", Some("country"), "preference", None, Some("email")),
+            "channel", Some(BankDetails("123", "123456", "accountName", Some("rollNumber"))),
+            "MDTP-API-code"
+          ))
+      }
+
     }
 
   }
