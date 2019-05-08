@@ -45,7 +45,10 @@ object CreateAccountBody {
   )
 
   object BankDetails {
-    implicit val format: Format[BankDetails] = Json.format[BankDetails]
+    val allowedSeparators: Set[Char] = Set(' ', '-', '–', '−', '—')
+    implicit val reads: Reads[BankDetails] = Json.reads[BankDetails].map(bankDetails ⇒ bankDetails.copy(sortCode = bankDetails.sortCode.filterNot(allowedSeparators.contains)))
+
+    implicit val writes: Writes[BankDetails] = Json.writes[BankDetails]
   }
 
   case class ContactDetails(
