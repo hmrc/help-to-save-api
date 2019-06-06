@@ -32,7 +32,7 @@ class XSSProtectionFilterSpec extends TestSupport {
 
       val filter = new XSSProtectionFilter(fakeApplication.materializer)
       val result = filter.apply(_ ⇒ Future.successful(Ok))(FakeRequest())
-      headers(result) shouldBe Map("X-XSS-Protection" → "1; mode=block")
+      headers(result) shouldBe Map("X-XSS-Protection" → "1; mode=block", "X-Content-Type-Options" → "nosniff")
 
     }
 
