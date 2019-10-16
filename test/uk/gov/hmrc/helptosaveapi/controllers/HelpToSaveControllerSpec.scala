@@ -42,7 +42,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
   val apiService: HelpToSaveApiService = mock[HelpToSaveApiService]
 
-  val controller: HelpToSaveController = new HelpToSaveController(apiService, mockAuthConnector)
+  val controller: HelpToSaveController = new HelpToSaveController(apiService, mockAuthConnector, mockCc)
 
   def mockCreateAccountPrivileged(request: Request[AnyContent])(response: Either[ApiError, CreateAccountSuccess]): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
     (apiService.createAccountPrivileged(_: Request[AnyContent])(_: HeaderCarrier, _: ExecutionContext))

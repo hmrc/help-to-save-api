@@ -20,11 +20,13 @@ import akka.stream.Materializer
 import com.codahale.metrics.{Counter, Timer}
 import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
 import com.typesafe.config.ConfigFactory
+import controllers.Assets
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.validators.EmailValidation
 import uk.gov.hmrc.http.HeaderCarrier
@@ -40,7 +42,9 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
         ConfigFactory.parseString(
           """
             | metrics.enabled       = false
-            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveapi.RegistrationModule", "play.modules.reactivemongo.ReactiveMongoHmrcModule" ]
+            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveapi.RegistrationModule",
+            | "play.modules.reactivemongo.ReactiveMongoHmrcModule",
+            | "play.api.mvc.LegacyCookiesModule" ]
           """.stripMargin)
       ))
       .build()
@@ -50,6 +54,12 @@ class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   implicit lazy val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
+
+  lazy val mockCc: ControllerComponents = fakeApplication.injector.instanceOf[ControllerComponents]
+
+  lazy val mockAssets: Assets = fakeApplication.injector.instanceOf[Assets]
+
+  lazy val appName: String = "fakeApp"
 
   implicit lazy val config: Configuration = fakeApplication.injector.instanceOf[Configuration]
 
