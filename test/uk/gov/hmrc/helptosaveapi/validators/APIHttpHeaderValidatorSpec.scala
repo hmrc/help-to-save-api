@@ -18,6 +18,7 @@ package uk.gov.hmrc.helptosaveapi.validators
 
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.{NonEmptyList, ValidatedNel}
+import cats.scalatest.ValidatedMatchers._
 import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc._
 import play.api.test.FakeRequest
@@ -66,7 +67,7 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
                      checkContentType: Boolean): Unit = {
 
         "allow requests with valid headers" in {
-          result(headers) shouldBe Valid(requestWithHeaders(headers))
+          result(headers) should be(valid)
         }
 
         "flag as invalid requests" which {
