@@ -16,23 +16,21 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
-import javax.inject.{Inject, Singleton}
-
 import com.typesafe.config.Config
-import controllers.AssetsBuilder
-import play.api.Configuration
-import play.api.http.HttpErrorHandler
-import play.api.libs.json.{Format, Json}
-import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.helptosaveapi.views.txt
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import configs.syntax._
+import controllers.Assets
+import javax.inject.{Inject, Singleton}
+import play.api.Configuration
+import play.api.libs.json.{Format, Json}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess.Version
+import uk.gov.hmrc.helptosaveapi.views.txt
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 @Singleton
-class DocumentationController @Inject() (httpErrorHandler: HttpErrorHandler, configuration: Configuration)
-  extends AssetsBuilder(httpErrorHandler) with BaseController {
+class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets)
+  extends BackendController(cc) {
 
   val access: Version ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
@@ -43,7 +41,7 @@ class DocumentationController @Inject() (httpErrorHandler: HttpErrorHandler, con
   }
 
   def raml(version: String, file: String): Action[AnyContent] =
-    at(s"/public/api/conf/$version", file)
+    assets.at(s"/public/api/conf/$version", file)
 
 }
 

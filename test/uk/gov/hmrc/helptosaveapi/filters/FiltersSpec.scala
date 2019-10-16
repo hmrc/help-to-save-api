@@ -22,7 +22,7 @@ import uk.gov.hmrc.play.bootstrap.filters._
 
 class FiltersSpec extends TestSupport {
 
-  val mockMDCFilter = new MDCFilter(fakeApplication.materializer, fakeApplication.configuration)
+  val mockMDCFilter = new MDCFilter(fakeApplication.materializer, fakeApplication.configuration, appName)
 
   class EmptyMicroserviceFilters extends MicroserviceFilters(
     stub[MetricsFilter],

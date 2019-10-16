@@ -13,20 +13,21 @@ val appName = "help-to-save-api"
 val dependencies = Seq(
   ws,
   "org.typelevel" %% "cats-core" % "1.5.0",
-  "uk.gov.hmrc" %% "bootstrap-play-25" % "4.11.0",
+  "uk.gov.hmrc" %% "bootstrap-play-26" % "1.1.0",
   "com.github.kxbmap" %% "configs" % "0.4.4",
-  "uk.gov.hmrc" %% "auth-client" % "2.19.0-play-25",
-  "uk.gov.hmrc" %% "mongo-caching" % "6.1.0-play-25",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.12.0-play-25"
+  "uk.gov.hmrc" %% "auth-client" % "2.30.0-play-26",
+  "uk.gov.hmrc" %% "mongo-caching" % "6.6.0-play-26",
+  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.20.0-play-26"
 )
 
 val testDependencies = Seq(
-  "uk.gov.hmrc" %% "hmrctest" % "3.4.0-play-25" % "test",
+  "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % "test",
   "org.scalatest" %% "scalatest" % "3.0.5" % "test",
   "com.typesafe.play" %% "play-test" % PlayVersion.current % "test",
   "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
   "uk.gov.hmrc" %% "stub-data-generator" % "0.5.3" % "test",
-  "uk.gov.hmrc" %% "reactivemongo-test" % "4.8.0-play-25" % "test"
+  "uk.gov.hmrc" %% "reactivemongo-test" % "4.15.0-play-26" % "test",
+  "com.ironcorelabs" %% "cats-scalatest" % "2.4.0" % "test"
 )
 
 lazy val appDependencies: Seq[ModuleID] = dependencies ++ testDependencies
@@ -125,8 +126,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     libraryDependencies ++= appDependencies,
     retrieveManaged := false,
-    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-    routesGenerator := StaticRoutesGenerator
+    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
   )
   .settings(scalacOptions += "-Xcheckinit")
   .configs(IntegrationTest)

@@ -37,7 +37,7 @@ class DocumentationControllerSpec extends TestSupport {
     "api.access.version-2.0.whitelistedApplicationIds" → whiteList,
     "api.access.version-2.0.enabled" → true
   )
-  val controller = new DocumentationController(httpErrorHandler, configuration)
+  val controller = new DocumentationController(configuration, mockCc, mockAssets)
 
   val apiAccess: String ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
