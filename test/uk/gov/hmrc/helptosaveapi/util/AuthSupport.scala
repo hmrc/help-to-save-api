@@ -29,9 +29,11 @@ trait AuthSupport extends TestSupport {
 
   val nino = "AE123456C"
 
-  val ggCredentials = GGCredId("123-gg")
+  //  val ggCredentials = GGCredId("123-gg")
+  val ggCredentials = Some(Credentials("123-gg", "GovernmentGateway"))
 
-  val privilegedCredentials = PAClientId("123-pa")
+  //  val privilegedCredentials = PAClientId("123-pa")
+  val privilegedCredentials = Some(Credentials("123-pa", "PrivilegedApplication"))
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 

@@ -17,22 +17,22 @@
 package uk.gov.hmrc.helptosaveapi.controllers
 
 import java.time.format.DateTimeFormatter
+import java.time.{LocalDate ⇒ JavaLocalDate}
 import java.util.UUID
 
 import org.joda.time.LocalDate
-import java.time.{LocalDate ⇒ JavaLocalDate}
 import org.scalamock.handlers.{CallHandler3, CallHandler4, CallHandler5}
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId ⇒ v2AuthProviderId, nino ⇒ v2Nino}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials ⇒ v2AuthProviderId, nino ⇒ v2Nino}
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
-import uk.gov.hmrc.helptosaveapi.util.AuthSupport._
+import uk.gov.hmrc.helptosaveapi.util.AuthSupport.TildeOps
 import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, DataGenerators, toFuture}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -79,7 +79,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "the request is made with privileged access" must {
 
-        val privilegedCredentials = PAClientId("id")
+        val privilegedCredentials = Some(Credentials("id", "PrivilegedApplication"))
 
         "return a Created response if the request is valid and account create is successful " in {
           inSequence {
@@ -162,7 +162,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           def toJodaDate(d: java.time.LocalDate): org.joda.time.LocalDate =
             LocalDate.parse(d.format(DateTimeFormatter.ISO_DATE))
 
-        val ggCredentials = GGCredId("id")
+        val ggCredentials = Some(Credentials("id", "GovernmentGateway"))
 
         "return a Created response if the request is valid and account create is successful " in {
           val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
@@ -265,7 +265,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "the request is made with unknown access" must {
 
         "return a 403" in {
-          mockAuthResultWithSuccess(v2AuthProviderId)(VerifyPid("id"))
+          mockAuthResultWithSuccess(v2AuthProviderId)(Some(Credentials("id", "")))
           val result = controller.createAccount()(fakeRequest)
           status(result) shouldBe FORBIDDEN
         }
@@ -445,13 +445,13 @@ class HelpToSaveControllerSpec extends AuthSupport {
       "the request is made with other access" must {
 
         "return a 403 when no NINO is passed in the URL" in {
-          mockAuthResultWithSuccess(v2AuthProviderId)(VerifyPid("id"))
+          mockAuthResultWithSuccess(v2AuthProviderId)(Some(Credentials("id", "")))
           val result = controller.checkEligibilityDeriveNino()(fakeRequest)
           status(result) shouldBe FORBIDDEN
         }
 
         "return a 403 a NINO is passed in the URL" in {
-          mockAuthResultWithSuccess(v2AuthProviderId)(VerifyPid("id"))
+          mockAuthResultWithSuccess(v2AuthProviderId)(Some(Credentials("id", "")))
           val result = controller.checkEligibility(nino)(fakeRequest)
           status(result) shouldBe FORBIDDEN
         }

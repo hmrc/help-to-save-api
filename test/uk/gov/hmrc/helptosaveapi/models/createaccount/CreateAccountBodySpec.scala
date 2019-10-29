@@ -78,8 +78,9 @@ class CreateAccountBodySpec extends TestSupport {
       }
 
       "strip out any spaces in the sortcode" in {
+        val str = ""
         val jsonString: String =
-          s"""{
+          s"""$str{
              | "nino" : "nino",
              | "forename" : "name",
              | "surname" : "surname",
@@ -118,8 +119,9 @@ class CreateAccountBodySpec extends TestSupport {
       }
 
       "strip out any hyphens in the sortcode" in {
+        val str = ""
         val jsonString: String =
-          s"""{
+          s"""$str{
              | "nino" : "nino",
              | "forename" : "name",
              | "surname" : "surname",

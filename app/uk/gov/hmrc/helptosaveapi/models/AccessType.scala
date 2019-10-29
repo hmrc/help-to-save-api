@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.models
 
-import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 sealed trait AccessType
 
@@ -26,10 +26,14 @@ object AccessType {
 
   case object UserRestricted extends AccessType
 
-  def fromLegacyCredentials(credentials: LegacyCredentials): Either[String, AccessType] = credentials match {
-    case GGCredId(_)   ⇒ Right(UserRestricted)
-    case PAClientId(_) ⇒ Right(PrivilegedAccess)
-    case other         ⇒ Left(other.toString)
+  def fromLegacyCredentials(creds: Option[Credentials]): Either[String, AccessType] = creds match {
+    case Some(credentials) ⇒
+      credentials match {
+        case Credentials(_, "GovernmentGateway")     ⇒ Right(UserRestricted)
+        case Credentials(_, "PrivilegedApplication") ⇒ Right(PrivilegedAccess)
+        case Credentials(_, other)                   ⇒ Left(other)
+      }
+    case None ⇒ Left("Empty")
   }
 
 }
