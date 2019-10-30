@@ -19,7 +19,7 @@ package uk.gov.hmrc.helptosaveapi.controllers
 import java.time.LocalDate
 import java.util.UUID
 
-import cats.instances.string.catsKernelStdOrderForString
+import cats.instances.string._
 import cats.syntax.eq._
 import com.google.inject.Inject
 import org.joda.time.{LocalDate ⇒ JodaLocalDate}
@@ -28,7 +28,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials ⇒ v2AuthProviderId, nino ⇒ v2Nino}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId ⇒ v2AuthProviderId, nino ⇒ v2Nino}
 import uk.gov.hmrc.auth.core.retrieve.{v2, Name ⇒ RetrievedName, _}
 import uk.gov.hmrc.helptosaveapi.auth.Auth
 import uk.gov.hmrc.helptosaveapi.models.AccessType.{PrivilegedAccess, UserRestricted}
@@ -57,7 +57,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
       v2.Retrievals.itmpAddress and
       v2.Retrievals.email
 
-  def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials1 ⇒
+  def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials ⇒
     def toJavaDate(jodaDate: JodaLocalDate): LocalDate =
         LocalDate.of(jodaDate.getYear, jodaDate.getMonthOfYear, jodaDate.getDayOfMonth)
 
@@ -69,7 +69,7 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
           case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒ if (alreadyHadAccount) { Conflict } else { Created }
         }
 
-    AccessType.fromLegacyCredentials(credentials1) match {
+    AccessType.fromLegacyCredentials(credentials) match {
       case Right(PrivilegedAccess) ⇒
         helpToSaveApiService.createAccountPrivileged(request).map(handleResult)
 
@@ -97,11 +97,11 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
     }
   }
 
-  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials1 ⇒
+  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials ⇒
     val correlationId = UUID.randomUUID()
 
     val result: Future[Result] =
-      AccessType.fromLegacyCredentials(credentials1) match {
+      AccessType.fromLegacyCredentials(credentials) match {
         case Right(UserRestricted) ⇒
           authorised(v2Nino){ _ ⇒
             _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
@@ -120,11 +120,10 @@ class HelpToSaveController @Inject() (helpToSaveApiService:       HelpToSaveApiS
 
   }
 
-  def checkEligibility(urlNino: String): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials1 ⇒
+  def checkEligibility(urlNino: String): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials ⇒
     val correlationId = UUID.randomUUID()
-    println(credentials1)
     val result: Future[Result] =
-      AccessType.fromLegacyCredentials(credentials1) match {
+      AccessType.fromLegacyCredentials(credentials) match {
         case Right(UserRestricted) ⇒
           authorised(v2Nino){ _ ⇒
             _.fold[Future[Result]] {

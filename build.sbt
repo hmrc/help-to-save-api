@@ -22,8 +22,6 @@ val dependencies = Seq(
 
 val testDependencies = Seq(
   "uk.gov.hmrc"       %% "hmrctest"                     % "3.9.0-play-26"     % "test",
-  "org.scalatest"     %% "scalatest"                    % "3.0.8"             % "test",
-  "com.typesafe.play" %% "play-test"                    % PlayVersion.current % "test",
   "org.scalamock"     %% "scalamock-scalatest-support"  % "3.6.0"             % "test",
   "uk.gov.hmrc"       %% "stub-data-generator"          % "0.5.3"             % "test",
   "uk.gov.hmrc"       %% "reactivemongo-test"           % "4.15.0-play-26"    % "test",
