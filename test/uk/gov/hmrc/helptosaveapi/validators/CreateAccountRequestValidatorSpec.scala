@@ -19,14 +19,14 @@ package uk.gov.hmrc.helptosaveapi.validators
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 
-import cats.data.Validated.Invalid
 import cats.data.NonEmptyList
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
+import cats.data.Validated.Invalid
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
-class CreateAccountRequestValidatorSpec extends TestSupport with GeneratorDrivenPropertyChecks {
+class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrivenPropertyChecks {
 
   val validator = new CreateAccountRequestValidator(new EmailValidation(config))
 

@@ -20,7 +20,7 @@ import java.util.UUID
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
@@ -29,7 +29,7 @@ import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSuppor
 import uk.gov.hmrc.http.HttpResponse
 
 // scalastyle:off magic.number
-class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with GeneratorDrivenPropertyChecks with EitherValues with HttpSupport {
+class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with ScalaCheckDrivenPropertyChecks with EitherValues with HttpSupport {
 
   val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, mockHttp)
 

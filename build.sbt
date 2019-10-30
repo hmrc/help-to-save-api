@@ -12,29 +12,25 @@ val appName = "help-to-save-api"
 
 val dependencies = Seq(
   ws,
-  "org.typelevel" %% "cats-core" % "1.5.0",
-  "uk.gov.hmrc" %% "bootstrap-play-26" % "1.1.0",
-  "com.github.kxbmap" %% "configs" % "0.4.4",
-  "uk.gov.hmrc" %% "auth-client" % "2.30.0-play-26",
-  "uk.gov.hmrc" %% "mongo-caching" % "6.6.0-play-26",
-  "uk.gov.hmrc" %% "simple-reactivemongo" % "7.20.0-play-26"
+  "org.typelevel"     %% "cats-core"            % "2.0.0",
+  "uk.gov.hmrc"       %% "bootstrap-play-26"    % "1.1.0",
+  "com.github.kxbmap" %% "configs"              % "0.4.4",
+  "uk.gov.hmrc"       %% "auth-client"          % "2.31.0-play-26",
+  "uk.gov.hmrc"       %% "mongo-caching"        % "6.6.0-play-26",
+  "uk.gov.hmrc"       %% "simple-reactivemongo" % "7.20.0-play-26"
 )
 
 val testDependencies = Seq(
-  "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % "test",
-  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
-  "com.typesafe.play" %% "play-test" % PlayVersion.current % "test",
-  "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
-  "uk.gov.hmrc" %% "stub-data-generator" % "0.5.3" % "test",
-  "uk.gov.hmrc" %% "reactivemongo-test" % "4.15.0-play-26" % "test",
-  "com.ironcorelabs" %% "cats-scalatest" % "2.4.0" % "test"
+  "uk.gov.hmrc"       %% "hmrctest"                     % "3.9.0-play-26"     % "test",
+  "org.scalamock"     %% "scalamock-scalatest-support"  % "3.6.0"             % "test",
+  "uk.gov.hmrc"       %% "stub-data-generator"          % "0.5.3"             % "test",
+  "uk.gov.hmrc"       %% "reactivemongo-test"           % "4.15.0-play-26"    % "test",
+  "com.ironcorelabs"  %% "cats-scalatest"               % "3.0.0"             % "test"
 )
 
 lazy val appDependencies: Seq[ModuleID] = dependencies ++ testDependencies
 lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
-
-
 
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
