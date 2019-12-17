@@ -22,7 +22,6 @@ import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
 import com.typesafe.config.ConfigFactory
 import controllers.Assets
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{Matchers, WordSpec}
 import play.api.Configuration
 import play.api.http.HttpErrorHandler
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -30,13 +29,12 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.validators.EmailValidation
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.ExecutionContext
 
-class TestSupport extends WordSpec with UnitSpec with Matchers with MockFactory with WithFakeApplication {
+class TestSupport extends UnitSpec with MockFactory {
 
-  override lazy val fakeApplication =
+  lazy val fakeApplication =
     new GuiceApplicationBuilder()
       .configure(Configuration(
         ConfigFactory.parseString(

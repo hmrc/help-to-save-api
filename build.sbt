@@ -1,31 +1,31 @@
-import play.core.PlayVersion
 import sbt.Keys._
 import sbt._
 import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings}
-import uk.gov.hmrc.{SbtArtifactory, SbtAutoBuildPlugin}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 import uk.gov.hmrc.versioning.SbtGitVersioning
+import uk.gov.hmrc.{SbtArtifactory, SbtAutoBuildPlugin}
 import wartremover.{Wart, Warts, wartremoverErrors, wartremoverExcluded}
 
 val appName = "help-to-save-api"
+val hmrc = "uk.gov.hmrc"
 
 val dependencies = Seq(
   ws,
-  "org.typelevel"     %% "cats-core"            % "2.0.0",
-  "uk.gov.hmrc"       %% "bootstrap-play-26"    % "1.1.0",
-  "com.github.kxbmap" %% "configs"              % "0.4.4",
-  "uk.gov.hmrc"       %% "auth-client"          % "2.31.0-play-26",
-  "uk.gov.hmrc"       %% "mongo-caching"        % "6.6.0-play-26",
-  "uk.gov.hmrc"       %% "simple-reactivemongo" % "7.20.0-play-26"
+  hmrc %% "bootstrap-play-26" % "1.3.0",
+  hmrc %% "auth-client" % "2.32.0-play-26",
+  hmrc %% "mongo-caching" % "6.6.0-play-26",
+  hmrc %% "simple-reactivemongo" % "7.20.0-play-26",
+  "org.typelevel" %% "cats-core" % "2.0.0",
+  "com.github.kxbmap" %% "configs" % "0.4.4"
 )
 
 val testDependencies = Seq(
-  "uk.gov.hmrc"       %% "hmrctest"                     % "3.9.0-play-26"     % "test",
-  "org.scalamock"     %% "scalamock-scalatest-support"  % "3.6.0"             % "test",
-  "uk.gov.hmrc"       %% "stub-data-generator"          % "0.5.3"             % "test",
-  "uk.gov.hmrc"       %% "reactivemongo-test"           % "4.15.0-play-26"    % "test",
-  "com.ironcorelabs"  %% "cats-scalatest"               % "3.0.0"             % "test"
+  hmrc %% "service-integration-test" % "0.9.0-play-26" % "test",
+  hmrc %% "stub-data-generator" % "0.5.3" % "test",
+  hmrc %% "reactivemongo-test" % "4.15.0-play-26" % "test",
+  "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
+  "com.ironcorelabs" %% "cats-scalatest" % "3.0.0" % "test"
 )
 
 lazy val appDependencies: Seq[ModuleID] = dependencies ++ testDependencies
@@ -36,7 +36,7 @@ lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
   Seq(
     // Semicolon-separated list of regexs matching classes to exclude
-    ScoverageKeys.coverageExcludedPackages := "<empty>;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps|Metrics).*;.*http.*",
+    ScoverageKeys.coverageExcludedPackages := "<empty>;.*Reverse.*;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps|Metrics).*;.*http.*",
     ScoverageKeys.coverageExcludedFiles := ".*ApplicationRegistration.*;.*RegistrationModule.*",
     ScoverageKeys.coverageMinimum := 95,
     ScoverageKeys.coverageFailOnMinimum := true,
