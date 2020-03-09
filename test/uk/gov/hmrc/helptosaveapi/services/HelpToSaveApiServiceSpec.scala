@@ -756,7 +756,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           mockEligibilityStoreGet(createAccountRequest.header.requestCorrelationId)(Right(Some(apiEligibilityResponseWithNINO)))
           createAccountRequest.body.bankDetails.foreach(mockBankDetailsValidation(createAccountRequest.body.nino, _)(Right(true)))
           mockCreateAccountService(createAccountRequest.body)(Left(""))
-          mockPagerDutyAlert("Failed to make call to createAccount")
+          mockPagerDutyAlert("Failed to make call to create account")
         }
 
         val result = await(service.createAccountPrivileged(fakeRequestWithBody))
