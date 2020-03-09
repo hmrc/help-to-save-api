@@ -232,7 +232,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
     }.recover {
       case NonFatal(e) ⇒
         logger.warn(s"Received unexpected error during create account, error=$e", body.nino, correlationIdHeader)
-        pagerDutyAlerting.alert("Failed to make call to createAccount")
+        pagerDutyAlerting.alert("Failed to make call to create account")
         Left(ApiBackendError())
     }
   }
@@ -285,7 +285,7 @@ class HelpToSaveApiServiceImpl @Inject() (val helpToSaveConnector:       HelpToS
                     case other: Int ⇒
                       metrics.apiEligibilityCallErrorCounter.inc()
                       logger.warn(s"Call to check eligibility returned status: $other", nino, correlationIdHeader)
-                      pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check: $other")
+                      pagerDutyAlerting.alert(s"Received unexpected http status in response to eligibility check")
                       Left(ApiBackendError())
 
                   }
