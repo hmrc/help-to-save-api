@@ -49,7 +49,7 @@ private[services] trait EmailBehaviour {
             logger.info("successfully stored email for the api user", nino, correlationIdHeader)
             Right(())
           case other: Int ⇒
-            logger.warn(s"could not store email in mongo for the api user, status: $other", nino, correlationIdHeader)
+            logger.warn(s"unexpected status storing email in mongo for the api user, status: $other", nino, correlationIdHeader)
             pagerDutyAlerting.alert("unexpected status during storing email for the api user")
             Left(ApiBackendError())
         }
