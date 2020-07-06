@@ -29,39 +29,6 @@ lazy val scoverageSettings = {
   )
 }
 
-lazy val scalariformSettings = {
-  import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-  import scalariform.formatter.preferences._
-  // description of options found here -> https://github.com/scala-ide/scalariform
-  ScalariformKeys.preferences := ScalariformKeys.preferences.value
-    .setPreference(AlignArguments, true)
-    .setPreference(AlignParameters, true)
-    .setPreference(AlignSingleLineCaseStatements, true)
-    .setPreference(CompactControlReadability, false)
-    .setPreference(CompactStringConcatenation, false)
-    .setPreference(DanglingCloseParenthesis, Preserve)
-    .setPreference(DoubleIndentConstructorArguments, true)
-    .setPreference(DoubleIndentMethodDeclaration, true)
-    .setPreference(FirstArgumentOnNewline, Preserve)
-    .setPreference(FirstParameterOnNewline, Preserve)
-    .setPreference(FormatXml, true)
-    .setPreference(IndentLocalDefs, true)
-    .setPreference(IndentPackageBlocks, true)
-    .setPreference(IndentSpaces, 2)
-    .setPreference(IndentWithTabs, false)
-    .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
-    .setPreference(NewlineAtEndOfFile, true)
-    .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, false)
-    .setPreference(PreserveSpaceBeforeArguments, true)
-    .setPreference(RewriteArrowSymbols, true)
-    .setPreference(SpaceBeforeColon, false)
-    .setPreference(SpaceBeforeContextColon, false)
-    .setPreference(SpaceInsideBrackets, false)
-    .setPreference(SpaceInsideParentheses, false)
-    .setPreference(SpacesAroundMultiImports, false)
-    .setPreference(SpacesWithinPatternBinders, true)
-}
-
 lazy val wartRemoverSettings = {
   // list of warts here: http://www.wartremover.org/doc/warts.html
   val excludedWarts = Seq(
@@ -90,7 +57,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(publishingSettings: _*)
   .settings(defaultSettings(): _*)
   .settings(PlayKeys.playDefaultPort := 7004)
-  .settings(scalariformSettings: _*)
   .settings(wartRemoverSettings)
   .settings(unmanagedResourceDirectories in Compile += baseDirectory.value / "resources")
   .settings(unmanagedResourceDirectories in Test += baseDirectory.value / "resources")
@@ -121,3 +87,11 @@ lazy val microservice = Project(appName, file("."))
     Resolver.bintrayRepo("hmrc", "releases"),
     Resolver.jcenterRepo
   ))
+
+lazy val compileAll = taskKey[Unit]("Compiles sources in all configurations.")
+
+compileAll := {
+  val a = (compile in Test).value
+  val b = (compile in IntegrationTest).value
+  ()
+}
