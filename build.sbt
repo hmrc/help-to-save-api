@@ -8,42 +8,11 @@ import uk.gov.hmrc.{SbtArtifactory, SbtAutoBuildPlugin}
 import wartremover.{Wart, Warts, wartremoverErrors, wartremoverExcluded}
 
 val appName = "help-to-save-api"
-val hmrc = "uk.gov.hmrc"
 
-val akkaVersion     = "2.5.23"
+lazy val appDependencies: Seq[ModuleID] = Seq(ws) ++ AppDependencies.compile ++ AppDependencies.test
 
-val akkaHttpVersion = "10.0.15"
+dependencyOverrides ++= AppDependencies.overrides
 
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-stream"    % akkaVersion
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-protobuf"  % akkaVersion
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-actor"     % akkaVersion
-
-dependencyOverrides += "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
-
-val dependencies = Seq(
-  ws,
-  hmrc %% "bootstrap-play-26" % "1.12.0",
-  hmrc %% "auth-client" % "3.0.0-play-26",
-  hmrc %% "mongo-caching" % "6.14.0-play-26",
-  hmrc %% "simple-reactivemongo" % "7.30.0-play-26",
-  "org.typelevel" %% "cats-core" % "2.0.0",
-  "com.github.kxbmap" %% "configs" % "0.4.4"
-)
-
-val testDependencies = Seq(
-  hmrc %% "service-integration-test" % "0.12.0-play-26" % "test",
-  hmrc %% "stub-data-generator" % "0.5.3" % "test",
-  hmrc %% "reactivemongo-test" % "4.20.0-play-26" % "test",
-  "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
-  "com.ironcorelabs" %% "cats-scalatest" % "3.0.0" % "test"
-)
-
-lazy val appDependencies: Seq[ModuleID] = dependencies ++ testDependencies
 lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
