@@ -29,10 +29,14 @@ object Logging {
 
   implicit class LoggerOps(val logger: Logger) {
 
-    def info(message: String, nino: String, additionalParams: (String, String)*)(implicit transformer: LogMessageTransformer): Unit =
+    def info(message: String, nino: String, additionalParams: (String, String)*)(
+      implicit transformer: LogMessageTransformer
+    ): Unit =
       logger.info(transformer.transform(message, nino, additionalParams))
 
-    def warn(message: String, nino: String, additionalParams: (String, String)*)(implicit transformer: LogMessageTransformer): Unit =
+    def warn(message: String, nino: String, additionalParams: (String, String)*)(
+      implicit transformer: LogMessageTransformer
+    ): Unit =
       logger.warn(transformer.transform(message, nino, additionalParams))
   }
 
@@ -47,17 +51,16 @@ trait LogMessageTransformer {
 class LogMessageTransformerImpl @Inject() (configuration: Configuration) extends LogMessageTransformer {
 
   private val ninoPrefix: String ⇒ String =
-    if (configuration.underlying.getBoolean("nino-logging.enabled")) {
-      nino ⇒ s"For NINO [$nino], "
-    } else {
-      _ ⇒ ""
+    if (configuration.underlying.getBoolean("nino-logging.enabled")) { nino ⇒
+      s"For NINO [$nino], "
+    } else { _ ⇒
+      ""
     }
 
-  private val logAdditionalParams: Seq[(String, String)] ⇒ String = {
-    params ⇒
-      params.toList.foldLeft("") {
-        (acc, tuple) ⇒ s"${acc}For ${tuple._1} [${tuple._2}], "
-      }
+  private val logAdditionalParams: Seq[(String, String)] ⇒ String = { params ⇒
+    params.toList.foldLeft("") { (acc, tuple) ⇒
+      s"${acc}For ${tuple._1} [${tuple._2}], "
+    }
   }
 
   def transform(message: String, nino: String, additionalParams: Seq[(String, String)]): String =

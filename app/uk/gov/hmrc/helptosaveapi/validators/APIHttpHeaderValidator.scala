@@ -31,20 +31,25 @@ class APIHttpHeaderValidator extends Logging {
 
   import uk.gov.hmrc.helptosaveapi.validators.APIHttpHeaderValidator._
 
-  def contentTypeCheck(implicit request: Request[_]): ValidatedOrErrorString[Option[String]] = validationFromBoolean(request.contentType)(
-    _.contains(ContentTypes.JSON),
-    contentType ⇒ s"content type was not JSON: ${contentType.getOrElse("")}")
+  def contentTypeCheck(implicit request: Request[_]): ValidatedOrErrorString[Option[String]] =
+    validationFromBoolean(request.contentType)(
+      _.contains(ContentTypes.JSON),
+      contentType ⇒ s"content type was not JSON: ${contentType.getOrElse("")}"
+    )
 
-  def acceptCheck(implicit request: Request[_]): ValidatedOrErrorString[Headers] = validationFromBoolean(request.headers)(
-    _.get(HeaderNames.ACCEPT).exists(_ === expectedAcceptType),
-    _ ⇒ s"accept header should match: '$expectedAcceptType'")
+  def acceptCheck(implicit request: Request[_]): ValidatedOrErrorString[Headers] =
+    validationFromBoolean(request.headers)(
+      _.get(HeaderNames.ACCEPT).exists(_ === expectedAcceptType),
+      _ ⇒ s"accept header should match: '$expectedAcceptType'"
+    )
 
   def txmHeadersCheck(implicit request: Request[_]): ValidatedOrErrorString[List[String]] = {
-    val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(expectedKey ⇒
-      validationFromBoolean(expectedKey)(
-        request.headers.get(_).isDefined,
-        _ ⇒ s"Could not find header '$expectedKey'"
-      )
+    val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(
+      expectedKey ⇒
+        validationFromBoolean(expectedKey)(
+          request.headers.get(_).isDefined,
+          _ ⇒ s"Could not find header '$expectedKey'"
+        )
     )
     listOfValidations.traverse[Validation, String](identity)
   }

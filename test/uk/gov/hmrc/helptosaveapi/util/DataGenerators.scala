@@ -49,7 +49,18 @@ object DataGenerators {
       communicationPreference ← Gen.alphaStr
       phoneNumber ← Gen.option(Gen.numStr)
       email ← Gen.option(Gen.alphaStr)
-    } yield ContactDetails(line1, line2, line3, line4, line5, postcode, countryCode, communicationPreference, phoneNumber, email)
+    } yield ContactDetails(
+      line1,
+      line2,
+      line3,
+      line4,
+      line5,
+      postcode,
+      countryCode,
+      communicationPreference,
+      phoneNumber,
+      email
+    )
 
   val bankDetailsGen: Gen[BankDetails] =
     for {

@@ -23,8 +23,8 @@ import uk.gov.hmrc.play.bootstrap.filters.MicroserviceFilters
 
 @Singleton
 class Filters @Inject() (
-    microserviceFilters: MicroserviceFilters,
-    xssProtectionFilter: XSSProtectionFilter
+  microserviceFilters: MicroserviceFilters,
+  xssProtectionFilter: XSSProtectionFilter
 ) extends HttpFilters {
 
   override val filters: Seq[EssentialFilter] = microserviceFilters.filters :+ xssProtectionFilter

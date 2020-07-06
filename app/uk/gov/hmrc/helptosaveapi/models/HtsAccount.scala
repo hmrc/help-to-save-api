@@ -20,11 +20,13 @@ import java.time.LocalDate
 
 import play.api.libs.json.{Format, Json}
 
-case class HtsBonusTerm(bonusEstimate:          BigDecimal,
-                        bonusPaid:              BigDecimal,
-                        startDate:              LocalDate,
-                        endDate:                LocalDate,
-                        bonusPaidOnOrAfterDate: LocalDate)
+case class HtsBonusTerm(
+  bonusEstimate: BigDecimal,
+  bonusPaid: BigDecimal,
+  startDate: LocalDate,
+  endDate: LocalDate,
+  bonusPaidOnOrAfterDate: LocalDate
+)
 
 object HtsBonusTerm {
   implicit val format: Format[HtsBonusTerm] = Json.format[HtsBonusTerm]
@@ -36,17 +38,19 @@ object Blocking {
   implicit val format: Format[Blocking] = Json.format[Blocking]
 }
 
-case class HtsAccount(accountNumber:          String,
-                      isClosed:               Boolean,
-                      blocked:                Blocking,
-                      balance:                BigDecimal,
-                      paidInThisMonth:        BigDecimal,
-                      canPayInThisMonth:      BigDecimal,
-                      maximumPaidInThisMonth: BigDecimal,
-                      thisMonthEndDate:       LocalDate,
-                      bonusTerms:             Seq[HtsBonusTerm],
-                      closureDate:            Option[LocalDate]  = None,
-                      closingBalance:         Option[BigDecimal] = None)
+case class HtsAccount(
+  accountNumber: String,
+  isClosed: Boolean,
+  blocked: Blocking,
+  balance: BigDecimal,
+  paidInThisMonth: BigDecimal,
+  canPayInThisMonth: BigDecimal,
+  maximumPaidInThisMonth: BigDecimal,
+  thisMonthEndDate: LocalDate,
+  bonusTerms: Seq[HtsBonusTerm],
+  closureDate: Option[LocalDate] = None,
+  closingBalance: Option[BigDecimal] = None
+)
 
 object HtsAccount {
   implicit val format: Format[HtsAccount] = Json.format[HtsAccount]

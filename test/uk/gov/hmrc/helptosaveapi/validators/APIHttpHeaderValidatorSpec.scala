@@ -35,8 +35,8 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
 
     "handling CreateAccount requests" must {
 
-        def result(headers: Map[String, String]): ValidatedNel[String, Request[Any]] =
-          validator.validateHttpHeaders(true)(requestWithHeaders(headers))
+      def result(headers: Map[String, String]): ValidatedNel[String, Request[Any]] =
+        validator.validateHttpHeaders(true)(requestWithHeaders(headers))
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ → "value") ++ List(
@@ -56,51 +56,53 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
         ): _*
       )
 
-        def result(headers: Map[String, String]): ValidatedNel[String, Request[Any]] =
-          validator.validateHttpHeaders(false)(requestWithHeaders(headers))
+      def result(headers: Map[String, String]): ValidatedNel[String, Request[Any]] =
+        validator.validateHttpHeaders(false)(requestWithHeaders(headers))
 
       behave like testCommon(validRequestHeaders, result, false)
     }
 
-      def testCommon(headers:          Map[String, String],
-                     result:           Map[String, String] ⇒ ValidatedNel[String, Request[Any]],
-                     checkContentType: Boolean): Unit = {
+    def testCommon(
+      headers: Map[String, String],
+      result: Map[String, String] ⇒ ValidatedNel[String, Request[Any]],
+      checkContentType: Boolean
+    ): Unit = {
 
-        "allow requests with valid headers" in {
-          result(headers) should be(valid)
+      "allow requests with valid headers" in {
+        result(headers) should be(valid)
+      }
+
+      "flag as invalid requests" which {
+
+        if (checkContentType) {
+          "do not have content type JSON" in {
+            result(headers.updated(HeaderNames.CONTENT_TYPE, ContentTypes.HTML)) shouldBe
+              Invalid(NonEmptyList[String]("content type was not JSON: text/html", Nil))
+          }
         }
 
-        "flag as invalid requests" which {
+        "do not have expected accept header" in {
 
-          if (checkContentType) {
-            "do not have content type JSON" in {
-              result(headers.updated(HeaderNames.CONTENT_TYPE, ContentTypes.HTML)) shouldBe
-                Invalid(NonEmptyList[String]("content type was not JSON: text/html", Nil))
-            }
-          }
+          val errorString = "accept header should match: 'application/vnd.hmrc.2.0+json'"
+          result(headers.updated(HeaderNames.ACCEPT, "invalid")) shouldBe
+            Invalid(NonEmptyList[String](errorString, Nil))
 
-          "do not have expected accept header" in {
+          result(headers.updated(HeaderNames.ACCEPT, "application/vnd.hmrc.2.0+jsonx")) shouldBe
+            Invalid(NonEmptyList[String](errorString, Nil))
 
-            val errorString = "accept header should match: 'application/vnd.hmrc.2.0+json'"
-            result(headers.updated(HeaderNames.ACCEPT, "invalid")) shouldBe
-              Invalid(NonEmptyList[String](errorString, Nil))
+          result(headers - HeaderNames.ACCEPT) shouldBe
+            Invalid(NonEmptyList[String](errorString, Nil))
+        }
 
-            result(headers.updated(HeaderNames.ACCEPT, "application/vnd.hmrc.2.0+jsonx")) shouldBe
-              Invalid(NonEmptyList[String](errorString, Nil))
-
-            result(headers - HeaderNames.ACCEPT) shouldBe
-              Invalid(NonEmptyList[String](errorString, Nil))
-          }
-
-          "does not have all the expected TxM headers" in {
-            (1 to APIHttpHeaderValidator.expectedTxmHeaders.size).foreach { size ⇒
-              APIHttpHeaderValidator.expectedTxmHeaders.combinations(size).foreach { h ⇒
-                result(headers -- h).isInvalid shouldBe true
-              }
+        "does not have all the expected TxM headers" in {
+          (1 to APIHttpHeaderValidator.expectedTxmHeaders.size).foreach { size ⇒
+            APIHttpHeaderValidator.expectedTxmHeaders.combinations(size).foreach { h ⇒
+              result(headers -- h).isInvalid shouldBe true
             }
           }
         }
       }
+    }
   }
 
 }

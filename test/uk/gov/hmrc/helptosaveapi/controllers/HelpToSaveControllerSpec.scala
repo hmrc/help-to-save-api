@@ -44,23 +44,38 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
   val controller: HelpToSaveController = new HelpToSaveController(apiService, mockAuthConnector, mockCc)
 
-  def mockCreateAccountPrivileged(request: Request[AnyContent])(response: Either[ApiError, CreateAccountSuccess]): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
-    (apiService.createAccountPrivileged(_: Request[AnyContent])(_: HeaderCarrier, _: ExecutionContext))
+  def mockCreateAccountPrivileged(request: Request[AnyContent])(
+    response: Either[ApiError, CreateAccountSuccess]
+  ): CallHandler3[Request[AnyContent], HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
+    (apiService
+      .createAccountPrivileged(_: Request[AnyContent])(_: HeaderCarrier, _: ExecutionContext))
       .expects(request, *, *)
       .returning(toFuture(response))
 
-  def mockCreateAccountUserRestricted(request: Request[AnyContent], retrievedUserDetails: RetrievedUserDetails)(response: Either[ApiError, CreateAccountSuccess]): CallHandler4[Request[AnyContent], RetrievedUserDetails, HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
-    (apiService.createAccountUserRestricted(_: Request[AnyContent], _: RetrievedUserDetails)(_: HeaderCarrier, _: ExecutionContext))
+  def mockCreateAccountUserRestricted(request: Request[AnyContent], retrievedUserDetails: RetrievedUserDetails)(
+    response: Either[ApiError, CreateAccountSuccess]
+  ): CallHandler4[Request[AnyContent], RetrievedUserDetails, HeaderCarrier, ExecutionContext, CreateAccountResponseType] =
+    (apiService
+      .createAccountUserRestricted(_: Request[AnyContent], _: RetrievedUserDetails)(
+        _: HeaderCarrier,
+        _: ExecutionContext
+      ))
       .expects(request, retrievedUserDetails, *, *)
       .returning(toFuture(response))
 
-  def mockEligibilityCheck(nino: String)(response: Either[ApiError, EligibilityResponse]): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, CheckEligibilityResponseType] =
-    (apiService.checkEligibility(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
+  def mockEligibilityCheck(nino: String)(
+    response: Either[ApiError, EligibilityResponse]
+  ): CallHandler5[String, UUID, Request[AnyContent], HeaderCarrier, ExecutionContext, CheckEligibilityResponseType] =
+    (apiService
+      .checkEligibility(_: String, _: UUID)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
       .expects(nino, *, *, *, *)
       .returning(toFuture(response))
 
-  def mockGetAccount(nino: String)(response: Either[ApiError, Option[Account]]): CallHandler4[String, Request[AnyContent], HeaderCarrier, ExecutionContext, GetAccountResponseType] =
-    (apiService.getAccount(_: String)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
+  def mockGetAccount(nino: String)(
+    response: Either[ApiError, Option[Account]]
+  ): CallHandler4[String, Request[AnyContent], HeaderCarrier, ExecutionContext, GetAccountResponseType] =
+    (apiService
+      .getAccount(_: String)(_: Request[AnyContent], _: HeaderCarrier, _: ExecutionContext))
       .expects(nino, *, *, *)
       .returning(toFuture(response))
 
@@ -141,7 +156,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "the request is made with user-restricted access" must {
 
-        val userInfoRetrievals: Retrieval[Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[String]] =
+        val userInfoRetrievals: Retrieval[
+          Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[String]
+        ] =
           v2.Retrievals.name and
             v2.Retrievals.dateOfBirth and
             v2.Retrievals.itmpName and
@@ -151,16 +168,20 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         val createAccountUserDetailsRetrievals = userInfoRetrievals and v2Nino
 
-          def createAccountRetrievalResult(u: RetrievedUserDetails): Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[String] ~ Option[String] = {
-            val dob = u.dateOfBirth.map(toJodaDate)
+        def createAccountRetrievalResult(
+          u: RetrievedUserDetails
+        ): Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[
+          String
+        ] ~ Option[String] = {
+          val dob = u.dateOfBirth.map(toJodaDate)
 
-            new ~(Some(Name(u.forename, u.surname)), dob) and
-              Some(ItmpName(u.forename, None, u.surname)) and dob and
-              u.address and u.email and u.nino
-          }
+          new ~(Some(Name(u.forename, u.surname)), dob) and
+            Some(ItmpName(u.forename, None, u.surname)) and dob and
+            u.address and u.email and u.nino
+        }
 
-          def toJodaDate(d: java.time.LocalDate): org.joda.time.LocalDate =
-            LocalDate.parse(d.format(DateTimeFormatter.ISO_DATE))
+        def toJodaDate(d: java.time.LocalDate): org.joda.time.LocalDate =
+          LocalDate.parse(d.format(DateTimeFormatter.ISO_DATE))
 
         val ggCredentials = GGCredId("id")
 
@@ -171,7 +192,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(
+              Right(CreateAccountSuccess(alreadyHadAccount = false))
+            )
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -185,7 +208,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = true)))
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(
+              Right(CreateAccountSuccess(alreadyHadAccount = true))
+            )
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -200,14 +225,17 @@ class HelpToSaveControllerSpec extends AuthSupport {
               Some(ItmpName(Some("c"), None, Some("d"))) and Some(new LocalDate(3, 2, 1)) and
               u.address and u.email and u.nino
 
-            val expectedRetrievedUserDetails = u.copy(forename    = Some("c"), surname = Some("d"), dateOfBirth = Some(java.time.LocalDate.of(3, 2, 1)))
+            val expectedRetrievedUserDetails =
+              u.copy(forename = Some("c"), surname = Some("d"), dateOfBirth = Some(java.time.LocalDate.of(3, 2, 1)))
             retrieval → expectedRetrievedUserDetails
           }
 
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Right(CreateAccountSuccess(alreadyHadAccount = false)))
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(
+              Right(CreateAccountSuccess(alreadyHadAccount = false))
+            )
           }
 
           val result = controller.createAccount()(fakeRequest)
@@ -463,9 +491,11 @@ class HelpToSaveControllerSpec extends AuthSupport {
     "handling getAccount requests" must {
 
       "return a success response along with some json if getting the account is successful" in {
-        val bonusTerms = Seq(BonusTerm(JavaLocalDate.of(2018, 1, 1), JavaLocalDate.of(2019, 12, 31), BigDecimal("65.43")),
-                             BonusTerm(JavaLocalDate.of(2020, 1, 1), JavaLocalDate.of(2021, 12, 31), BigDecimal("125.43")))
-        inSequence{
+        val bonusTerms = Seq(
+          BonusTerm(JavaLocalDate.of(2018, 1, 1), JavaLocalDate.of(2019, 12, 31), BigDecimal("65.43")),
+          BonusTerm(JavaLocalDate.of(2020, 1, 1), JavaLocalDate.of(2021, 12, 31), BigDecimal("125.43"))
+        )
+        inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
           mockGetAccount(nino)(Right(Some(Account("1100000000001", 40.00, false, false, 100.00, bonusTerms))))
         }
@@ -477,7 +507,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       }
 
       "return an Internal Server Error when getting an account is unsuccessful" in {
-        inSequence{
+        inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
           mockGetAccount(nino)(Left(ApiBackendError()))
         }
@@ -488,7 +518,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       }
 
       "return a Forbidden when getting an account returns an access error" in {
-        inSequence{
+        inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
           mockGetAccount(nino)(Left(ApiAccessError()))
         }
@@ -500,7 +530,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "return a Bad Request when there is a validation error" in {
         val error = ApiValidationError("error", "description")
-        inSequence{
+        inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
           mockGetAccount(nino)(Left(error))
         }
@@ -518,7 +548,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       }
 
       "return a Not Found result" in {
-        inSequence{
+        inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
           mockGetAccount(nino)(Right(None))
         }

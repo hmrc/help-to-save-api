@@ -30,7 +30,14 @@ class CreateAccountFieldSpec extends WordSpec with Matchers {
 
       val validContactDetails = TestContactDetails(Some("line1"), Some("line2"), Some("postcode"))
 
-      val validBody = TestCreateAccountBody(Some("name"), Some("surname"), Some("dob"), Some("nino"), Some("channel"), validContactDetails)
+      val validBody = TestCreateAccountBody(
+        Some("name"),
+        Some("surname"),
+        Some("dob"),
+        Some("nino"),
+        Some("channel"),
+        validContactDetails
+      )
 
       val validRequest = TestCreateAccountRequest(validBody)
 
@@ -66,19 +73,25 @@ class CreateAccountFieldSpec extends WordSpec with Matchers {
 
         "address1 is missing" in {
           CreateAccountField.missingMandatoryFields(
-            validRequest.copy(body = validBody.copy(contactDetails = validContactDetails.copy(address1 = None))).toJson()
+            validRequest
+              .copy(body = validBody.copy(contactDetails = validContactDetails.copy(address1 = None)))
+              .toJson()
           ) shouldBe Set(CreateAccountField.Address)
         }
 
         "address2 is missing" in {
           CreateAccountField.missingMandatoryFields(
-            validRequest.copy(body = validBody.copy(contactDetails = validContactDetails.copy(address2 = None))).toJson()
+            validRequest
+              .copy(body = validBody.copy(contactDetails = validContactDetails.copy(address2 = None)))
+              .toJson()
           ) shouldBe Set(CreateAccountField.Address)
         }
 
         "postcode is missing" in {
           CreateAccountField.missingMandatoryFields(
-            validRequest.copy(body = validBody.copy(contactDetails = validContactDetails.copy(postcode = None))).toJson()
+            validRequest
+              .copy(body = validBody.copy(contactDetails = validContactDetails.copy(postcode = None)))
+              .toJson()
           ) shouldBe Set(CreateAccountField.Address)
         }
 
@@ -90,7 +103,14 @@ class CreateAccountFieldSpec extends WordSpec with Matchers {
 
         "multiple mandatory fields are missing" in {
           CreateAccountField.missingMandatoryFields(TestCreateAccountRequest.empty().toJson) shouldBe
-            Set[MandatoryCreateAccountField](Forename, Surname, DateOfBirth, NINO, RegistrationChannel, CreateAccountField.Address)
+            Set[MandatoryCreateAccountField](
+              Forename,
+              Surname,
+              DateOfBirth,
+              NINO,
+              RegistrationChannel,
+              CreateAccountField.Address
+            )
         }
 
       }
@@ -112,35 +132,36 @@ class CreateAccountFieldSpec extends WordSpec with Matchers {
             Postcode → JsString("postcode"),
             CountryCode → JsString("countryCode"),
             Email → JsString("email")
-          ))(json) shouldBe Json.parse(
-            """
-            |{
-            |  "a" : 1,
-            |  "body" : {
-            |    "thing"       : 1,
-            |    "forename"    : "name",
-            |    "surname"     : "surname",
-            |    "dateOfBirth" : "dob",
-            |    "nino"        : "nino",
-            |    "contactDetails" : {
-            |      "address1" : "address1",
-            |      "address2" : "address2",
-            |      "address3" : "address3",
-            |      "address4" : "address4",
-            |      "address5" : "address5",
-            |      "postcode" : "postcode",
-            |      "countryCode" : "countryCode",
-            |      "email" : "email"
-            |    }
-            |  }
-            |}
+          )
+        )(json) shouldBe Json.parse("""
+                                      |{
+                                      |  "a" : 1,
+                                      |  "body" : {
+                                      |    "thing"       : 1,
+                                      |    "forename"    : "name",
+                                      |    "surname"     : "surname",
+                                      |    "dateOfBirth" : "dob",
+                                      |    "nino"        : "nino",
+                                      |    "contactDetails" : {
+                                      |      "address1" : "address1",
+                                      |      "address2" : "address2",
+                                      |      "address3" : "address3",
+                                      |      "address4" : "address4",
+                                      |      "address5" : "address5",
+                                      |      "postcode" : "postcode",
+                                      |      "countryCode" : "countryCode",
+                                      |      "email" : "email"
+                                      |    }
+                                      |  }
+                                      |}
           """.stripMargin)
 
         CreateAccountField.insertFields(
           Map(
             RegistrationChannel → JsString("channel"),
             CreateAccountField.Address → JsString("address")
-          ))(json) shouldBe json
+          )
+        )(json) shouldBe json
 
       }
 
@@ -153,25 +174,27 @@ class CreateAccountFieldSpec extends WordSpec with Matchers {
 object CreateAccountFieldSpec {
 
   case class TestContactDetails(
-      address1: Option[String],
-      address2: Option[String],
-      postcode: Option[String]
+    address1: Option[String],
+    address2: Option[String],
+    postcode: Option[String]
   )
 
   case class TestCreateAccountBody(
-      forename:            Option[String],
-      surname:             Option[String],
-      dateOfBirth:         Option[String],
-      nino:                Option[String],
-      registrationChannel: Option[String],
-      contactDetails:      TestContactDetails
+    forename: Option[String],
+    surname: Option[String],
+    dateOfBirth: Option[String],
+    nino: Option[String],
+    registrationChannel: Option[String],
+    contactDetails: TestContactDetails
   )
 
   case class TestCreateAccountRequest(body: TestCreateAccountBody)
   object TestCreateAccountRequest {
 
     def empty(): TestCreateAccountRequest =
-      TestCreateAccountRequest(TestCreateAccountBody(None, None, None, None, None, TestContactDetails(None, None, None)))
+      TestCreateAccountRequest(
+        TestCreateAccountBody(None, None, None, None, None, TestContactDetails(None, None, None))
+      )
 
     implicit val contactDetailsFormat: Format[TestContactDetails] = Json.format[TestContactDetails]
     implicit val createAccountBodyFormat: Format[TestCreateAccountBody] = Json.format[TestCreateAccountBody]

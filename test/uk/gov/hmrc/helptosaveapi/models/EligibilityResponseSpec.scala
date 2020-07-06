@@ -28,7 +28,9 @@ class EligibilityResponseSpec extends TestSupport {
       "write to json as expected when the response type is ApiEligibilityResponse" in {
         val expected = """{"eligibility":{"isEligible":true,"hasWTC":false,"hasUC":true},"accountExists":false}"""
 
-        Json.toJson(ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = false, hasUC = true), accountExists = false)) shouldBe Json.parse(expected)
+        Json.toJson(
+          ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = false, hasUC = true), accountExists = false)
+        ) shouldBe Json.parse(expected)
       }
 
       "write to json as expected when the response type is AccountAlreadyExists" in {

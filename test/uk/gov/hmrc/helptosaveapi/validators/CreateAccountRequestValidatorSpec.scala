@@ -30,12 +30,19 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
 
   val validator = new CreateAccountRequestValidator(new EmailValidation(config))
 
-  val validCreateAccountHeader: CreateAccountHeader = CreateAccountHeader("1.0", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
+  val validCreateAccountHeader: CreateAccountHeader =
+    CreateAccountHeader("1.0", ZonedDateTime.now(), "KCOM", UUID.randomUUID())
 
   val validCreateAccountBody: CreateAccountBody =
-    CreateAccountBody("", "forename", "surname", LocalDate.now(),
-                                                 ContactDetails("", "", None, None, None, "", None, "00", Some("07841000000"), Some("test@gmail.com")),
-      "callCentre", None, "systemId"
+    CreateAccountBody(
+      "",
+      "forename",
+      "surname",
+      LocalDate.now(),
+      ContactDetails("", "", None, None, None, "", None, "00", Some("07841000000"), Some("test@gmail.com")),
+      "callCentre",
+      None,
+      "systemId"
     )
 
   val validCreateAccountRequest: CreateAccountRequest = CreateAccountRequest(
@@ -47,8 +54,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
 
     "mark as valid requests" which {
 
-        def testIsValid(request: CreateAccountRequest): Unit =
-          validator.validateRequest(request).isValid shouldBe true
+      def testIsValid(request: CreateAccountRequest): Unit =
+        validator.validateRequest(request).isValid shouldBe true
 
       "are valid" in {
         testIsValid(validCreateAccountRequest)
@@ -59,7 +66,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
           CreateAccountRequest(
             validCreateAccountHeader,
             validCreateAccountBody.copy(forename = "fo-ren&a.me")
-          ))
+          )
+        )
       }
 
       "has a surname containing a special character" in {
@@ -67,7 +75,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
           CreateAccountRequest(
             validCreateAccountHeader,
             validCreateAccountBody.copy(surname = "sur-n&ame")
-          ))
+          )
+        )
       }
 
       "has an empty phone number" in {
@@ -75,16 +84,19 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
           CreateAccountRequest(
             validCreateAccountHeader,
             validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = None))
-          ))
+          )
+        )
       }
 
       "has an phone number with allowed special characters" in {
-        validator.allowedPhoneNumberSpecialCharacters.foreach{ c ⇒
+        validator.allowedPhoneNumberSpecialCharacters.foreach { c ⇒
           testIsValid(
             CreateAccountRequest(
               validCreateAccountHeader,
-              validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(s"1$c")))
-            ))
+              validCreateAccountBody
+                .copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(s"1$c")))
+            )
+          )
         }
       }
 
@@ -92,29 +104,33 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
 
     "mark as invalid requests" which {
 
-        def testIsInvalid(request: CreateAccountRequest): Unit =
-          validator.validateRequest(request).isInvalid shouldBe true
+      def testIsInvalid(request: CreateAccountRequest): Unit =
+        validator.validateRequest(request).isInvalid shouldBe true
 
       "have a phone number" which {
 
         "does not contain any digits" in {
-          validator.allowedPhoneNumberSpecialCharacters.foreach{ c ⇒
+          validator.allowedPhoneNumberSpecialCharacters.foreach { c ⇒
             testIsInvalid(
               CreateAccountRequest(
                 validCreateAccountHeader,
-                validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(c.toString)))
-              ))
+                validCreateAccountBody
+                  .copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(c.toString)))
+              )
+            )
           }
         }
 
         "contains disallowed characters" in {
-          forAll{ (c: Char) ⇒
-            whenever(!c.isDigit && !validator.allowedPhoneNumberSpecialCharacters.contains(c)){
+          forAll { (c: Char) ⇒
+            whenever(!c.isDigit && !validator.allowedPhoneNumberSpecialCharacters.contains(c)) {
               testIsInvalid(
                 CreateAccountRequest(
                   validCreateAccountHeader,
-                  validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(s"1$c")))
-                ))
+                  validCreateAccountBody
+                    .copy(contactDetails = validCreateAccountBody.contactDetails.copy(phoneNumber = Some(s"1$c")))
+                )
+              )
             }
           }
         }
@@ -127,7 +143,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader.copy(version = "version"),
               validCreateAccountBody
-            ))
+            )
+          )
 
         }
 
@@ -136,7 +153,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader.copy(version = "1.11111111111111111111111"),
               validCreateAccountBody
-            ))
+            )
+          )
 
         }
 
@@ -145,7 +163,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader.copy(clientCode = "a"),
               validCreateAccountBody
-            ))
+            )
+          )
         }
 
         "has an invalid client code length" in {
@@ -153,7 +172,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader.copy(clientCode = "abcdefghijklmnopqrstuvwxyz"),
               validCreateAccountBody
-            ))
+            )
+          )
         }
       }
 
@@ -164,7 +184,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(registrationChannel = "channel")
-            ))
+            )
+          )
 
         }
 
@@ -172,8 +193,10 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
           testIsInvalid(
             CreateAccountRequest(
               validCreateAccountHeader,
-              validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "comm"))
-            ))
+              validCreateAccountBody
+                .copy(contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "comm"))
+            )
+          )
         }
 
         "has a forename starting with a special character" in {
@@ -181,7 +204,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(forename = "&forename")
-            ))
+            )
+          )
         }
 
         "has a forename containing an apostrophe" in {
@@ -189,7 +213,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(forename = "fore'name")
-            ))
+            )
+          )
           result.isInvalid shouldBe true
           result shouldBe Invalid(NonEmptyList.of("forename contains an apostrophe"))
         }
@@ -199,7 +224,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(forename = "fore--name")
-            ))
+            )
+          )
         }
 
         "has a surname starting with a special character" in {
@@ -207,7 +233,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "-surname")
-            ))
+            )
+          )
         }
 
         "has a surname ending with a special character" in {
@@ -215,7 +242,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "surname-")
-            ))
+            )
+          )
 
           result.isInvalid shouldBe true
           result.leftSideValue.toString shouldBe "Invalid(NonEmptyList(surname ended with special character))"
@@ -226,7 +254,8 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "")
-            ))
+            )
+          )
         }
 
         "has a surname with no more than one consecutive special character" in {
@@ -234,46 +263,59 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckDrive
             CreateAccountRequest(
               validCreateAccountHeader,
               validCreateAccountBody.copy(surname = "sur--name")
-            ))
+            )
+          )
         }
 
         "has a forename containing a digit" in {
-          validator.validateRequest(
-            CreateAccountRequest(
-              validCreateAccountHeader,
-              validCreateAccountBody.copy(forename = "fore123name")
-            )).isInvalid shouldBe true
+          validator
+            .validateRequest(
+              CreateAccountRequest(
+                validCreateAccountHeader,
+                validCreateAccountBody.copy(forename = "fore123name")
+              )
+            )
+            .isInvalid shouldBe true
         }
 
         "has a surname containing a digit" in {
-          validator.validateRequest(
-            CreateAccountRequest(
-              validCreateAccountHeader,
-              validCreateAccountBody.copy(surname = "surname123")
-            )).isInvalid shouldBe true
+          validator
+            .validateRequest(
+              CreateAccountRequest(
+                validCreateAccountHeader,
+                validCreateAccountBody.copy(surname = "surname123")
+              )
+            )
+            .isInvalid shouldBe true
         }
 
         "have a missing email when communicationPreference is 02" in {
-          val body = validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "02"))
+          val body = validCreateAccountBody.copy(
+            contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "02")
+          )
           val bodyWithNoEmail = body.copy(contactDetails = body.contactDetails.copy(email = None))
           val result = validator.validateRequest(
             CreateAccountRequest(
               validCreateAccountHeader,
               bodyWithNoEmail
-            ))
+            )
+          )
 
           result.isInvalid shouldBe true
           result shouldBe Invalid(NonEmptyList.of("invalid email provided with communicationPreference = 02"))
         }
 
         "have invalid email when communicationPreference is 02" in {
-          val body = validCreateAccountBody.copy(contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "02"))
+          val body = validCreateAccountBody.copy(
+            contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "02")
+          )
           val bodyWithNoEmail = body.copy(contactDetails = body.contactDetails.copy(email = Some("invalidEmail")))
           val result = validator.validateRequest(
             CreateAccountRequest(
               validCreateAccountHeader,
               bodyWithNoEmail
-            ))
+            )
+          )
           result.isInvalid shouldBe true
           result shouldBe Invalid(NonEmptyList.of("invalid email provided with communicationPreference = 02"))
         }

@@ -36,15 +36,16 @@ class TestSupport extends UnitSpec with MockFactory {
 
   lazy val fakeApplication =
     new GuiceApplicationBuilder()
-      .configure(Configuration(
-        ConfigFactory.parseString(
-          """
-            | metrics.enabled       = false
-            | play.modules.disabled = [ "uk.gov.hmrc.helptosaveapi.RegistrationModule",
-            | "play.modules.reactivemongo.ReactiveMongoHmrcModule",
-            | "play.api.mvc.LegacyCookiesModule" ]
+      .configure(
+        Configuration(
+          ConfigFactory.parseString("""
+                                      | metrics.enabled       = false
+                                      | play.modules.disabled = [ "uk.gov.hmrc.helptosaveapi.RegistrationModule",
+                                      | "play.modules.reactivemongo.ReactiveMongoHmrcModule",
+                                      | "play.api.mvc.LegacyCookiesModule" ]
           """.stripMargin)
-      ))
+        )
+      )
       .build()
 
   implicit lazy val materializer: Materializer = fakeApplication.materializer
@@ -69,11 +70,15 @@ class TestSupport extends UnitSpec with MockFactory {
     override def counter(name: String): Counter = new Counter()
   }
 
-  implicit lazy val logMessageTransformer: LogMessageTransformer = fakeApplication.injector.instanceOf[LogMessageTransformer]
+  implicit lazy val logMessageTransformer: LogMessageTransformer =
+    fakeApplication.injector.instanceOf[LogMessageTransformer]
 
   implicit val mockEmailValidation: EmailValidation =
-    new EmailValidation(Configuration(
-      "email-validation.max-total-length" → Int.MaxValue,
-      "email-validation.max-local-length" → Int.MaxValue,
-      "email-validation.max-domain-length" → Int.MaxValue))
+    new EmailValidation(
+      Configuration(
+        "email-validation.max-total-length" → Int.MaxValue,
+        "email-validation.max-local-length" → Int.MaxValue,
+        "email-validation.max-domain-length" → Int.MaxValue
+      )
+    )
 }

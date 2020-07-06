@@ -41,15 +41,18 @@ lazy val wartRemoverSettings = {
     Wart.Nothing,
     Wart.Overloading,
     Wart.ToString,
-    Wart.Var)
+    Wart.Var
+  )
 
-  wartremoverErrors in(Compile, compile) ++= Warts.allBut(excludedWarts: _*)
+  wartremoverErrors in (Compile, compile) ++= Warts.allBut(excludedWarts: _*)
 }
 
 lazy val catsSettings = scalacOptions += "-Ypartial-unification"
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) ++ plugins: _*)
+  .enablePlugins(
+    Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) ++ plugins: _*
+  )
   .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
   .settings(playSettings ++ scoverageSettings: _*)
   .settings(scalaSettings: _*)
@@ -63,11 +66,20 @@ lazy val microservice = Project(appName, file("."))
   // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
   // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
   // imcompatible with a lot of WordSpec
-  .settings(wartremoverErrors in(Test, compile) --= Seq(Wart.Any, Wart.Equals, Wart.Null, Wart.NonUnitStatements, Wart.PublicInference))
-  .settings(wartremoverExcluded ++=
-    routes.in(Compile).value ++
-      (baseDirectory.value ** "*.sc").get ++
-      Seq(sourceManaged.value / "main" / "sbt-buildinfo" / "BuildInfo.scala")
+  .settings(
+    wartremoverErrors in (Test, compile) --= Seq(
+      Wart.Any,
+      Wart.Equals,
+      Wart.Null,
+      Wart.NonUnitStatements,
+      Wart.PublicInference
+    )
+  )
+  .settings(
+    wartremoverExcluded ++=
+      routes.in(Compile).value ++
+        (baseDirectory.value ** "*.sc").get ++
+        Seq(sourceManaged.value / "main" / "sbt-buildinfo" / "BuildInfo.scala")
   )
   .settings(
     libraryDependencies ++= appDependencies,
@@ -82,11 +94,14 @@ lazy val microservice = Project(appName, file("."))
     unmanagedSourceDirectories in IntegrationTest := Seq((baseDirectory in IntegrationTest).value / "it"),
     addTestReportOption(IntegrationTest, "int-test-reports"),
     //testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
-    parallelExecution in IntegrationTest := false)
-  .settings(resolvers ++= Seq(
-    Resolver.bintrayRepo("hmrc", "releases"),
-    Resolver.jcenterRepo
-  ))
+    parallelExecution in IntegrationTest := false
+  )
+  .settings(
+    resolvers ++= Seq(
+      Resolver.bintrayRepo("hmrc", "releases"),
+      Resolver.jcenterRepo
+    )
+  )
 
 lazy val compileAll = taskKey[Unit]("Compiles sources in all configurations.")
 

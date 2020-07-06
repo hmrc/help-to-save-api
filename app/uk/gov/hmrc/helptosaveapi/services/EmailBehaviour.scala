@@ -35,30 +35,36 @@ private[services] trait EmailBehaviour {
 
   type StoreEmailResponseType = Future[Either[ApiError, Unit]]
 
-  def storeEmail(nino:          String,
-                 email:         String,
-                 correlationId: UUID)(implicit hc: HeaderCarrier,
-                                      ec:                    ExecutionContext,
-                                      logMessageTransformer: LogMessageTransformer): StoreEmailResponseType = {
+  def storeEmail(nino: String, email: String, correlationId: UUID)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext,
+    logMessageTransformer: LogMessageTransformer
+  ): StoreEmailResponseType = {
 
     val correlationIdHeader = "requestCorrelationId" -> correlationId.toString
-    helpToSaveConnector.storeEmail(base64Encode(email), nino, correlationId).map[Either[ApiError, Unit]] {
-      response ⇒
+    helpToSaveConnector
+      .storeEmail(base64Encode(email), nino, correlationId)
+      .map[Either[ApiError, Unit]] { response ⇒
         response.status match {
           case Status.OK ⇒
             logger.info("successfully stored email for the api user", nino, correlationIdHeader)
             Right(())
           case other: Int ⇒
-            logger.warn(s"unexpected status storing email in mongo for the api user, status: $other", nino, correlationIdHeader)
+            logger.warn(
+              s"unexpected status storing email in mongo for the api user, status: $other",
+              nino,
+              correlationIdHeader
+            )
             pagerDutyAlerting.alert("unexpected status during storing email for the api user")
             Left(ApiBackendError())
         }
-    }.recover {
-      case e ⇒
-        logger.warn(s"error during storing email for the api user, error=${e.getMessage}")
-        pagerDutyAlerting.alert("could not store email in mongo for the api user")
-        Left(ApiBackendError())
-    }
+      }
+      .recover {
+        case e ⇒
+          logger.warn(s"error during storing email for the api user, error=${e.getMessage}")
+          pagerDutyAlerting.alert("could not store email in mongo for the api user")
+          Left(ApiBackendError())
+      }
   }
 
 }

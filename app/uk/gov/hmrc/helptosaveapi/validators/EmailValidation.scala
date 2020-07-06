@@ -43,15 +43,16 @@ class EmailValidation @Inject() (configuration: Configuration) {
     if (predicate(a)) Valid(a) else invalid(ifFalse)
 
   private def charactersBeforeAndAfterChar(c: Char)(s: String): Option[(Int, Int)] = {
-      @tailrec
-      def loop(chars: List[Char], count: Int): Option[(Int, Int)] = chars match {
-        case Nil ⇒ None
-        case h :: t ⇒ if (h === c) {
+    @tailrec
+    def loop(chars: List[Char], count: Int): Option[(Int, Int)] = chars match {
+      case Nil ⇒ None
+      case h :: t ⇒
+        if (h === c) {
           Some(count → t.length)
         } else {
           loop(t, count + 1)
         }
-      }
+    }
 
     loop(s.toList, 0)
   }
@@ -65,10 +66,13 @@ class EmailValidation @Inject() (configuration: Configuration) {
     val domainPart = trimmed.substring(trimmed.lastIndexOf('@') + 1)
 
     val notBlankCheck: ValidOrErrorStrings[String] = validatedFromBoolean(trimmed)(_.nonEmpty, "")
-    val totalLengthCheck: ValidOrErrorStrings[String] = validatedFromBoolean(trimmed)(_.length <= emailMaxTotalLength, invalidEmailError)
-    val hasAtSymbolCheck: ValidOrErrorStrings[String] = validatedFromBoolean(trimmed)(_.contains('@'), invalidEmailError)
+    val totalLengthCheck: ValidOrErrorStrings[String] =
+      validatedFromBoolean(trimmed)(_.length <= emailMaxTotalLength, invalidEmailError)
+    val hasAtSymbolCheck: ValidOrErrorStrings[String] =
+      validatedFromBoolean(trimmed)(_.contains('@'), invalidEmailError)
 
-    val hasDotSymbolInDomainCheck: ValidOrErrorStrings[String] = validatedFromBoolean(domainPart)(_.contains('.'), invalidEmailError)
+    val hasDotSymbolInDomainCheck: ValidOrErrorStrings[String] =
+      validatedFromBoolean(domainPart)(_.contains('.'), invalidEmailError)
 
     val hasTextAfterAtSymbolButBeforeDotCheck: ValidOrErrorStrings[String] = validatedFromBoolean(domainPart)(
       { text ⇒
@@ -96,7 +100,8 @@ class EmailValidation @Inject() (configuration: Configuration) {
     val domainBlankCheck: ValidOrErrorStrings[Option[(Int, Int)]] =
       validatedFromBoolean(localAndDomainLength)(_.forall(_._2 > 0), invalidEmailError)
 
-    (notBlankCheck,
+    (
+      notBlankCheck,
       totalLengthCheck,
       hasAtSymbolCheck,
       hasDotSymbolInDomainCheck,
@@ -106,6 +111,6 @@ class EmailValidation @Inject() (configuration: Configuration) {
       domainLengthCheck,
       localBlankCheck,
       domainBlankCheck
-    ).mapN{ case _ ⇒ trimmed }
+    ).mapN { case _ ⇒ trimmed }
   }
 }

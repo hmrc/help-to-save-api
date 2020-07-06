@@ -46,28 +46,34 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     val surnameCheck: ValidatedOrErrorString[String] = surnameValidation(body.surname)
 
     val communicationPreferenceCheck: ValidatedOrErrorString[String] =
-      validationFromBoolean(body.contactDetails.communicationPreference)(validCommunicationPreferences.contains, c ⇒ s"Unknown communication preference: $c")
+      validationFromBoolean(body.contactDetails.communicationPreference)(
+        validCommunicationPreferences.contains,
+        c ⇒ s"Unknown communication preference: $c"
+      )
 
     val registrationChannelCheck: ValidatedOrErrorString[String] =
       validationFromBoolean(body.registrationChannel)(validChannels.contains, r ⇒ s"Unknown registration channel: $r")
 
     val emailCheck: ValidatedOrErrorString[CreateAccountBody] = {
 
-        def checkEmail(body: CreateAccountBody): Boolean = {
-          if (body.contactDetails.communicationPreference === "02") {
-            body.contactDetails.email.exists(emailValidation.validate(_).isValid)
-          } else {
-            true
-          }
+      def checkEmail(body: CreateAccountBody): Boolean =
+        if (body.contactDetails.communicationPreference === "02") {
+          body.contactDetails.email.exists(emailValidation.validate(_).isValid)
+        } else {
+          true
         }
 
       validationFromBoolean(body)(checkEmail, _ ⇒ "invalid email provided with communicationPreference = 02")
     }
 
-    (forenameCheck, surnameCheck,
-      communicationPreferenceCheck, registrationChannelCheck,
+    (
+      forenameCheck,
+      surnameCheck,
+      communicationPreferenceCheck,
+      registrationChannelCheck,
       phoneNumberValidation(body.contactDetails.phoneNumber),
-      emailCheck).mapN { case _ ⇒ body }
+      emailCheck
+    ).mapN { case _ ⇒ body }
   }
 
   private val versionRegex: String ⇒ Matcher = "^(\\d\\.)+\\d+$".r.pattern.matcher _
@@ -114,12 +120,11 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     val specialCharacterCheck: ValidatedOrErrorString[Option[String]] =
       validationFromBoolean(phoneNumber)(
         _.forall(specialCharacters(_, allowedPhoneNumberSpecialCharacters).isEmpty),
-        _ ⇒ "phone number contained invalid characters")
+        _ ⇒ "phone number contained invalid characters"
+      )
 
     val letterCheck: ValidatedOrErrorString[Option[String]] =
-      validationFromBoolean(phoneNumber)(
-        _.forall(!_.exists(_.isLetter)),
-        _ ⇒ "phone number contained letters")
+      validationFromBoolean(phoneNumber)(_.forall(!_.exists(_.isLetter)), _ ⇒ "phone number contained letters")
 
     (hasDigit, specialCharacterCheck, letterCheck).mapN {
       case _ ⇒ phoneNumber
@@ -138,12 +143,13 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
       validatedFromBoolean(name)(!_.headOption.forall(c ⇒ isSpecial(c)), s"$nameType started with special character")
 
     val consecutiveSpecialCharacters: ValidatedOrErrorString[String] =
-      validatedFromBoolean(name)(!containsNConsecutiveSpecialCharacters(_, 2),
-        s"$nameType contained consecutive special characters")
+      validatedFromBoolean(name)(
+        !containsNConsecutiveSpecialCharacters(_, 2),
+        s"$nameType contained consecutive special characters"
+      )
 
     val specialCharacterCheck: ValidatedOrErrorString[List[Char]] =
-      validatedFromBoolean(forbiddenSpecialCharacters)(_.isEmpty,
-        s"$nameType contained invalid special characters")
+      validatedFromBoolean(forbiddenSpecialCharacters)(_.isEmpty, s"$nameType contained invalid special characters")
 
     val noDigits: ValidatedOrErrorString[String] =
       validatedFromBoolean(name)(!_.exists(c ⇒ c.isDigit), s"$nameType contained a digit")
@@ -153,14 +159,13 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     }
   }
 
-  private def forenameNoApostrophe(name: String): ValidatedOrErrorString[String] = {
+  private def forenameNoApostrophe(name: String): ValidatedOrErrorString[String] =
     validatedFromBoolean(name)(!_.contains('''), "forename contains an apostrophe")
-  }
 
   /**
-   * Return a list of distinct special characters contained in the given string. Special
-   * characters found which are contained in `ignore` are not returned
-   */
+    * Return a list of distinct special characters contained in the given string. Special
+    * characters found which are contained in `ignore` are not returned
+    */
   private def specialCharacters(s: String, ignore: List[Char] = List.empty[Char]): List[Char] =
     s.replaceAllLiterally(" ", "").filter(isSpecial(_, ignore)).toList.distinct
 
@@ -169,30 +174,26 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     containsNConsecutive(s, n, isSpecial(_))
 
   /**
-   * Does the given string contains `n` consecutive characters which satisfy the given predicate?
-   * `n` should be one or greater.
-   */
-  private def containsNConsecutive(s:         String,
-                                   n:         Int,
-                                   predicate: Char ⇒ Boolean): Boolean = {
-      @tailrec
-      def loop(s:        List[Char],
-               previous: Char,
-               count:    Int): Boolean = s match {
-        case Nil ⇒
-          false
-        case head :: tail ⇒
-          if (predicate(head) && predicate(previous)) {
-            val newCount = count + 1
-            if (newCount + 1 === n) {
-              true
-            } else {
-              loop(tail, head, newCount)
-            }
+    * Does the given string contains `n` consecutive characters which satisfy the given predicate?
+    * `n` should be one or greater.
+    */
+  private def containsNConsecutive(s: String, n: Int, predicate: Char ⇒ Boolean): Boolean = {
+    @tailrec
+    def loop(s: List[Char], previous: Char, count: Int): Boolean = s match {
+      case Nil ⇒
+        false
+      case head :: tail ⇒
+        if (predicate(head) && predicate(previous)) {
+          val newCount = count + 1
+          if (newCount + 1 === n) {
+            true
           } else {
-            loop(tail, head, 0)
+            loop(tail, head, newCount)
           }
-      }
+        } else {
+          loop(tail, head, 0)
+        }
+    }
 
     if (n === 1) {
       s.exists(predicate)
@@ -200,7 +201,7 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
       s.toList match {
         // only loop over strings that have length two or greater
         case head :: tail ⇒ loop(tail, head, 0)
-        case _            ⇒ false
+        case _ ⇒ false
       }
     } else {
       false
@@ -211,11 +212,11 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     if (isValid(a)) Validated.Valid(a) else Validated.Invalid(NonEmptyList.of(ifFalse))
 
   /**
-   * The given [[Char]] is special if the following is true:
-   * - it is not a whitespace character
-   * - it is not alphanumeric
-   * - it is not contained in `ignore`
-   */
+    * The given [[Char]] is special if the following is true:
+    * - it is not a whitespace character
+    * - it is not alphanumeric
+    * - it is not contained in `ignore`
+    */
   private def isSpecial(c: Char, ignore: List[Char] = List.empty[Char]): Boolean =
     !(c === ' ' || c.isLetterOrDigit || ignore.contains(c))
 
@@ -224,4 +225,3 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
   private val validCommunicationPreferences: Set[String] = Set("00", "02")
 
 }
-

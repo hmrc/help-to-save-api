@@ -24,7 +24,7 @@ object CreateAccountRequest {
 
   implicit val writes: Writes[CreateAccountRequest] = Json.writes[CreateAccountRequest]
 
-  implicit val reads: Reads[CreateAccountRequest] = Reads[CreateAccountRequest]{ jsValue ⇒
+  implicit val reads: Reads[CreateAccountRequest] = Reads[CreateAccountRequest] { jsValue ⇒
     for {
       header ← (jsValue \ "header").validate[CreateAccountHeader]
       body ← (jsValue \ "body").validate[CreateAccountBody](CreateAccountBody.reads(header.clientCode))
