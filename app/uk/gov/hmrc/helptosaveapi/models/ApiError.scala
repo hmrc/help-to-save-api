@@ -27,8 +27,8 @@ object ApiError {
 
   implicit val writes: Writes[ApiError] = new Writes[ApiError] {
 
-    override def writes(o: ApiError): JsValue = Json.parse(
-      s"""{ "code" : "${o.code}", "message" : "${o.message}"}""".stripMargin)
+    override def writes(o: ApiError): JsValue =
+      Json.parse(s"""{ "code" : "${o.code}", "message" : "${o.message}"}""".stripMargin)
   }
 
 }

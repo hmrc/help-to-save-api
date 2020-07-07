@@ -29,7 +29,8 @@ import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSuppor
 import uk.gov.hmrc.http.HttpResponse
 
 // scalastyle:off magic.number
-class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with ScalaCheckDrivenPropertyChecks with EitherValues with HttpSupport {
+class HelpToSaveConnectorImplSpec
+    extends TestSupport with MockPagerDuty with ScalaCheckDrivenPropertyChecks with EitherValues with HttpSupport {
 
   val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, mockHttp)
 
@@ -43,11 +44,16 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Sc
     "creating an account" must {
 
       "call the correct url and return the response as is" in {
-        implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] = Arbitrary(DataGenerators.validCreateAccountBodyGen)
+        implicit val createAccountBodyArb: Arbitrary[CreateAccountBody] =
+          Arbitrary(DataGenerators.validCreateAccountBodyGen)
         implicit val correlationIdArb: Arbitrary[UUID] = Arbitrary(Gen.uuid)
 
         forAll { (body: CreateAccountBody, correlationId: UUID, clientCode: String, status: Int, response: String) ⇒
-          mockPost("http://localhost:7001/help-to-save/create-account", CreateAccountInfo(body, 8, clientCode), Map("X-Correlation-ID" -> correlationId.toString))(Some(HttpResponse(status, Some(JsString(response)))))
+          mockPost(
+            "http://localhost:7001/help-to-save/create-account",
+            CreateAccountInfo(body, 8, clientCode),
+            Map("X-Correlation-ID" -> correlationId.toString)
+          )(Some(HttpResponse(status, Some(JsString(response)))))
           val result = await(connector.createAccount(body, correlationId, clientCode, 8))
           result.status shouldBe status
           result.json shouldBe JsString(response)
@@ -77,32 +83,34 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Sc
       val getAccountUrl = s"http://localhost:7001/help-to-save/$nino/account"
       val account =
         """{
-           |"accountNumber":"1100000000001",
-           |"isClosed": false,
-           |"blocked": {
-           |  "unspecified": true
-           |},
-           |"balance": "100.00",
-           |"paidInThisMonth": "10.00",
-           |"canPayInThisMonth": "40.00",
-           |"maximumPaidInThisMonth": "50.00",
-           |"thisMonthEndDate": "2018-06-30",
-           |"bonusTerms": [ {
-           |  "bonusEstimate": "50.00",
-           |  "bonusPaid": "0.00",
-           |  "endDate": "2019-12-31",
-           |  "bonusPaidOnOrAfterDate": "2020-01-01"
-           |  }
-           |],
-           |"closureDate": "2022-01-01",
-           |"closingBalance": "100.00"
+          |"accountNumber":"1100000000001",
+          |"isClosed": false,
+          |"blocked": {
+          |  "unspecified": true
+          |},
+          |"balance": "100.00",
+          |"paidInThisMonth": "10.00",
+          |"canPayInThisMonth": "40.00",
+          |"maximumPaidInThisMonth": "50.00",
+          |"thisMonthEndDate": "2018-06-30",
+          |"bonusTerms": [ {
+          |  "bonusEstimate": "50.00",
+          |  "bonusPaid": "0.00",
+          |  "endDate": "2019-12-31",
+          |  "bonusPaidOnOrAfterDate": "2020-01-01"
+          |  }
+          |],
+          |"closureDate": "2022-01-01",
+          |"closingBalance": "100.00"
           }""".stripMargin
 
       val json = Json.parse(account)
 
       "call the correct url and return the response as is" in {
 
-        mockGet(getAccountUrl, Map("systemId" -> systemId, "correlationId" -> correlationId.toString), headers)(Some(HttpResponse(200, Some(json))))
+        mockGet(getAccountUrl, Map("systemId" -> systemId, "correlationId" -> correlationId.toString), headers)(
+          Some(HttpResponse(200, Some(json)))
+        )
         val result = await(connector.getAccount(nino, systemId, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
@@ -127,7 +135,11 @@ class HelpToSaveConnectorImplSpec extends TestSupport with MockPagerDuty with Sc
 
       "return http response as it is to the caller" in {
         val response = HttpResponse(200, Some(Json.parse("""{"isValid":true}""")))
-        mockPost("http://localhost:7001/help-to-save/validate-bank-details", ValidateBankDetailsRequest(nino, "123456", "02012345"), Map.empty)(Some(response))
+        mockPost(
+          "http://localhost:7001/help-to-save/validate-bank-details",
+          ValidateBankDetailsRequest(nino, "123456", "02012345"),
+          Map.empty
+        )(Some(response))
         await(connector.validateBankDetails(ValidateBankDetailsRequest(nino, "123456", "02012345"))) shouldBe response
       }
     }

@@ -26,10 +26,11 @@ import play.api.libs.json.Writes.temporalWrites
 import play.api.libs.json._
 
 case class CreateAccountHeader(
-    version:              String,
-    createdTimestamp:     ZonedDateTime,
-    clientCode:           String,
-    requestCorrelationId: UUID)
+  version: String,
+  createdTimestamp: ZonedDateTime,
+  clientCode: String,
+  requestCorrelationId: UUID
+)
 
 object CreateAccountHeader {
 
@@ -41,11 +42,9 @@ object CreateAccountHeader {
   implicit val format: Format[CreateAccountHeader] = Json.format[CreateAccountHeader]
 
   implicit val show: Show[CreateAccountHeader] =
-    Show.show(createAccountHeader ⇒
-      s"""{version: ${createAccountHeader.version},
+    Show.show(createAccountHeader ⇒ s"""{version: ${createAccountHeader.version},
           createdTimestamp: ${createAccountHeader.createdTimestamp},
           clientCode: ${createAccountHeader.clientCode},
           requestCorrelationId: ${createAccountHeader.requestCorrelationId}
-          }"""
-    )
+          }""")
 }

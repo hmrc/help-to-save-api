@@ -30,7 +30,9 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
 
   val apiCreateAccountUserRestrictedCallTimer: Timer = timer("api.create-account.user-restricted.time")
 
-  val apiCreateAccountUserRestrictedCallErrorCounter: Counter = counter("api.create-account.user-restricted.errors.count")
+  val apiCreateAccountUserRestrictedCallErrorCounter: Counter = counter(
+    "api.create-account.user-restricted.errors.count"
+  )
 
   val apiCreateAccountPrivilegedCallTimer: Timer = timer("api.create-account.privileged.time")
 
@@ -45,4 +47,3 @@ class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
   val apiValidateBankDetailsErrorCounter: Counter = counter("api.validate-bank-details-error.count")
 
 }
-

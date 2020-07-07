@@ -24,13 +24,14 @@ class FiltersSpec extends TestSupport {
 
   val mockMDCFilter = new MDCFilter(fakeApplication.materializer, fakeApplication.configuration, appName)
 
-  class EmptyMicroserviceFilters extends MicroserviceFilters(
-    stub[MetricsFilter],
-    stub[AuditFilter],
-    stub[LoggingFilter],
-    stub[CacheControlFilter],
-    mockMDCFilter
-  )
+  class EmptyMicroserviceFilters
+      extends MicroserviceFilters(
+        stub[MetricsFilter],
+        stub[AuditFilter],
+        stub[LoggingFilter],
+        stub[CacheControlFilter],
+        mockMDCFilter
+      )
 
   val mockMicroServiceFilters = mock[MicroserviceFilters]
   val mockXSSProtectionFilter = mock[XSSProtectionFilter]

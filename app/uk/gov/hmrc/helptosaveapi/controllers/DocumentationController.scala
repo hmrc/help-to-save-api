@@ -30,11 +30,12 @@ import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 @Singleton
 class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets)
-  extends BackendController(cc) {
+    extends BackendController(cc) {
 
   val access: Version ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
-  val versionEnabled: Version ⇒ Boolean = version ⇒ configuration.underlying.getBoolean(s"api.access.version-$version.enabled")
+  val versionEnabled: Version ⇒ Boolean = version ⇒
+    configuration.underlying.getBoolean(s"api.access.version-$version.enabled")
 
   def definition(): Action[AnyContent] = Action {
     Ok(txt.definition(access, versionEnabled)).as("application/json")
@@ -57,7 +58,7 @@ object DocumentationController {
 
     def apply(config: Config)(version: Version): APIAccess =
       APIAccess(
-        `type`                    = config.getString(s"version-$version.type"),
+        `type` = config.getString(s"version-$version.type"),
         whitelistedApplicationIds = config.get[List[String]](s"version-$version.whitelistedApplicationIds").value
       )
   }

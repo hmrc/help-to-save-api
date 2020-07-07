@@ -25,43 +25,46 @@ import play.api.libs.json._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
 
 case class CreateAccountBody(
-    nino:                String,
-    forename:            String,
-    surname:             String,
-    dateOfBirth:         LocalDate,
-    contactDetails:      ContactDetails,
-    registrationChannel: String,
-    bankDetails:         Option[BankDetails],
-    systemId:            String
+  nino: String,
+  forename: String,
+  surname: String,
+  dateOfBirth: LocalDate,
+  contactDetails: ContactDetails,
+  registrationChannel: String,
+  bankDetails: Option[BankDetails],
+  systemId: String
 )
 
 object CreateAccountBody {
 
   case class BankDetails(
-      accountNumber: String,
-      sortCode:      String,
-      accountName:   String,
-      rollNumber:    Option[String]
+    accountNumber: String,
+    sortCode: String,
+    accountName: String,
+    rollNumber: Option[String]
   )
 
   object BankDetails {
     val allowedSeparators: Set[Char] = Set(' ', '-', '–', '−', '—', '_')
-    implicit val reads: Reads[BankDetails] = Json.reads[BankDetails].map(bankDetails ⇒ bankDetails.copy(sortCode = bankDetails.sortCode.filterNot(allowedSeparators.contains)))
+    implicit val reads: Reads[BankDetails] = Json
+      .reads[BankDetails]
+      .map(bankDetails ⇒ bankDetails.copy(sortCode = bankDetails.sortCode.filterNot(allowedSeparators.contains)))
 
     implicit val writes: Writes[BankDetails] = Json.writes[BankDetails]
   }
 
   case class ContactDetails(
-      address1:                String,
-      address2:                String,
-      address3:                Option[String],
-      address4:                Option[String],
-      address5:                Option[String],
-      postcode:                String,
-      countryCode:             Option[String],
-      communicationPreference: String,
-      phoneNumber:             Option[String],
-      email:                   Option[String])
+    address1: String,
+    address2: String,
+    address3: Option[String],
+    address4: Option[String],
+    address5: Option[String],
+    postcode: String,
+    countryCode: Option[String],
+    communicationPreference: String,
+    phoneNumber: Option[String],
+    email: Option[String]
+  )
 
   object ContactDetails {
 
@@ -76,7 +79,7 @@ object CreateAccountBody {
 
   implicit val writes: Writes[CreateAccountBody] = Json.writes[CreateAccountBody]
 
-  def reads(clientCode: String): Reads[CreateAccountBody] = Reads[CreateAccountBody]{ jsValue ⇒
+  def reads(clientCode: String): Reads[CreateAccountBody] = Reads[CreateAccountBody] { jsValue ⇒
     for {
       nino ← (jsValue \ "nino").validate[String]
       forename ← (jsValue \ "forename").validate[String]
@@ -86,7 +89,16 @@ object CreateAccountBody {
       registrationChannel ← (jsValue \ "registrationChannel").validate[String]
       nbaDetails ← (jsValue \ "bankDetails").validateOpt[BankDetails]
       systemId ← JsSuccess("MDTP-API-" + clientCode)
-    } yield CreateAccountBody(nino, forename, surname, dateOfBirth, contactDetails, registrationChannel, nbaDetails, systemId)
+    } yield CreateAccountBody(
+      nino,
+      forename,
+      surname,
+      dateOfBirth,
+      contactDetails,
+      registrationChannel,
+      nbaDetails,
+      systemId
+    )
   }
 
 }

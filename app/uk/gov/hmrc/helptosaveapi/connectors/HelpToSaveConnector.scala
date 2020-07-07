@@ -34,23 +34,40 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[HelpToSaveConnectorImpl])
 trait HelpToSaveConnector {
 
-  def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse]
 
-  def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def checkEligibility(nino: String, correlationId: UUID)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse]
 
-  def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def getAccount(nino: String, systemId: String, correlationId: UUID)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse]
 
-  def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse]
 
-  def validateBankDetails(request: ValidateBankDetailsRequest)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse]
+  def validateBankDetails(
+    request: ValidateBankDetailsRequest
+  )(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse]
 
-  def getUserEnrolmentStatus(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse]
+  def getUserEnrolmentStatus(nino: String, correlationId: UUID)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse]
 }
 
 @Singleton
-class HelpToSaveConnectorImpl @Inject() (config: Configuration,
-                                         http:   HttpClient)(implicit transformer: LogMessageTransformer)
-  extends HelpToSaveConnector with Logging {
+class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient)(
+  implicit transformer: LogMessageTransformer
+) extends HelpToSaveConnector with Logging {
 
   private val htsBaseUrl = {
     val protocol = config.underlying.getString("microservice.services.help-to-save.protocol")
@@ -73,23 +90,51 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration,
 
   private val emptyQueryParameters: Map[String, String] = Map.empty[String, String]
 
-  override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.post(createAccountUrl, CreateAccountInfo(body, eligibilityReason, clientCode), Map(correlationIdHeaderName -> correlationId.toString))
-
-  override def checkEligibility(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(eligibilityCheckUrl, Map("nino" → nino), Map(correlationIdHeaderName -> correlationId.toString))
-
-  override def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(getAccountUrl(nino), Map("systemId" -> systemId, "correlationId" -> correlationId.toString), Map(correlationIdHeaderName -> correlationId.toString)
+  override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    http.post(
+      createAccountUrl,
+      CreateAccountInfo(body, eligibilityReason, clientCode),
+      Map(correlationIdHeaderName -> correlationId.toString)
     )
 
-  override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(storeEmailURL, Map("email" -> encodedEmail, "nino" -> nino), Map(correlationIdHeaderName -> correlationId.toString))
+  override def checkEligibility(
+    nino: String,
+    correlationId: UUID
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    http.get(eligibilityCheckUrl, Map("nino" → nino), Map(correlationIdHeaderName -> correlationId.toString))
 
-  override def validateBankDetails(request: ValidateBankDetailsRequest)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse] =
+  override def getAccount(nino: String, systemId: String, correlationId: UUID)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    http.get(
+      getAccountUrl(nino),
+      Map("systemId"              -> systemId, "correlationId" -> correlationId.toString),
+      Map(correlationIdHeaderName -> correlationId.toString)
+    )
+
+  override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[HttpResponse] =
+    http.get(
+      storeEmailURL,
+      Map("email"                 -> encodedEmail, "nino" -> nino),
+      Map(correlationIdHeaderName -> correlationId.toString)
+    )
+
+  override def validateBankDetails(
+    request: ValidateBankDetailsRequest
+  )(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse] =
     http.post(s"$htsBaseUrl/validate-bank-details", request)
 
-  override def getUserEnrolmentStatus(nino: String, correlationId: UUID)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+  override def getUserEnrolmentStatus(
+    nino: String,
+    correlationId: UUID
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     http.get(getEnrolmentStatusURL, Map("nino" → nino), Map(correlationIdHeaderName -> correlationId.toString))
 }
 

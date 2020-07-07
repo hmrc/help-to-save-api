@@ -27,9 +27,8 @@ import uk.gov.hmrc.helptosaveapi.util.TestSupport
 class EligibilityStoreSpec extends TestSupport with MongoSupport {
 
   val conf = Configuration(
-    ConfigFactory.parseString(
-      """
-        | mongo-cache.expireAfter =  2 seconds
+    ConfigFactory.parseString("""
+                                | mongo-cache.expireAfter =  2 seconds
       """.stripMargin)
   )
 

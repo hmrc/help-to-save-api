@@ -20,12 +20,12 @@ import java.time.LocalDate
 import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
 
 case class RetrievedUserDetails(
-    nino:        Option[String],
-    forename:    Option[String],
-    surname:     Option[String],
-    dateOfBirth: Option[LocalDate],
-    address:     Option[ItmpAddress],
-    email:       Option[String]
+  nino: Option[String],
+  forename: Option[String],
+  surname: Option[String],
+  dateOfBirth: Option[LocalDate],
+  address: Option[ItmpAddress],
+  email: Option[String]
 )
 
 object RetrievedUserDetails {

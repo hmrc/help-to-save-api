@@ -28,8 +28,8 @@ class CreateAccountHeaderSpec extends WordSpec with Matchers {
     "parsing JSON" must {
 
       "accept timestamps in the correct format" in {
-          def jsonString(timestampValue: String): String =
-            s"""
+        def jsonString(timestampValue: String): String =
+          s"""
              |{
              | "version" : "1",
              | "createdTimestamp" : $timestampValue,
@@ -45,9 +45,7 @@ class CreateAccountHeaderSpec extends WordSpec with Matchers {
           "\"20:33:37 2017-11-23\"",
           "\"2017/11/23 20:33:37 GMT\"",
           "true"
-        ).foreach(s ⇒
-            Json.parse(jsonString(s)).validate[CreateAccountHeader] shouldBe a[JsError]
-          )
+        ).foreach(s ⇒ Json.parse(jsonString(s)).validate[CreateAccountHeader] shouldBe a[JsError])
       }
 
     }

@@ -35,9 +35,13 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[MongoEligibilityStore])
 trait EligibilityStore {
 
-  def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponseWithNINO]]]
+  def get(correlationId: UUID)(
+    implicit ec: ExecutionContext
+  ): Future[Either[String, Option[EligibilityResponseWithNINO]]]
 
-  def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(implicit ec: ExecutionContext): Future[Either[String, Unit]]
+  def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(
+    implicit ec: ExecutionContext
+  ): Future[Either[String, Unit]]
 
 }
 
@@ -52,45 +56,58 @@ object EligibilityStore {
 }
 
 @Singleton
-class MongoEligibilityStore @Inject() (config: Configuration,
-                                       mongo:  ReactiveMongoComponent)(implicit ec: ExecutionContext) extends EligibilityStore {
+class MongoEligibilityStore @Inject() (config: Configuration, mongo: ReactiveMongoComponent)(
+  implicit ec: ExecutionContext
+) extends EligibilityStore {
 
   private val expireAfterSeconds = config.underlying.getDuration("mongo-cache.expireAfter").getSeconds
 
-  private lazy val cacheRepository = new CacheMongoRepository("api-eligibility", expireAfterSeconds)(mongo.mongoConnector.db, ec)
+  private lazy val cacheRepository =
+    new CacheMongoRepository("api-eligibility", expireAfterSeconds)(mongo.mongoConnector.db, ec)
 
   private type EitherStringOr[A] = Either[String, A]
 
-  override def get(correlationId: UUID)(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponseWithNINO]]] = {
-    doFindById(Id(correlationId.toString)).map { maybeCache ⇒
-      val response: OptionT[EitherStringOr, EligibilityResponseWithNINO] = for {
-        cache ← OptionT.fromOption[EitherStringOr](maybeCache)
-        data ← OptionT.fromOption[EitherStringOr](cache.data)
-        result ← OptionT.liftF[EitherStringOr, EligibilityResponseWithNINO](
-          (data \ "eligibility").validate[EligibilityResponseWithNINO].asEither.leftMap(e ⇒ s"Could not parse data: ${e.mkString("; ")}"))
-      } yield result
+  override def get(
+    correlationId: UUID
+  )(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponseWithNINO]]] =
+    doFindById(Id(correlationId.toString))
+      .map { maybeCache ⇒
+        val response: OptionT[EitherStringOr, EligibilityResponseWithNINO] = for {
+          cache ← OptionT.fromOption[EitherStringOr](maybeCache)
+          data ← OptionT.fromOption[EitherStringOr](cache.data)
+          result ← OptionT.liftF[EitherStringOr, EligibilityResponseWithNINO](
+                    (data \ "eligibility")
+                      .validate[EligibilityResponseWithNINO]
+                      .asEither
+                      .leftMap(e ⇒ s"Could not parse data: ${e.mkString("; ")}")
+                  )
+        } yield result
 
-      response.value
-    }.recover {
-      case e ⇒
-        Left(e.getMessage)
-    }
-  }
-
-  override def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(implicit ec: ExecutionContext): Future[Either[String, Unit]] = {
-    doCreateOrUpdate(Id(correlationId.toString), "eligibility", Json.toJson(EligibilityResponseWithNINO(eligibility, nino)))
-      .map[Either[String, Unit]] {
-        dbUpdate ⇒
-          if (dbUpdate.writeResult.inError) {
-            Left(dbUpdate.writeResult.errmsg.getOrElse("unknown error during inserting eligibility document"))
-          } else {
-            Right(())
-          }
-      }.recover {
+        response.value
+      }
+      .recover {
         case e ⇒
           Left(e.getMessage)
       }
-  }
+
+  override def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(
+    implicit ec: ExecutionContext
+  ): Future[Either[String, Unit]] =
+    doCreateOrUpdate(
+      Id(correlationId.toString),
+      "eligibility",
+      Json.toJson(EligibilityResponseWithNINO(eligibility, nino))
+    ).map[Either[String, Unit]] { dbUpdate ⇒
+        if (dbUpdate.writeResult.inError) {
+          Left(dbUpdate.writeResult.errmsg.getOrElse("unknown error during inserting eligibility document"))
+        } else {
+          Right(())
+        }
+      }
+      .recover {
+        case e ⇒
+          Left(e.getMessage)
+      }
 
   private[repo] def doFindById(id: Id) =
     cacheRepository.findById(id)

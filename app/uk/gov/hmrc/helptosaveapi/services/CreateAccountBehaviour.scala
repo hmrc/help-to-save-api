@@ -27,9 +27,10 @@ import uk.gov.hmrc.helptosaveapi.models.createaccount._
 
 private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
 
-  def fillInMissingDetailsGG(json:                 JsValue, // scalastyle:ignore cyclomatic.complexity
-                             missingDetails:       Set[MandatoryCreateAccountField],
-                             retrievedUserDetails: RetrievedUserDetails
+  def fillInMissingDetailsGG(
+    json: JsValue, // scalastyle:ignore cyclomatic.complexity
+    missingDetails: Set[MandatoryCreateAccountField],
+    retrievedUserDetails: RetrievedUserDetails
   ): Either[ApiError, JsValue] = {
     import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountRequest._
 
@@ -50,48 +51,53 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
           case None ⇒ // No bodyNINO
             retrievedUserDetails.nino match {
               case Some(nino) ⇒ collate(json, missingDetails, retrievedUserDetails, nino, registrationChannel)
-              case None       ⇒ Left(ApiAccessError())
+              case None ⇒ Left(ApiAccessError())
             }
         }
 
       case Some(_) ⇒ Left(ApiValidationError("registration channel is not of expected type String"))
 
-      case None    ⇒ Left(ApiValidationError("No registration channel was given"))
+      case None ⇒ Left(ApiValidationError("No registration channel was given"))
     }
 
   }
 
-  private def collate(json:                 JsValue, // scalastyle:ignore
-                      missingDetails:       Set[MandatoryCreateAccountField],
-                      retrievedUserDetails: RetrievedUserDetails,
-                      nino:                 String,
-                      registrationChannel:  String
+  private def collate(
+    json: JsValue, // scalastyle:ignore
+    missingDetails: Set[MandatoryCreateAccountField],
+    retrievedUserDetails: RetrievedUserDetails,
+    nino: String,
+    registrationChannel: String
   ): Either[ApiError, JsValue] = {
     import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountRequest._
 
-      def toJsValue[A](kv: A)(implicit writes: Writes[A]): JsValue =
-        writes.writes(kv)
+    def toJsValue[A](kv: A)(implicit writes: Writes[A]): JsValue =
+      writes.writes(kv)
 
     val collatedData: List[(CreateAccountField, Option[JsValue])] = {
       val communicationPreference: (CreateAccountField, Option[JsValue]) =
-        json.communicationPreference().fold{
-          if (registrationChannel === "online") {
-            CommunicationPreference → Some(toJsValue("02"))
-          } else if (registrationChannel === "callCentre") {
-            CommunicationPreference → Some(toJsValue("00"))
-          } else {
-            CommunicationPreference → None
-          }
-        } (CommunicationPreference → Some(_))
+        json
+          .communicationPreference()
+          .fold {
+            if (registrationChannel === "online") {
+              CommunicationPreference → Some(toJsValue("02"))
+            } else if (registrationChannel === "callCentre") {
+              CommunicationPreference → Some(toJsValue("00"))
+            } else {
+              CommunicationPreference → None
+            }
+          }(CommunicationPreference → Some(_))
 
       val email: List[(CreateAccountField, Option[JsValue])] =
-        json.email().fold(
-          if (registrationChannel === "online") {
-            List(Email → retrievedUserDetails.email.map(toJsValue(_)))
-          } else {
-            List.empty
-          }
-        )(e ⇒ List(Email → Some(e)))
+        json
+          .email()
+          .fold(
+            if (registrationChannel === "online") {
+              List(Email → retrievedUserDetails.email.map(toJsValue(_)))
+            } else {
+              List.empty
+            }
+          )(e ⇒ List(Email → Some(e)))
 
       communicationPreference :: email ::: missingDetails.toList.flatMap {
         case Forename ⇒
@@ -108,21 +114,22 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
 
         case CreateAccountField.Address ⇒
           val addressFields: Option[List[(CreateAccountField, Option[JsValue])]] =
-            (retrievedUserDetails.address.flatMap(_.line1),
+            (
+              retrievedUserDetails.address.flatMap(_.line1),
               retrievedUserDetails.address.flatMap(_.line2),
               retrievedUserDetails.address.flatMap(_.postCode)
             ).mapN {
-                case (l1, l2, p) ⇒
-                  List[(CreateAccountField, JsValue)](
-                    AddressLine1 → toJsValue(l1),
-                    AddressLine2 → toJsValue(l2),
-                    Postcode → toJsValue(p),
-                    AddressLine3 → toJsValue(retrievedUserDetails.address.flatMap(_.line3)),
-                    AddressLine4 → toJsValue(retrievedUserDetails.address.flatMap(_.line4)),
-                    AddressLine5 → toJsValue(retrievedUserDetails.address.flatMap(_.line5)),
-                    CountryCode → toJsValue(retrievedUserDetails.address.flatMap(_.countryCode))
-                  ).map{ case (k, v) ⇒ k → Some(v) }
-              }
+              case (l1, l2, p) ⇒
+                List[(CreateAccountField, JsValue)](
+                  AddressLine1 → toJsValue(l1),
+                  AddressLine2 → toJsValue(l2),
+                  Postcode → toJsValue(p),
+                  AddressLine3 → toJsValue(retrievedUserDetails.address.flatMap(_.line3)),
+                  AddressLine4 → toJsValue(retrievedUserDetails.address.flatMap(_.line4)),
+                  AddressLine5 → toJsValue(retrievedUserDetails.address.flatMap(_.line5)),
+                  CountryCode → toJsValue(retrievedUserDetails.address.flatMap(_.countryCode))
+                ).map { case (k, v) ⇒ k → Some(v) }
+            }
           addressFields.getOrElse(List(CreateAccountField.Address → None))
 
         case RegistrationChannel ⇒
@@ -131,8 +138,8 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
     }
 
     val (data, stillMissing) = {
-      collatedData.collect{ case (field, Some(value)) ⇒ field → value }.toMap →
-        collatedData.collect{ case (field, None) ⇒ field }
+      collatedData.collect { case (field, Some(value)) ⇒ field → value }.toMap →
+        collatedData.collect { case (field, None) ⇒ field }
     }
 
     if (stillMissing.nonEmpty) {
@@ -143,4 +150,3 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
   }
 
 }
-
