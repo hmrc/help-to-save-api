@@ -30,9 +30,11 @@ import scala.io.Source
 class DocumentationControllerSpec extends TestSupport {
 
   val access: String = "PRIVATE"
+  val allowList: List[String] = List("abc", "def")
 
   val configuration: Configuration = Configuration(
     "api.access.version-2.0.type" → access,
+    "api.access.version-2.0.whitelistedApplicationIds" → allowList,
     "api.access.version-2.0.enabled" → true
   )
   val controller = new DocumentationController(configuration, mockCc, mockAssets)
@@ -53,8 +55,7 @@ class DocumentationControllerSpec extends TestSupport {
   "raml" must {
     "return the raml documentation when called" in {
       val result: Future[Result] = controller.raml("2.0", "application.raml")(FakeRequest())
-      val raml =
-        Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/2.0/application.raml")).mkString
+      val raml = Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/2.0/application.raml")).mkString
       status(result) shouldBe OK
       contentAsString(result) shouldBe raml
     }
@@ -62,8 +63,8 @@ class DocumentationControllerSpec extends TestSupport {
 
   "APIAccess" must {
     "write valid json" in {
-      val expectedJson = Json.parse("""{"type":"PRIVATE"}""")
-      val apiAccess = APIAccess(access)
+      val expectedJson = Json.parse("""{"type":"PRIVATE","whitelistedApplicationIds":["abc","def"]}""")
+      val apiAccess = APIAccess(access, whiteList)
 
       Json.toJson[APIAccess](apiAccess) shouldBe expectedJson
     }

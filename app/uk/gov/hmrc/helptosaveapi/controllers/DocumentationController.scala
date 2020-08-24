@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,11 @@ import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 @Singleton
 class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets)
-    extends BackendController(cc) {
+  extends BackendController(cc) {
 
   val access: Version ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
-  val versionEnabled: Version ⇒ Boolean = version ⇒
-    configuration.underlying.getBoolean(s"api.access.version-$version.enabled")
+  val versionEnabled: Version ⇒ Boolean = version ⇒ configuration.underlying.getBoolean(s"api.access.version-$version.enabled")
 
   def definition(): Action[AnyContent] = Action {
     Ok(txt.definition(access, versionEnabled)).as("application/json")
@@ -48,7 +47,7 @@ class DocumentationController @Inject() (configuration: Configuration, cc: Contr
 
 object DocumentationController {
 
-  case class APIAccess(`type`: String)
+  case class APIAccess(`type`: String, allowListedApplicationIds: List[String])
 
   object APIAccess {
 
@@ -58,7 +57,8 @@ object DocumentationController {
 
     def apply(config: Config)(version: Version): APIAccess =
       APIAccess(
-        `type` = config.getString(s"version-$version.type")
+        `type`                    = config.getString(s"version-$version.type"),
+        allowListedApplicationIds = config.get[List[String]](s"version-$version.whitelistedApplicationIds").value
       )
   }
 
