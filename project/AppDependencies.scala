@@ -8,18 +8,17 @@ object AppDependencies {
 
   val compile = Seq(
     ws,
-    hmrc                %% "bootstrap-backend-play-26" % "2.25.0",
-    hmrc                %% "auth-client"               % "3.2.0-play-26",
-    hmrc                %% "mongo-caching"             % "6.15.0-play-26",
+    hmrc                %% "bootstrap-backend-play-26" % "3.0.0",
+    hmrc                %% "mongo-caching"             % "6.14.0-play-26",
     hmrc                %% "simple-reactivemongo"      % "7.30.0-play-26",
-    "org.typelevel"     %% "cats-core"                 % "2.2.0",
+    "org.typelevel"     %% "cats-core"                 % "2.0.0",
     "com.github.kxbmap" %% "configs"                   % "0.4.4"
   )
 
   val test = Seq(
     hmrc               %% "service-integration-test"    % "0.12.0-play-26" % "test",
     hmrc               %% "stub-data-generator"         % "0.5.3"          % "test",
-    hmrc               %% "reactivemongo-test"          % "4.21.0-play-26" % "test",
+    hmrc               %% "reactivemongo-test"          % "4.20.0-play-26" % "test",
     "org.scalamock"    %% "scalamock-scalatest-support" % "3.6.0"          % "test",
     "com.ironcorelabs" %% "cats-scalatest"              % "3.0.0"          % "test"
   )
