@@ -48,7 +48,7 @@ class DocumentationController @Inject() (configuration: Configuration, cc: Contr
 
 object DocumentationController {
 
-  case class APIAccess(`type`: String, whitelistedApplicationIds: List[String])
+  case class APIAccess(`type`: String)
 
   object APIAccess {
 
@@ -58,8 +58,7 @@ object DocumentationController {
 
     def apply(config: Config)(version: Version): APIAccess =
       APIAccess(
-        `type` = config.getString(s"version-$version.type"),
-        whitelistedApplicationIds = config.get[List[String]](s"version-$version.whitelistedApplicationIds").value
+        `type` = config.getString(s"version-$version.type")
       )
   }
 
