@@ -30,11 +30,9 @@ import scala.io.Source
 class DocumentationControllerSpec extends TestSupport {
 
   val access: String = "PRIVATE"
-  val whiteList: List[String] = List("abc", "def")
 
   val configuration: Configuration = Configuration(
     "api.access.version-2.0.type" → access,
-    "api.access.version-2.0.whitelistedApplicationIds" → whiteList,
     "api.access.version-2.0.enabled" → true
   )
   val controller = new DocumentationController(configuration, mockCc, mockAssets)
@@ -64,8 +62,8 @@ class DocumentationControllerSpec extends TestSupport {
 
   "APIAccess" must {
     "write valid json" in {
-      val expectedJson = Json.parse("""{"type":"PRIVATE","whitelistedApplicationIds":["abc","def"]}""")
-      val apiAccess = APIAccess(access, whiteList)
+      val expectedJson = Json.parse("""{"type":"PRIVATE"}""")
+      val apiAccess = APIAccess(access)
 
       Json.toJson[APIAccess](apiAccess) shouldBe expectedJson
     }
