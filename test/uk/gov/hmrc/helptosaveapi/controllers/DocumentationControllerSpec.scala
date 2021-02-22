@@ -53,8 +53,7 @@ class DocumentationControllerSpec extends TestSupport {
   "raml" must {
     "return the raml documentation when called" in {
       val result: Future[Result] = controller.raml("2.0", "application.raml")(FakeRequest())
-      val raml =
-        Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/2.0/application.raml")).mkString
+      val raml = Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/2.0/application.raml")).mkString
       status(result) shouldBe OK
       contentAsString(result) shouldBe raml
     }
