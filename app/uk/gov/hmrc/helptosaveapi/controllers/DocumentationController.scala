@@ -17,7 +17,6 @@
 package uk.gov.hmrc.helptosaveapi.controllers
 
 import com.typesafe.config.Config
-import configs.syntax._
 import controllers.Assets
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
@@ -26,7 +25,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess.Version
 import uk.gov.hmrc.helptosaveapi.views.txt
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets)

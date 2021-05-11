@@ -25,7 +25,6 @@ import cats.instances.string._
 import cats.syntax.apply._
 import cats.syntax.eq._
 import com.google.inject.{Inject, Singleton}
-import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.BankDetails
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.ValidatedOrErrorString
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
@@ -134,7 +133,7 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     }
   }
 
-  private[validators] val allowedNameSpecialCharacters = List('-', '&', '.', ',', ''')
+  private[validators] val allowedNameSpecialCharacters = List('-', '&', '.', ',', '\'')
 
   private[validators] val allowedPhoneNumberSpecialCharacters = List('(', ')', '-', '.', '+', ' ')
 
@@ -163,13 +162,13 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
   }
 
   private def forenameNoApostrophe(name: String): ValidatedOrErrorString[String] =
-    validatedFromBoolean(name)(!_.contains('''), "forename contains an apostrophe")
+    validatedFromBoolean(name)(!_.contains('\''), "forename contains an apostrophe")
 
   /**
     * Return a list of distinct special characters contained in the given string. Special
     * characters found which are contained in `ignore` are not returned
     */
-  private def specialCharacters(s: String, ignore: List[Char] = List.empty[Char]): List[Char] =
+  private def specialCharacters(s: String, ignore: List[Char]): List[Char] =
     s.replaceAllLiterally(" ", "").filter(isSpecial(_, ignore)).toList.distinct
 
   /** Does the given string contain `n` or more consecutive special characters? */

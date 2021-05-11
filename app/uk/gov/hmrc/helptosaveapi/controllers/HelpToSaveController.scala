@@ -38,7 +38,7 @@ import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
 import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, toFuture}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -41,7 +41,6 @@ trait HttpSupport { this: MockFactory with Matchers ⇒
         // are not satisfied - otherwise it is difficult to tell in the logs what went wrong
         u shouldBe url
         q shouldBe queryParams.toSeq
-        r shouldBe headers.toSeq
         h.extraHeaders shouldBe headers.toSeq
         true
       })
