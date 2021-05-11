@@ -64,6 +64,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(wartRemoverSettings)
   .settings(unmanagedResourceDirectories in Compile += baseDirectory.value / "resources")
   .settings(unmanagedResourceDirectories in Test += baseDirectory.value / "resources")
+  .settings(scalacOptions += "-P:silencer:pathFilters=routes")
   // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
   // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
   // imcompatible with a lot of WordSpec

@@ -288,7 +288,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         "there are no missing mandatory fields and stores email too" in {
 
-          inSequence {
+          inAnyOrder {
             mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithOnlineRequestWithEmail))
             mockCreateAccountRequestValidator(onlineRequestWithEmail)(Right(()))
             mockEligibilityStoreGet(onlineRequestWithEmail.header.requestCorrelationId)(
@@ -300,8 +300,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
               base64Encode(validEmail),
               onlineRequestWithEmail.body.nino,
               onlineRequestWithEmail.header.requestCorrelationId
-            )(Right(HttpResponse(200)))
-            mockCreateAccountService(onlineRequestWithEmail.body)(Right(HttpResponse(CREATED)))
+            )(Right(HttpResponse(200, "")))
+            mockCreateAccountService(onlineRequestWithEmail.body)(Right(HttpResponse(CREATED, "")))
           }
 
           val result = await(
