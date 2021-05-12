@@ -27,7 +27,7 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials ⇒ v2AuthProviderId, nino ⇒ v2Nino}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId ⇒ v2AuthProviderId, nino ⇒ v2Nino}
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
