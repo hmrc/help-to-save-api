@@ -161,7 +161,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       .returning(
         Future.successful(
           response
-            .fold(e ⇒ HttpResponse(500), isValid ⇒ HttpResponse(200, Some(Json.parse(s"""{"isValid":$isValid}"""))))
+            .fold(e ⇒ HttpResponse(500, ""), isValid ⇒ HttpResponse(200, Json.parse(s"""{"isValid":$isValid}"""),  Map.empty[String, Seq[String]]))
         )
       )
 
@@ -173,7 +173,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       .expects(nino, correlationId, *, *)
       .returning(
         jsonResponse.fold[Future[HttpResponse]](Future.failed(new Exception("Oh no!"))) { body ⇒
-          Future.successful(HttpResponse(200, Some(body)))
+          Future.successful(HttpResponse(200, body, Map.empty[String, Seq[String]]))
         }
       )
 
@@ -348,7 +348,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
               base64Encode(validEmail),
               onlineRequestWithEmail.body.nino,
               onlineRequestWithEmail.header.requestCorrelationId
-            )(Right(HttpResponse(400)))
+            )(Right(HttpResponse(400, "")))
             mockPagerDutyAlert("unexpected status during storing email for the api user")
           }
 
@@ -371,7 +371,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             request.body.bankDetails
               .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
             mockStoreEmail(base64Encode(validEmail), request.body.nino, request.header.requestCorrelationId)(
-              Right(HttpResponse(400))
+              Right(HttpResponse(400, ""))
             )
             mockPagerDutyAlert("unexpected status during storing email for the api user")
           }
@@ -392,8 +392,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             )
             generatedCreateAccountRequest.body.bankDetails
               .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
-            mockStoreEmail(base64Encode(validEmail), "retrievedNINO", correlationId)(Right(HttpResponse(200)))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockStoreEmail(base64Encode(validEmail), "retrievedNINO", correlationId)(Right(HttpResponse(200, "")))
+            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
           }
 
           val result =
@@ -414,7 +414,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             )
             generatedCreateAccountRequest.body.bankDetails
               .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
           }
 
           val result = await(
@@ -445,8 +445,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             )
             generatedCreateAccountRequest.body.bankDetails
               .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
-            mockStoreEmail(base64Encode(validEmail), "retrievedNINO", correlationId)(Right(HttpResponse(200)))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockStoreEmail(base64Encode(validEmail), "retrievedNINO", correlationId)(Right(HttpResponse(200, "")))
+            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
           }
 
           val result =
@@ -473,7 +473,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             )
             generatedCreateAccountRequest.body.bankDetails
               .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
           }
 
           val result =
@@ -504,8 +504,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             )
             generatedCreateAccountRequest.body.bankDetails
               .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
-            mockStoreEmail(base64Encode(validEmail), "nino", correlationId)(Right(HttpResponse(200)))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockStoreEmail(base64Encode(validEmail), "nino", correlationId)(Right(HttpResponse(200, "")))
+            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
           }
 
           val result =
@@ -540,7 +540,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             )
             generatedCreateAccountRequest.body.bankDetails
               .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
           }
 
           val result = await(service.createAccountUserRestricted(request, fullRetrievedUserDetails))
@@ -570,8 +570,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             )
             generatedCreateAccountRequest.body.bankDetails
               .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
-            mockStoreEmail(base64Encode("email"), "retrievedNINO", correlationId)(Right(HttpResponse(200)))
-            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED)))
+            mockStoreEmail(base64Encode("email"), "retrievedNINO", correlationId)(Right(HttpResponse(200, "")))
+            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
           }
 
           val result = await(service.createAccountUserRestricted(request, fullRetrievedUserDetails.copy(email = None)))
@@ -955,7 +955,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           )
           createAccountRequest.body.bankDetails
             .foreach(mockBankDetailsValidation(createAccountRequest.body.nino, _)(Right(true)))
-          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CREATED)))
+          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CREATED, "")))
         }
 
         val result = await(service.createAccountPrivileged(fakeRequestWithBody))
@@ -971,7 +971,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           )
           createAccountRequest.body.bankDetails
             .foreach(mockBankDetailsValidation(createAccountRequest.body.nino, _)(Right(true)))
-          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CONFLICT)))
+          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(CONFLICT, "")))
         }
 
         val result = await(service.createAccountPrivileged(fakeRequestWithBody))
@@ -980,7 +980,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
       "handle 400 responses" in {
         val response =
-          HttpResponse(BAD_REQUEST, Some(Json.toJson(CreateAccountErrorResponse("error", "details"))), Map.empty, None)
+          HttpResponse(BAD_REQUEST, Json.toJson(CreateAccountErrorResponse("error", "details")), Map.empty[String, Seq[String]])
 
         inSequence {
           mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
@@ -999,7 +999,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
 
       "handle 400 responses with unrecognised JSON response format" in {
-        val response = HttpResponse(BAD_REQUEST, Some(Json.toJson(createAccountRequest.header)))
+        val response = HttpResponse(BAD_REQUEST, Json.toJson(createAccountRequest.header), Map.empty[String, Seq[String]])
         inSequence {
           mockCreateAccountHeaderValidator(true)(Valid(fakeRequestWithBody))
           mockCreateAccountRequestValidator(createAccountRequest)(Right(()))
@@ -1025,7 +1025,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           )
           createAccountRequest.body.bankDetails
             .foreach(mockBankDetailsValidation(createAccountRequest.body.nino, _)(Right(true)))
-          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(202)))
+          mockCreateAccountService(createAccountRequest.body)(Right(HttpResponse(202, "")))
           mockPagerDutyAlert("Received unexpected http status in response to create account")
         }
 
@@ -1095,7 +1095,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
-          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson(1, 6))))))
+          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Json.parse(eligibilityJson(1, 6)), Map.empty[String, Seq[String]])))
           mockEligibilityStorePut(correlationId, ApiEligibilityResponse(Eligibility(true, false, true), false), nino)(
             Right(())
           )
@@ -1183,7 +1183,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
         mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
         mockEligibilityCheckRequestValidator(nino)(Valid(nino))
-        mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson)))))
+        mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Json.parse(eligibilityJson), Map.empty[String, Seq[String]])))
         mockEligibilityStorePut(correlationId, apiResponse, nino)(Right(()))
         val result = await(service.checkEligibility(nino, correlationId))
         result shouldBe Right(apiResponse)
@@ -1195,7 +1195,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
-          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(json))))
+          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, json, Map.empty[String, Seq[String]])))
           mockPagerDutyAlert("Could not parse JSON in eligibility check response")
 
           val result = await(service.checkEligibility(nino, correlationId))
@@ -1215,7 +1215,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           mockGetUserEnrolmentStatus(nino, correlationId)(None)
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
           mockEligibilityCheckRequestValidator(nino)(Valid(nino))
-          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Some(Json.parse(eligibilityJson(1, 6))))))
+          mockEligibilityCheck(nino, correlationId)(Right(HttpResponse(200, Json.parse(eligibilityJson(1, 6)), Map.empty[String, Seq[String]])))
           mockEligibilityStorePut(correlationId, ApiEligibilityResponse(Eligibility(true, false, true), false), nino)(
             Right(())
           )
@@ -1269,7 +1269,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         inSequence {
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
-          mockGetAccount(nino, systemId)(Right(HttpResponse(200, Some(Json.parse(account)))))
+          mockGetAccount(nino, systemId)(Right(HttpResponse(200, Json.parse(account), Map.empty[String, Seq[String]])))
         }
 
         val result = await(service.getAccount(nino))
@@ -1279,7 +1279,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       "return an Api Error when an INTERNAL SERVER ERROR status is returned from the connector" in {
         inSequence {
           mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
-          mockGetAccount(nino, systemId)(Right(HttpResponse(500, None)))
+          mockGetAccount(nino, systemId)(Right(HttpResponse(500, "")))
         }
 
         val result = await(service.getAccount(nino))

@@ -24,7 +24,7 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, nino ⇒ v2Nino}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, Logging}
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -39,7 +39,7 @@ class AuthSpec extends AuthSupport {
 
   val retrieve: Retrieval[Option[String] ~ Option[Credentials]] = v2Nino and credentials
 
-  private def callAuth = auth.authorised(retrieve) { implicit request ⇒
+  private def callAuth = auth.authorised(retrieve) { _ ⇒
     {
       case nino ~ credentials ⇒
         Future.successful(Ok("authSuccess"))

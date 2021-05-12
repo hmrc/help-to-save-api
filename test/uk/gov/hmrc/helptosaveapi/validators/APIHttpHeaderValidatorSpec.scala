@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.validators
 
-import cats.data.Validated.{Invalid, Valid}
+import cats.data.Validated.Invalid
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.scalatest.ValidatedMatchers._
 import play.api.http.{ContentTypes, HeaderNames}
