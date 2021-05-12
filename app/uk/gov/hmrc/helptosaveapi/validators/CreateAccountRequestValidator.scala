@@ -39,9 +39,6 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
 
   // checks the communication preference and registration channel - the rest of the body is validated downstream
   def validateBody(body: CreateAccountBody): ValidatedOrErrorString[CreateAccountBody] = {
-
-    println("MOHAN from validateBody .....$$$$$$$$$$$$$$$$$")
-
     val forenameCheck: ValidatedOrErrorString[String] = forenameValidation(body.forename)
 
     val surnameCheck: ValidatedOrErrorString[String] = surnameValidation(body.surname)
@@ -82,7 +79,6 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
   private val clientCodeRegex: String ⇒ Matcher = "^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$".r.pattern.matcher _
 
   def validateHeaders(header: CreateAccountHeader): ValidatedOrErrorString[CreateAccountHeader] = {
-    println("MOHAN from validateHeaders .....$$$$$$$$$$$$$$$$$")
     val versionCheck: ValidatedOrErrorString[String] =
       validationFromBoolean(header.version)(versionRegex(_).matches(), v ⇒ s"version has incorrect format: $v")
 
