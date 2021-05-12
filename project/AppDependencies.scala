@@ -11,7 +11,6 @@ object AppDependencies {
     hmrc                %% "bootstrap-backend-play-26" % "5.2.0",
     hmrc                %% "mongo-caching"             % "7.0.0-play-26",
     hmrc                %% "simple-reactivemongo"      % "8.0.0-play-26",
-    hmrc                %% "http-verbs-play-26"        % "13.3.0",
     "org.typelevel"     %% "cats-core"                 % "2.0.0",
     "com.github.kxbmap" %% "configs"                   % "0.4.4",
     compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.1" cross CrossVersion.full),
@@ -19,7 +18,7 @@ object AppDependencies {
   )
 
   val test = Seq(
-    hmrc               %% "service-integration-test"    % "0.12.0-play-26" % "test",
+    hmrc               %% "service-integration-test"    % "1.1.0-play-26"  % "test",
     hmrc               %% "stub-data-generator"         % "0.5.3"          % "test",
     hmrc               %% "reactivemongo-test"          % "4.20.0-play-26" % "test",
     "org.scalamock"    %% "scalamock-scalatest-support" % "3.6.0"          % "test",
