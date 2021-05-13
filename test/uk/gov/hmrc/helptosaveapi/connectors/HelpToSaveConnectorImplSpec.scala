@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.HttpResponse
 class HelpToSaveConnectorImplSpec
     extends TestSupport with MockPagerDuty with ScalaCheckDrivenPropertyChecks with EitherValues with HttpSupport {
 
-  val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, mockHttp)
+  val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, mockHttp)()
 
   "The HelpToSaveConnectorImpl" when {
 
@@ -53,7 +53,7 @@ class HelpToSaveConnectorImplSpec
             "http://localhost:7001/help-to-save/create-account",
             CreateAccountInfo(body, 8, clientCode),
             Map("X-Correlation-ID" -> correlationId.toString)
-          )(Some(HttpResponse(status, Some(JsString(response)))))
+          )(Some(HttpResponse(status, JsString(response), Map.empty[String, Seq[String]])))
           val result = await(connector.createAccount(body, correlationId, clientCode, 8))
           result.status shouldBe status
           result.json shouldBe JsString(response)
@@ -71,7 +71,7 @@ class HelpToSaveConnectorImplSpec
 
       "call correct url and return the response as is" in {
 
-        mockGet(eligibilityUrl, Map("nino" → nino), headers)(Some(HttpResponse(200, Some(json))))
+        mockGet(eligibilityUrl, Map("nino" → nino), headers)(Some(HttpResponse(200, json, Map.empty[String, Seq[String]])))
         val result = await(connector.checkEligibility(nino, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
@@ -109,7 +109,7 @@ class HelpToSaveConnectorImplSpec
       "call the correct url and return the response as is" in {
 
         mockGet(getAccountUrl, Map("systemId" -> systemId, "correlationId" -> correlationId.toString), headers)(
-          Some(HttpResponse(200, Some(json)))
+          Some(HttpResponse(200, json,  Map.empty[String, Seq[String]]))
         )
         val result = await(connector.getAccount(nino, systemId, correlationId))
         result.status shouldBe 200
@@ -124,7 +124,7 @@ class HelpToSaveConnectorImplSpec
       "call the correct url and return the response as is" in {
         val email = base64Encode("email@email.com")
 
-        mockGet(storeEmailUrl, Map("email" -> email, "nino" -> nino), headers)(Some(HttpResponse(200)))
+        mockGet(storeEmailUrl, Map("email" -> email, "nino" -> nino), headers)(Some(HttpResponse(200, "")))
         val result = await(connector.storeEmail(email, nino, correlationId))
         result.status shouldBe 200
       }
@@ -134,7 +134,7 @@ class HelpToSaveConnectorImplSpec
     "validating bank details" must {
 
       "return http response as it is to the caller" in {
-        val response = HttpResponse(200, Some(Json.parse("""{"isValid":true}""")))
+        val response = HttpResponse(200, Json.parse("""{"isValid":true}"""),  Map.empty[String, Seq[String]])
         mockPost(
           "http://localhost:7001/help-to-save/validate-bank-details",
           ValidateBankDetailsRequest(nino, "123456", "02012345"),

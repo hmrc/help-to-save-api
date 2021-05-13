@@ -80,11 +80,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
       .returning(toFuture(response))
 
   "The CreateAccountController" when {
-
     val nino = "AE123456C"
-    val systemId = "systemId"
-    val correlationId = UUID.randomUUID()
-
     val fakeRequest = FakeRequest()
 
     val eligibilityResponse: Either[ApiError, ApiEligibilityResponse] =

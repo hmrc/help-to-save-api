@@ -24,10 +24,10 @@ import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.http.HttpClient.HttpClientOps
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging}
+import uk.gov.hmrc.helptosaveapi.util.Logging
 import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -65,9 +65,8 @@ trait HelpToSaveConnector {
 }
 
 @Singleton
-class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient)(
-  implicit transformer: LogMessageTransformer
-) extends HelpToSaveConnector with Logging {
+class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient)()
+  extends HelpToSaveConnector with Logging {
 
   private val htsBaseUrl = {
     val protocol = config.underlying.getString("microservice.services.help-to-save.protocol")
@@ -87,8 +86,6 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
   def getAccountUrl(nino: String): String = s"$htsBaseUrl/$nino/account"
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
-
-  private val emptyQueryParameters: Map[String, String] = Map.empty[String, String]
 
   override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(
     implicit hc: HeaderCarrier,
