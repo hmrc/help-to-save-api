@@ -66,9 +66,9 @@ class HelpToSaveController @Inject() (
 
     def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
       result match {
-        case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.message))
-        case Left(a: ApiValidationError) ⇒ BadRequest(Json.toJson(a.message))
-        case Left(b: ApiBackendError) ⇒ InternalServerError(Json.toJson(b.message))
+        case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.asInstanceOf[ApiError]))
+        case Left(a: ApiValidationError) ⇒ BadRequest(Json.toJson(a.asInstanceOf[ApiError]))
+        case Left(b: ApiBackendError) ⇒ InternalServerError(Json.toJson(b.asInstanceOf[ApiError]))
         case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒
           if (alreadyHadAccount) {
             Conflict
@@ -176,11 +176,11 @@ class HelpToSaveController @Inject() (
     correlationId: UUID
   )(implicit request: Request[AnyContent], hc: HeaderCarrier): Future[Result] =
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
-      case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.message))
+      case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.asInstanceOf[ApiError]))
 
-      case Left(a: ApiValidationError) ⇒ BadRequest(Json.toJson(a.message))
+      case Left(a: ApiValidationError) ⇒ BadRequest(Json.toJson(a.asInstanceOf[ApiError]))
 
-      case Left(b: ApiBackendError) ⇒ InternalServerError(Json.toJson(b.message))
+      case Left(b: ApiBackendError) ⇒ InternalServerError(Json.toJson(b.asInstanceOf[ApiError]))
 
       case Right(response) ⇒ Ok(toJson(response))
     }
@@ -193,9 +193,9 @@ class HelpToSaveController @Inject() (
           .map {
             case Right(Some(account)) ⇒ Ok(Json.toJson(account))
             case Right(None) ⇒ NotFound
-            case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.message))
-            case Left(e: ApiBackendError) ⇒ InternalServerError(Json.toJson(e.message))
-            case Left(e: ApiValidationError) ⇒ BadRequest(Json.toJson(e.message))
+            case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.asInstanceOf[ApiError]))
+            case Left(e: ApiBackendError) ⇒ InternalServerError(Json.toJson(e.asInstanceOf[ApiError]))
+            case Left(e: ApiValidationError) ⇒ BadRequest(Json.toJson(e.asInstanceOf[ApiError]))
           }
 
       case None ⇒

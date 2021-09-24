@@ -123,7 +123,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe BAD_REQUEST
-          contentAsJson(result) shouldBe Json.toJson(error.message)
+          contentAsJson(result) shouldBe Json.toJson(error.asInstanceOf[ApiError])
         }
 
         "handle unexpected internal server errors and return InternalServerError" in {
@@ -134,7 +134,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe INTERNAL_SERVER_ERROR
-          contentAsJson(result) shouldBe Json.toJson(ApiBackendError().message)
+          contentAsJson(result) shouldBe Json.toJson(ApiBackendError().asInstanceOf[ApiError])
         }
 
         "handle access errors and return Forbidden" in {
@@ -146,7 +146,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe FORBIDDEN
-          contentAsJson(result) shouldBe Json.toJson(ApiAccessError().message)
+          contentAsJson(result) shouldBe Json.toJson(ApiAccessError().asInstanceOf[ApiError])
         }
       }
 
@@ -251,7 +251,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe BAD_REQUEST
-          contentAsJson(result) shouldBe Json.toJson(error.message)
+          contentAsJson(result) shouldBe Json.toJson(error.asInstanceOf[ApiError])
         }
 
         "handle unexpected internal server errors and return InternalServerError" in {
@@ -266,7 +266,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe INTERNAL_SERVER_ERROR
-          contentAsJson(result) shouldBe Json.toJson(ApiBackendError().message)
+          contentAsJson(result) shouldBe Json.toJson(ApiBackendError().asInstanceOf[ApiError])
         }
 
         "handle access errors and return Forbidden" in {
@@ -282,7 +282,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe FORBIDDEN
-          contentAsJson(result) shouldBe Json.toJson(ApiAccessError().message)
+          contentAsJson(result) shouldBe Json.toJson(ApiAccessError().asInstanceOf[ApiError])
         }
       }
 
@@ -510,7 +510,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe INTERNAL_SERVER_ERROR
-        contentAsJson(result) shouldBe Json.toJson(ApiBackendError().message)
+        contentAsJson(result) shouldBe Json.toJson(ApiBackendError().asInstanceOf[ApiError])
       }
 
       "return a Forbidden when getting an account returns an access error" in {
@@ -521,7 +521,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe FORBIDDEN
-        contentAsJson(result) shouldBe Json.toJson(ApiAccessError().message)
+        contentAsJson(result) shouldBe Json.toJson(ApiAccessError().asInstanceOf[ApiError])
       }
 
       "return a Bad Request when there is a validation error" in {
@@ -533,7 +533,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe BAD_REQUEST
-        contentAsJson(result) shouldBe Json.toJson(error.message)
+        contentAsJson(result) shouldBe Json.toJson(error.asInstanceOf[ApiError])
       }
 
       "return a Forbidden result when the nino isn't in Auth" in {
