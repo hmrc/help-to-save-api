@@ -18,17 +18,17 @@ package uk.gov.hmrc.helptosaveapi.controllers
 
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-
 import org.joda.time.LocalDate
-import java.time.{LocalDate ⇒ JavaLocalDate}
+
+import java.time.{LocalDate => JavaLocalDate}
 import org.scalamock.handlers.{CallHandler3, CallHandler4, CallHandler5}
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId ⇒ v2AuthProviderId, nino ⇒ v2Nino}
-import uk.gov.hmrc.helptosaveapi.models._
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId => v2AuthProviderId, nino => v2Nino}
+import uk.gov.hmrc.helptosaveapi.models.{ApiAccessError, _}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
@@ -114,7 +114,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         }
 
         "handle invalid createAccount requests and return BadRequest" in {
-          val error = ApiValidationError("invalid request", "uh oh")
+          val error : ApiError = ApiValidationError("invalid request", "uh oh")
 
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(privilegedCredentials)
@@ -123,30 +123,32 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe BAD_REQUEST
-          contentAsJson(result) shouldBe Json.toJson(error.asInstanceOf[ApiError])
+          contentAsJson(result) shouldBe Json.toJson(error)
         }
 
         "handle unexpected internal server errors and return InternalServerError" in {
+          val apiBackendError:ApiError=ApiBackendError()
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(privilegedCredentials)
-            mockCreateAccountPrivileged(fakeRequest)(Left(ApiBackendError()))
+            mockCreateAccountPrivileged(fakeRequest)(Left(apiBackendError))
           }
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe INTERNAL_SERVER_ERROR
-          contentAsJson(result) shouldBe Json.toJson(ApiBackendError().asInstanceOf[ApiError])
+          contentAsJson(result) shouldBe Json.toJson(apiBackendError)
         }
 
         "handle access errors and return Forbidden" in {
+          val apiAccessError:ApiError = ApiAccessError()
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(privilegedCredentials)
-            mockCreateAccountPrivileged(fakeRequest)(Left(ApiAccessError()))
+            mockCreateAccountPrivileged(fakeRequest)(Left(apiAccessError))
           }
 
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe FORBIDDEN
-          contentAsJson(result) shouldBe Json.toJson(ApiAccessError().asInstanceOf[ApiError])
+          contentAsJson(result) shouldBe Json.toJson(apiAccessError)
         }
       }
 
@@ -241,7 +243,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
         "handle invalid createAccount requests and return BadRequest" in {
           val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
           val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
-          val error = ApiValidationError("invalid request", "uh oh")
+          val error : ApiError = ApiValidationError("invalid request", "uh oh")
 
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(ggCredentials)
@@ -251,38 +253,40 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe BAD_REQUEST
-          contentAsJson(result) shouldBe Json.toJson(error.asInstanceOf[ApiError])
+          contentAsJson(result) shouldBe Json.toJson(error)
         }
 
         "handle unexpected internal server errors and return InternalServerError" in {
+          val apiBackendError:ApiError = ApiBackendError()
           val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
           val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
 
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiBackendError()))
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(apiBackendError))
           }
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe INTERNAL_SERVER_ERROR
-          contentAsJson(result) shouldBe Json.toJson(ApiBackendError().asInstanceOf[ApiError])
+          contentAsJson(result) shouldBe Json.toJson(apiBackendError)
         }
 
         "handle access errors and return Forbidden" in {
+          val apiAccessError:ApiError = ApiAccessError()
           val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
           val userDetailsRetrieval = createAccountRetrievalResult(retrievedUserDetails)
 
           inSequence {
             mockAuthResultWithSuccess(v2AuthProviderId)(ggCredentials)
             mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
-            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(ApiAccessError()))
+            mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(apiAccessError))
           }
 
           val result = controller.createAccount()(fakeRequest)
 
           status(result) shouldBe FORBIDDEN
-          contentAsJson(result) shouldBe Json.toJson(ApiAccessError().asInstanceOf[ApiError])
+          contentAsJson(result) shouldBe Json.toJson(apiAccessError)
         }
       }
 
@@ -503,17 +507,19 @@ class HelpToSaveControllerSpec extends AuthSupport {
       }
 
       "return an Internal Server Error when getting an account is unsuccessful" in {
+        val apiBackendError:ApiError = ApiBackendError()
         inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
-          mockGetAccount(nino)(Left(ApiBackendError()))
+          mockGetAccount(nino)(Left(apiBackendError))
         }
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe INTERNAL_SERVER_ERROR
-        contentAsJson(result) shouldBe Json.toJson(ApiBackendError().asInstanceOf[ApiError])
+        contentAsJson(result) shouldBe Json.toJson(apiBackendError)
       }
 
       "return a Forbidden when getting an account returns an access error" in {
+        val apiAccessError:ApiError = ApiAccessError()
         inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
           mockGetAccount(nino)(Left(ApiAccessError()))
@@ -521,11 +527,11 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe FORBIDDEN
-        contentAsJson(result) shouldBe Json.toJson(ApiAccessError().asInstanceOf[ApiError])
+        contentAsJson(result) shouldBe Json.toJson(apiAccessError)
       }
 
       "return a Bad Request when there is a validation error" in {
-        val error = ApiValidationError("error", "description")
+        val error: ApiError = ApiValidationError("error", "description")
         inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
           mockGetAccount(nino)(Left(error))
@@ -533,7 +539,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe BAD_REQUEST
-        contentAsJson(result) shouldBe Json.toJson(error.asInstanceOf[ApiError])
+        contentAsJson(result) shouldBe Json.toJson(error)
       }
 
       "return a Forbidden result when the nino isn't in Auth" in {
