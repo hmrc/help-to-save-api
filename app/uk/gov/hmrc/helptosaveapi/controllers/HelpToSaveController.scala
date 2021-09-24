@@ -18,18 +18,17 @@ package uk.gov.hmrc.helptosaveapi.controllers
 
 import java.time.LocalDate
 import java.util.UUID
-
 import cats.instances.string._
 import cats.syntax.eq._
 import com.google.inject.Inject
-import org.joda.time.{LocalDate ⇒ JodaLocalDate}
+import org.joda.time.{LocalDate => JodaLocalDate}
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId ⇒ v2AuthProviderId, nino ⇒ v2Nino}
-import uk.gov.hmrc.auth.core.retrieve.{v2, Name ⇒ RetrievedName, _}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId => v2AuthProviderId, nino => v2Nino}
+import uk.gov.hmrc.auth.core.retrieve.{v2, Name => RetrievedName, _}
 import uk.gov.hmrc.helptosaveapi.auth.Auth
 import uk.gov.hmrc.helptosaveapi.models.AccessType.{PrivilegedAccess, UserRestricted}
 import uk.gov.hmrc.helptosaveapi.models._
@@ -67,9 +66,9 @@ class HelpToSaveController @Inject() (
 
     def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
       result match {
-        case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e))
-        case Left(a: ApiValidationError) ⇒ BadRequest(Json.toJson(a))
-        case Left(b: ApiBackendError) ⇒ InternalServerError(Json.toJson(b))
+        case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.message))
+        case Left(a: ApiValidationError) ⇒ BadRequest(Json.toJson(a.message))
+        case Left(b: ApiBackendError) ⇒ InternalServerError(Json.toJson(b.message))
         case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒
           if (alreadyHadAccount) {
             Conflict
@@ -177,11 +176,11 @@ class HelpToSaveController @Inject() (
     correlationId: UUID
   )(implicit request: Request[AnyContent], hc: HeaderCarrier): Future[Result] =
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
-      case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e))
+      case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.message))
 
-      case Left(a: ApiValidationError) ⇒ BadRequest(Json.toJson(a))
+      case Left(a: ApiValidationError) ⇒ BadRequest(Json.toJson(a.message))
 
-      case Left(b: ApiBackendError) ⇒ InternalServerError(Json.toJson(b))
+      case Left(b: ApiBackendError) ⇒ InternalServerError(Json.toJson(b.message))
 
       case Right(response) ⇒ Ok(toJson(response))
     }
@@ -194,9 +193,9 @@ class HelpToSaveController @Inject() (
           .map {
             case Right(Some(account)) ⇒ Ok(Json.toJson(account))
             case Right(None) ⇒ NotFound
-            case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e))
-            case Left(e: ApiBackendError) ⇒ InternalServerError(Json.toJson(e))
-            case Left(e: ApiValidationError) ⇒ BadRequest(Json.toJson(e))
+            case Left(e: ApiAccessError) ⇒ Forbidden(Json.toJson(e.message))
+            case Left(e: ApiBackendError) ⇒ InternalServerError(Json.toJson(e.message))
+            case Left(e: ApiValidationError) ⇒ BadRequest(Json.toJson(e.message))
           }
 
       case None ⇒
@@ -207,5 +206,5 @@ class HelpToSaveController @Inject() (
   }
 
   val unsupportedCredentialsProviderResult: Result =
-    Forbidden(Json.toJson(ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised")))
+    Forbidden(Json.toJson(ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised").message))
 }
