@@ -60,6 +60,14 @@ class HelpToSaveController @Inject() (
       v2.Retrievals.itmpAddress and
       v2.Retrievals.email
 
+  def apiErrorToResult(e: ApiError):Result = { e match
+    {
+      case _: ApiAccessError ⇒ Forbidden(Json.toJson(e))
+      case _: ApiValidationError ⇒ BadRequest(Json.toJson(e))
+      case _: ApiBackendError ⇒ InternalServerError(Json.toJson(e))
+    }
+  }
+
   def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials ⇒
     def toJavaDate(jodaDate: JodaLocalDate): LocalDate =
       LocalDate.of(jodaDate.getYear, jodaDate.getMonthOfYear, jodaDate.getDayOfMonth)
@@ -67,11 +75,7 @@ class HelpToSaveController @Inject() (
     def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
       result match {
         case Left(e: ApiError) =>
-          e match{
-        case _ : ApiAccessError ⇒ Forbidden(Json.toJson(e))
-        case _ : ApiValidationError ⇒ BadRequest(Json.toJson(e))
-        case _ : ApiBackendError ⇒ InternalServerError(Json.toJson(e))
-          }
+          apiErrorToResult(e)
         case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒
           if (alreadyHadAccount) {
             Conflict
@@ -181,11 +185,7 @@ class HelpToSaveController @Inject() (
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
       case Right(response) ⇒ Ok(toJson(response))
       case Left (e: ApiError) =>
-      e match {
-        case _ : ApiAccessError ⇒ Forbidden (Json.toJson (e))
-        case _ : ApiValidationError ⇒ BadRequest (Json.toJson (e))
-        case _ : ApiBackendError ⇒ InternalServerError (Json.toJson (e))
-      }
+        apiErrorToResult(e)
     }
 
   def getAccount(): Action[AnyContent] = authorised(v2Nino) { implicit request ⇒
@@ -197,11 +197,7 @@ class HelpToSaveController @Inject() (
             case Right(Some(account)) ⇒ Ok(Json.toJson(account))
             case Right(None) ⇒ NotFound
             case Left(e: ApiError) =>
-              e match {
-                case _ : ApiAccessError ⇒ Forbidden(Json.toJson(e))
-                case _ : ApiBackendError ⇒ InternalServerError(Json.toJson(e))
-                case _ : ApiValidationError ⇒ BadRequest(Json.toJson(e))
-              }
+              apiErrorToResult(e)
           }
 
       case None ⇒
