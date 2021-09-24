@@ -10,8 +10,6 @@ val appName = "help-to-save-api"
 
 lazy val appDependencies: Seq[ModuleID] = Seq(ws) ++ AppDependencies.compile ++ AppDependencies.test
 
-dependencyOverrides ++= AppDependencies.overrides
-
 lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
@@ -42,8 +40,6 @@ lazy val wartRemoverSettings = {
     Wart.ToString,
     Wart.Var
   )
-
-  wartremoverErrors in (Compile, compile) ++= Warts.allBut(excludedWarts: _*)
 }
 
 lazy val catsSettings = scalacOptions += "-Ypartial-unification"
@@ -60,22 +56,13 @@ lazy val microservice = Project(appName, file("."))
   .settings(publishingSettings: _*)
   .settings(defaultSettings(): _*)
   .settings(PlayKeys.playDefaultPort := 7004)
-  .settings(wartRemoverSettings)
   .settings(unmanagedResourceDirectories in Compile += baseDirectory.value / "resources")
   .settings(unmanagedResourceDirectories in Test += baseDirectory.value / "resources")
   .settings(scalacOptions += "-P:silencer:pathFilters=routes")
   // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
   // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
   // imcompatible with a lot of WordSpec
-  .settings(
-    wartremoverErrors in (Test, compile) --= Seq(
-      Wart.Any,
-      Wart.Equals,
-      Wart.Null,
-      Wart.NonUnitStatements,
-      Wart.PublicInference
-    )
-  )
+
   .settings(
     wartremoverExcluded ++=
       routes.in(Compile).value ++

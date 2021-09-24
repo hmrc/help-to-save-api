@@ -29,16 +29,4 @@ object AppDependencies {
     "org.scalacheck"         %% "scalacheck"                  % "1.15.2"         % "test",
     "com.vladsch.flexmark"     % "flexmark-all"                 % "0.35.10"        % "test"
   )
-
-  // Play 2.6.23 requires akka 2.5.23
-  val akka = "com.typesafe.akka"
-  val akkaVersion = "2.6.7"
-  val overrides = Seq(
-    akka %% "akka-stream_2.12"    % akkaVersion,
-    akka %% "akka-protobuf_2.12"  % akkaVersion,
-    akka %% "akka-slf4j_2.12"     % akkaVersion,
-    akka %% "akka-actor_2.12"     % akkaVersion,
-    akka %% "akka-http-core_2.12" % "10.0.15"
-  )
-
 }
