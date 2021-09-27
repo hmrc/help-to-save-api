@@ -207,6 +207,7 @@ class HelpToSaveController @Inject() (
     }
   }
 
-  val unsupportedCredentialsProviderResult: Result =
-    Forbidden(Json.toJson(ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised").message))
+  val unsupportedCredentialsProviderResult: Result = {
+    Forbidden(Json.toJson(ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised").asInstanceOf[ApiError]))
+  }
 }
