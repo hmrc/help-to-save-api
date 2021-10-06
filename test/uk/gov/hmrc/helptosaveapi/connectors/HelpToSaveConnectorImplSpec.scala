@@ -16,11 +16,14 @@
 
 package uk.gov.hmrc.helptosaveapi.connectors
 
-import java.util.UUID
 
+
+import org.scalacheck.Prop.forAll
+
+import java.util.UUID
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
@@ -30,7 +33,8 @@ import uk.gov.hmrc.http.HttpResponse
 
 // scalastyle:off magic.number
 class HelpToSaveConnectorImplSpec
-    extends TestSupport with MockPagerDuty with ScalaCheckDrivenPropertyChecks with EitherValues with HttpSupport {
+    extends TestSupport with MockPagerDuty  with EitherValues with HttpSupport with ScalaCheckPropertyChecks
+       {
 
   val connector = new HelpToSaveConnectorImpl(fakeApplication.configuration, mockHttp)()
 

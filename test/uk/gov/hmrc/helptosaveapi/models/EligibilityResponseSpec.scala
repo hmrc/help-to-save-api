@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.models
 
+
 import play.api.libs.json.Json
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
@@ -29,12 +30,13 @@ class EligibilityResponseSpec extends TestSupport {
         val expected = """{"eligibility":{"isEligible":true,"hasWTC":false,"hasUC":true},"accountExists":false}"""
 
         Json.toJson(
-          ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = false, hasUC = true), accountExists = false)
+          ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = false, hasUC = true), accountExists = false).asInstanceOf[EligibilityResponse]
         ) shouldBe Json.parse(expected)
       }
 
       "write to json as expected when the response type is AccountAlreadyExists" in {
-        Json.toJson(AccountAlreadyExists()) shouldBe Json.parse("""{"accountExists":true}""")
+        Json.toJson(
+          AccountAlreadyExists().asInstanceOf[EligibilityResponse]) shouldBe Json.parse("""{"accountExists":true}""")
       }
     }
 
