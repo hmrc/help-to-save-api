@@ -25,11 +25,19 @@ import uk.gov.hmrc.helptosaveapi.models.{AccountAlreadyExists, ApiEligibilityRes
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.util.{Logging, TestSupport}
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 
 
 class EligibilityStoreSpec extends TestSupport with MongoSupport with Logging{
+
+  override def beforeEach(): Unit = {
+    dropMongoDb()
+  }
+
+  def dropMongoDb()(implicit ec: ExecutionContext): Unit = {
+    await(mongo().drop())
+  }
 
   val conf = Configuration(
     ConfigFactory.parseString("""
@@ -75,7 +83,6 @@ class EligibilityStoreSpec extends TestSupport with MongoSupport with Logging{
 
       "get the eligibility result and return success result" in new TestProps {
         val cId = UUID.randomUUID()
-                                  Await.result(mongo().drop, 10.seconds)
                                   val response  = await(store.put(cId, eligibility, nino))
                                   logger.info(s"Eligibility result response: ${response.toString} time: ${LocalTime.now()}")
         response shouldBe Right(())
