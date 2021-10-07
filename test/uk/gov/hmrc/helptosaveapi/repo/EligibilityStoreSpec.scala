@@ -73,7 +73,6 @@ class EligibilityStoreSpec extends TestSupport with MongoSupport {
 
       "get the eligibility result and return success result" in new TestProps {
         val cId = UUID.randomUUID()
-                                  Await.ready(mongo().drop(),10 seconds)
         await(store.put(cId, eligibility, nino)) shouldBe Right(())
         await(store.get(cId)) shouldBe Right(Some(eligibilityWithNINO))
       }
@@ -81,6 +80,7 @@ class EligibilityStoreSpec extends TestSupport with MongoSupport {
       "handle unexpected future failures" in {
         val cId = UUID.randomUUID()
         withBrokenMongo { reactiveMongoComponent ⇒
+          Await.ready(mongo().drop(),10 seconds)
           val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
           await(store.get(cId)) shouldBe Left("error")
         }
