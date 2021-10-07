@@ -16,18 +16,20 @@
 
 package uk.gov.hmrc.helptosaveapi.repo
 
-import java.util.UUID
+import com.github.nscala_time.time.Imports.LocalTime
 
+import java.util.UUID
 import com.typesafe.config.ConfigFactory
 import play.api.Configuration
 import uk.gov.hmrc.helptosaveapi.models.{AccountAlreadyExists, ApiEligibilityResponse, Eligibility}
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
-import uk.gov.hmrc.helptosaveapi.util.TestSupport
+import uk.gov.hmrc.helptosaveapi.util.{Logging, TestSupport}
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 
-class EligibilityStoreSpec extends TestSupport with MongoSupport {
+class EligibilityStoreSpec extends TestSupport with MongoSupport with Logging{
 
   val conf = Configuration(
     ConfigFactory.parseString("""
@@ -73,14 +75,16 @@ class EligibilityStoreSpec extends TestSupport with MongoSupport {
 
       "get the eligibility result and return success result" in new TestProps {
         val cId = UUID.randomUUID()
-        await(store.put(cId, eligibility, nino)) shouldBe Right(())
+                                  Await.result(mongo().drop, 10.seconds)
+                                  val response  = await(store.put(cId, eligibility, nino))
+                                  logger.info(s"Eligibility result response: ${response.toString} time: ${LocalTime.now()}")
+        response shouldBe Right(())
         await(store.get(cId)) shouldBe Right(Some(eligibilityWithNINO))
       }
 
       "handle unexpected future failures" in {
         val cId = UUID.randomUUID()
         withBrokenMongo { reactiveMongoComponent ⇒
-          Await.ready(mongo().drop(),10 seconds)
           val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
           await(store.get(cId)) shouldBe Left("error")
         }
