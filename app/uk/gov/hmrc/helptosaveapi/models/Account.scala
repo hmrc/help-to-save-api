@@ -24,7 +24,11 @@ case class Account(
   closed: Boolean,
   blockedFromPayment: Boolean,
   balance: BigDecimal,
-  bonusTerms: Seq[BonusTerm]
+  bonusTerms: Seq[BonusTerm],
+  nbaAccountNumber: Option[String] = None,
+  nbaPayee: Option[String] = None,
+  nbaRollNumber: Option[String] = None,
+  nbaSortCode: Option[String] = None
 )
 
 object Account {
@@ -38,7 +42,11 @@ object Account {
       account.isClosed,
       account.blocked.unspecified,
       account.balance,
-      account.bonusTerms.map(BonusTerm.fromHtsBonusTerm)
+      account.bonusTerms.map(BonusTerm.fromHtsBonusTerm),
+      account.nbaAccountNumber,
+      account.nbaPayee,
+      account.nbaRollNumber,
+      account.nbaSortCode
     )
 
 }

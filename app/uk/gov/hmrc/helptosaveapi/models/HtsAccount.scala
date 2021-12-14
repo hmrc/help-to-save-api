@@ -49,7 +49,11 @@ case class HtsAccount(
   thisMonthEndDate: LocalDate,
   bonusTerms: Seq[HtsBonusTerm],
   closureDate: Option[LocalDate] = None,
-  closingBalance: Option[BigDecimal] = None
+  closingBalance: Option[BigDecimal] = None,
+  nbaAccountNumber: Option[String] = None,
+  nbaPayee: Option[String] = None,
+  nbaRollNumber: Option[String] = None,
+  nbaSortCode: Option[String] = None
 )
 
 object HtsAccount {
