@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.util
+package uk.gov.hmrc.helptosaveapi.repo
 
-import cats.data.{NonEmptyList, Validated}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import uk.gov.hmrc.mongo.test.MongoSupport
 
-class ValidationSpec extends TestSupport {
+trait MongoTestSupport extends MongoSupport with BeforeAndAfterEach with BeforeAndAfterAll { this: Suite ⇒
 
-  "Validation" must {
+  abstract override def beforeEach(): Unit = {
+    super.beforeEach()
+    mongoComponent.database.drop()
+  }
 
-    "have a method which can validate based on a boolean prediacte" in {
-      val i = 1
-      def validation[A] = Validation.validationFromBoolean[Int, String](i) _
-
-      validation(_ < 0, _ ⇒ "uh oh") shouldBe Validated.Invalid(NonEmptyList.of("uh oh"))
-      validation(_ > 0, _ ⇒ "uh oh") shouldBe Validated.Valid(i)
-    }
-
+  abstract override def afterAll(): Unit = {
+    super.afterAll()
+    mongoComponent.client.close()
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,43 +16,29 @@
 
 package uk.gov.hmrc.helptosaveapi.repo
 
-import com.github.nscala_time.time.Imports.LocalTime
-
 import java.util.UUID
-import com.typesafe.config.ConfigFactory
-import play.api.Configuration
+
+import com.github.nscala_time.time.Imports.LocalTime
 import uk.gov.hmrc.helptosaveapi.models.{AccountAlreadyExists, ApiEligibilityResponse, Eligibility}
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.util.{Logging, TestSupport}
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration._
 
+class EligibilityStoreSpec extends TestSupport with MongoTestSupport with Logging {
 
-class EligibilityStoreSpec extends TestSupport with MongoSupport with Logging{
-
-  override def beforeEach(): Unit = {
-    dropMongoDb()
-  }
-
-  def dropMongoDb()(implicit ec: ExecutionContext): Unit = {
-    await(mongo().drop())
-  }
-
-  val conf = Configuration(
-    ConfigFactory.parseString("""
-                                | mongo-cache.expireAfter =  2 seconds
-      """.stripMargin)
-  )
+  val mockMongoComponent: MongoComponent = fakeApplication.injector.instanceOf[MongoComponent]
+  val mockServicesConfig: ServicesConfig = fakeApplication.injector.instanceOf[ServicesConfig]
 
   class TestProps {
-    val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
+    val store = new MongoEligibilityStore(mockMongoComponent, mockServicesConfig)
   }
 
   "The EligibilityStoreSpec" when {
 
     val nino = "nino"
-    val eligibility = ApiEligibilityResponse(Eligibility(true, true, true), false)
+    val eligibility = ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = true), accountExists = false)
     val eligibilityWithNINO = EligibilityResponseWithNINO(eligibility, nino)
 
     "storing api eligibility" must {
@@ -64,38 +50,24 @@ class EligibilityStoreSpec extends TestSupport with MongoSupport with Logging{
       "store the AccountAlreadyExists result and return success result" in new TestProps {
         await(store.put(UUID.randomUUID(), AccountAlreadyExists(), nino)) shouldBe Right(())
       }
-
-      "handle unexpected future failures" in {
-        withBrokenMongo { reactiveMongoComponent ⇒
-          val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
-          await(store.put(UUID.randomUUID(), eligibility, nino)) shouldBe Left("error")
-        }
-      }
     }
 
     "getting api eligibility" must {
 
       "be able to read the  AccountAlreadyExists result and return success result" in new TestProps {
-        val cId = UUID.randomUUID()
+        val cId: UUID = UUID.randomUUID()
         await(store.put(cId, AccountAlreadyExists(), nino)) shouldBe Right(())
         await(store.get(cId)) shouldBe Right(Some(EligibilityResponseWithNINO(AccountAlreadyExists(), nino)))
       }
 
       "get the eligibility result and return success result" in new TestProps {
-        val cId = UUID.randomUUID()
-                                  val response  = await(store.put(cId, eligibility, nino))
+        val cId: UUID = UUID.randomUUID()
+                                  val response: Either[String, Unit] = await(store.put(cId, eligibility, nino))
                                   logger.info(s"Eligibility result response: ${response.toString} time: ${LocalTime.now()}")
         response shouldBe Right(())
         await(store.get(cId)) shouldBe Right(Some(eligibilityWithNINO))
       }
 
-      "handle unexpected future failures" in {
-        val cId = UUID.randomUUID()
-        withBrokenMongo { reactiveMongoComponent ⇒
-          val store = new MongoEligibilityStore(conf, reactiveMongoComponent)
-          await(store.get(cId)) shouldBe Left("error")
-        }
-      }
     }
   }
 }
