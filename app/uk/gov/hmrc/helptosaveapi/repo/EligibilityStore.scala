@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,12 @@ import cats.data.OptionT
 import cats.instances.either._
 import cats.syntax.either._
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import play.api.Configuration
 import play.api.libs.json.{Format, JsValue, Json}
-import play.modules.reactivemongo.ReactiveMongoComponent
-import uk.gov.hmrc.cache.model.Id
-import uk.gov.hmrc.cache.repository.CacheMongoRepository
 import uk.gov.hmrc.helptosaveapi.models.EligibilityResponse
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
+import uk.gov.hmrc.mongo.{CurrentTimestampSupport, MongoComponent}
+import uk.gov.hmrc.mongo.cache.{CacheIdType, DataKey, MongoCacheRepository}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -56,25 +55,28 @@ object EligibilityStore {
 }
 
 @Singleton
-class MongoEligibilityStore @Inject() (config: Configuration, mongo: ReactiveMongoComponent)(
+class MongoEligibilityStore @Inject()(mongoComponent: MongoComponent,
+                                      servicesConfig: ServicesConfig)(
   implicit ec: ExecutionContext
 ) extends EligibilityStore {
 
-  private val expireAfterSeconds = config.underlying.getDuration("mongo-cache.expireAfter").getSeconds
-
-  private lazy val cacheRepository =
-    new CacheMongoRepository("api-eligibility", expireAfterSeconds)(mongo.mongoConnector.db, ec)
-
   private type EitherStringOr[A] = Either[String, A]
+
+  val mongoRepo = new MongoCacheRepository(
+    mongoComponent = mongoComponent,
+    collectionName = "api-eligibility",
+    ttl =  servicesConfig.getDuration("mongo-cache.expireAfter"),
+    timestampSupport = new CurrentTimestampSupport,
+    cacheIdType = CacheIdType.SimpleCacheId)(ec)
 
   override def get(
     correlationId: UUID
   )(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponseWithNINO]]] =
-    doFindById(Id(correlationId.toString))
+    doFindById(correlationId.toString)
       .map { maybeCache ⇒
         val response: OptionT[EitherStringOr, EligibilityResponseWithNINO] = for {
           cache ← OptionT.fromOption[EitherStringOr](maybeCache)
-          data ← OptionT.fromOption[EitherStringOr](cache.data)
+          data ← OptionT.fromOption[EitherStringOr](Some(cache.data))
           result ← OptionT.liftF[EitherStringOr, EligibilityResponseWithNINO](
                     (data \ "eligibility")
                       .validate[EligibilityResponseWithNINO]
@@ -94,24 +96,19 @@ class MongoEligibilityStore @Inject() (config: Configuration, mongo: ReactiveMon
     implicit ec: ExecutionContext
   ): Future[Either[String, Unit]] =
     doCreateOrUpdate(
-      Id(correlationId.toString),
+      correlationId.toString,
       "eligibility",
       Json.toJson(EligibilityResponseWithNINO(eligibility, nino))
     ).map[Either[String, Unit]] { dbUpdate ⇒
-        if (dbUpdate.writeResult.inError) {
-          Left(dbUpdate.writeResult.errmsg.getOrElse("unknown error during inserting eligibility document"))
-        } else {
           Right(())
-        }
-      }
-      .recover {
+    }.recover {
         case e ⇒
           Left(e.getMessage)
       }
 
-  private[repo] def doFindById(id: Id) =
-    cacheRepository.findById(id)
+  private[repo] def doFindById(id: String) =
+    mongoRepo.findById(id)
 
-  private[repo] def doCreateOrUpdate(id: Id, key: String, toCache: JsValue) =
-    cacheRepository.createOrUpdate(id, key, toCache)
+  private[repo] def doCreateOrUpdate(id: String, key: String, toCache: JsValue) =
+    mongoRepo.put(id)(DataKey(key), toCache)
 }

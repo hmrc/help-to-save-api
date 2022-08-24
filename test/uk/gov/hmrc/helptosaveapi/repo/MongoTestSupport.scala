@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.util
+package uk.gov.hmrc.helptosaveapi.repo
 
-import scala.util.{Failure, Success, Try}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import uk.gov.hmrc.mongo.test.MongoSupport
 
-object TryOps {
-  implicit def foldOps[A](t: Try[A]): TryOps[A] = new TryOps[A](t)
-}
+trait MongoTestSupport extends MongoSupport with BeforeAndAfterEach with BeforeAndAfterAll { this: Suite ⇒
 
-class TryOps[A](val t: Try[A]) extends AnyVal {
+  abstract override def beforeEach(): Unit = {
+    super.beforeEach()
+    mongoComponent.database.drop()
+  }
 
-  def fold[B](f: Throwable ⇒ B, g: A ⇒ B): B = t match {
-    case Failure(e) ⇒ f(e)
-    case Success(s) ⇒ g(s)
+  abstract override def afterAll(): Unit = {
+    super.afterAll()
+    mongoComponent.client.close()
   }
 
 }
