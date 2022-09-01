@@ -405,9 +405,6 @@ class HelpToSaveApiServiceImpl @Inject() (
                 .parseJson[HtsAccount]
                 .bimap(
                   e ⇒ {
-                    logger.warn(
-                      s"htsAccount json from back end failed to parse to HtsAccount, json is: ${response.json}, error is: $e"
-                    )
                     ApiBackendError()
                   },
                   a ⇒ Some(fromHtsAccount(a))
