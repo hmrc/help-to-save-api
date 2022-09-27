@@ -71,8 +71,7 @@ lazy val microservice = Project(appName, file("."))
   )
   .settings(
     libraryDependencies ++= appDependencies,
-    retrieveManaged := false,
-    evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
+    retrieveManaged := false
   )
   .settings(scalacOptions += "-Xcheckinit")
   .configs(IntegrationTest)
