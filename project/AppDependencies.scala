@@ -10,7 +10,7 @@ object AppDependencies {
     ws,
     hmrc                %% "bootstrap-backend-play-28" % "5.12.0",
     hmrc                %% "mongo-caching"             % "7.0.0-play-28",
-    "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"      % "0.68.0",
+    "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"        % "0.73.0",
     "org.typelevel"     %% "cats-core"                 % "2.0.0",
     "com.github.kxbmap" %% "configs"                   % "0.4.4",
     compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.1" cross CrossVersion.full),
