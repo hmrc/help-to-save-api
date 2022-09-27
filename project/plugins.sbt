@@ -23,3 +23,4 @@ addSbtPlugin("org.wartremover" % "sbt-wartremover" % "2.4.20")
 
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.3")
 
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.3")
