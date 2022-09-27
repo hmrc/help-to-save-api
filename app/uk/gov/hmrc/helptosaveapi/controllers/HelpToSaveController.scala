@@ -21,7 +21,6 @@ import java.util.UUID
 import cats.instances.string._
 import cats.syntax.eq._
 import com.google.inject.Inject
-import org.joda.time.{LocalDate => JodaLocalDate}
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
@@ -50,8 +49,8 @@ class HelpToSaveController @Inject() (
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
-  val userInfoRetrievals: Retrieval[Option[RetrievedName] ~ Option[JodaLocalDate] ~ Option[ItmpName] ~ Option[
-    JodaLocalDate
+  val userInfoRetrievals: Retrieval[Option[RetrievedName] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[
+    LocalDate
   ] ~ Option[ItmpAddress] ~ Option[String]] =
     v2.Retrievals.name and
       v2.Retrievals.dateOfBirth and
@@ -69,9 +68,6 @@ class HelpToSaveController @Inject() (
   }
 
   def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials ⇒
-    def toJavaDate(jodaDate: JodaLocalDate): LocalDate =
-      LocalDate.of(jodaDate.getYear, jodaDate.getMonthOfYear, jodaDate.getDayOfMonth)
-
     def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
       result match {
         case Left(e: ApiError) =>
@@ -98,7 +94,7 @@ class HelpToSaveController @Inject() (
                 authNino,
                 itmpName.flatMap(_.givenName).orElse(ggName.flatMap(_.name)),
                 itmpName.flatMap(_.familyName).orElse(ggName.flatMap(_.lastName)),
-                itmpDob.orElse(dob).map(toJavaDate),
+                itmpDob.orElse(dob),
                 itmpAddress,
                 email
               )

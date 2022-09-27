@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
-import java.time.format.DateTimeFormatter
 import java.util.UUID
-import org.joda.time.LocalDate
 
-import java.time.{LocalDate => JavaLocalDate}
+import java.time.LocalDate
 import org.scalamock.handlers.{CallHandler3, CallHandler4, CallHandler5}
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -171,15 +169,12 @@ class HelpToSaveControllerSpec extends AuthSupport {
         ): Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[
           String
         ] ~ Option[String] = {
-          val dob = u.dateOfBirth.map(toJodaDate)
+          val dob = u.dateOfBirth
 
           new ~(Some(Name(u.forename, u.surname)), dob) and
             Some(ItmpName(u.forename, None, u.surname)) and dob and
             u.address and u.email and u.nino
         }
-
-        def toJodaDate(d: java.time.LocalDate): org.joda.time.LocalDate =
-          LocalDate.parse(d.format(DateTimeFormatter.ISO_DATE))
 
         val ggCredentials = GGCredId("id")
 
@@ -219,12 +214,12 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val (userDetailsRetrieval, retrievedUserDetails) = {
             val u = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
 
-            val retrieval = new ~(Some(Name(Some("a"), Some("b"))), Some(new LocalDate(1, 2, 3))) and
-              Some(ItmpName(Some("c"), None, Some("d"))) and Some(new LocalDate(3, 2, 1)) and
+            val retrieval = new ~(Some(Name(Some("a"), Some("b"))), Some(LocalDate.of(1, 2, 3))) and
+              Some(ItmpName(Some("c"), None, Some("d"))) and Some(LocalDate.of(3, 2, 1)) and
               u.address and u.email and u.nino
 
             val expectedRetrievedUserDetails =
-              u.copy(forename = Some("c"), surname = Some("d"), dateOfBirth = Some(java.time.LocalDate.of(3, 2, 1)))
+              u.copy(forename = Some("c"), surname = Some("d"), dateOfBirth = Some(LocalDate.of(3, 2, 1)))
             retrieval → expectedRetrievedUserDetails
           }
 
@@ -492,8 +487,8 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "return a success response along with some json if getting the account is successful" in {
         val bonusTerms = Seq(
-          BonusTerm(JavaLocalDate.of(2018, 1, 1), JavaLocalDate.of(2019, 12, 31), BigDecimal("65.43")),
-          BonusTerm(JavaLocalDate.of(2020, 1, 1), JavaLocalDate.of(2021, 12, 31), BigDecimal("125.43"))
+          BonusTerm(LocalDate.of(2018, 1, 1), LocalDate.of(2019, 12, 31), BigDecimal("65.43")),
+          BonusTerm(LocalDate.of(2020, 1, 1), LocalDate.of(2021, 12, 31), BigDecimal("125.43"))
         )
         inSequence {
           mockAuthResultWithSuccess(v2Nino)(Some(nino))
