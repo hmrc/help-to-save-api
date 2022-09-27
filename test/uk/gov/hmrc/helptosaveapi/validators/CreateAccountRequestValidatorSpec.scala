@@ -20,8 +20,6 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import cats.data.NonEmptyList
 import cats.data.Validated.Invalid
-import org.scalacheck.Prop.forAll
-import org.scalatest.prop.TableDrivenPropertyChecks.whenever
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
