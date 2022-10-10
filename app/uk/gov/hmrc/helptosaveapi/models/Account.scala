@@ -40,7 +40,7 @@ object Account {
       account.accountNumber,
       account.canPayInThisMonth,
       account.isClosed,
-      account.blocked.unspecified,
+      false,
       account.balance,
       account.bonusTerms.map(BonusTerm.fromHtsBonusTerm),
       account.nbaAccountNumber,

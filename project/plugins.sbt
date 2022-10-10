@@ -5,21 +5,22 @@ resolvers += Resolver.url("HMRC-open-artefacts-ivy", url("https://open.artefacts
 resolvers += "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/"
 resolvers += Resolver.jcenterRepo
 
-addSbtPlugin("uk.gov.hmrc" % "sbt-auto-build" % "3.5.0")
+addSbtPlugin("uk.gov.hmrc" % "sbt-auto-build" % "3.8.0")
 
 addSbtPlugin("uk.gov.hmrc" % "sbt-distributables" % "2.1.0")
 
-addSbtPlugin("uk.gov.hmrc" % "sbt-bobby" % "3.4.0")
+addSbtPlugin("uk.gov.hmrc" % "sbt-bobby" % "4.2.0")
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.8" exclude ("org.slf4j", "slf4j-simple"))
 
-addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "1.6.1")
+addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "1.9.3")
 
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
 
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.3.4")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
 
-addSbtPlugin("org.wartremover" % "sbt-wartremover" % "2.4.9")
+addSbtPlugin("org.wartremover" % "sbt-wartremover" % "2.4.20")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.4")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.3")
 
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.3")

@@ -32,16 +32,9 @@ object HtsBonusTerm {
   implicit val format: Format[HtsBonusTerm] = Json.format[HtsBonusTerm]
 }
 
-case class Blocking(unspecified: Boolean)
-
-object Blocking {
-  implicit val format: Format[Blocking] = Json.format[Blocking]
-}
-
 case class HtsAccount(
   accountNumber: String,
   isClosed: Boolean,
-  blocked: Blocking,
   balance: BigDecimal,
   paidInThisMonth: BigDecimal,
   canPayInThisMonth: BigDecimal,

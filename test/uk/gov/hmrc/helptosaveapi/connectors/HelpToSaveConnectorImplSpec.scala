@@ -16,10 +16,6 @@
 
 package uk.gov.hmrc.helptosaveapi.connectors
 
-
-
-import org.scalacheck.Prop.forAll
-
 import java.util.UUID
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
