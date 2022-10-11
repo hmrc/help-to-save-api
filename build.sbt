@@ -74,6 +74,7 @@ lazy val microservice = Project(appName, file("."))
     retrieveManaged := false
   )
   .settings(scalacOptions += "-Xcheckinit")
+  .settings(Compile / scalacOptions -= "utf8")
   .configs(IntegrationTest)
   .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(
