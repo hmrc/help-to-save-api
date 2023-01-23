@@ -1,4 +1,3 @@
-import play.core.PlayVersion
 import play.sbt.PlayImport.ws
 import sbt._
 
@@ -9,7 +8,6 @@ object AppDependencies {
   val compile = Seq(
     ws,
     hmrc                %% "bootstrap-backend-play-28" % "5.25.0",
-    hmrc                %% "mongo-caching"             % "7.2.0-play-28",
     "uk.gov.hmrc.mongo" %% "hmrc-mongo-play-28"        % "0.73.0",
     "org.typelevel"     %% "cats-core"                 % "2.8.0",
     "com.github.kxbmap" %% "configs"                   % "0.6.1",

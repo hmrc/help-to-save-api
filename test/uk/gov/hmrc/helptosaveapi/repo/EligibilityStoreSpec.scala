@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.helptosaveapi.repo
 
+import java.time.LocalTime
 import java.util.UUID
 
-import com.github.nscala_time.time.Imports.LocalTime
 import uk.gov.hmrc.helptosaveapi.models.{AccountAlreadyExists, ApiEligibilityResponse, Eligibility}
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.util.{Logging, TestSupport}
