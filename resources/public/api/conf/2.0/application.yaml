@@ -14,7 +14,7 @@ info:
 
   contact: {}
   version: '2.0'
-servers:
+  servers:
   - url: https://test-api.service.hmrc.gov.uk
     description: Sandbox
   - url: https://api.service.hmrc.gov.uk/
@@ -25,8 +25,9 @@ paths:
     get:
       tags:
         - individuals
+      summary: IndividualsHelpToSaveAccount_GET
       description: Get help-to-save account information
-      operationId: get
+      operationId: get '/individuals/help-to-save/account'
       security:
         - userRestricted: [ "read:help-to-save" ]
       parameters:
@@ -106,6 +107,7 @@ paths:
     post:
       tags:
         - individuals
+      summary: IndividualsHelpToSaveAccount_POST
       description: >
         Sends a request to create or update an account on behalf of the user, noting the value fields below are all |
 
@@ -116,7 +118,7 @@ paths:
         https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide, noting the timezone should be a |
 
         UTC offset as outlined in the righthand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
-      operationId: post
+      operationId: post '/individuals/help-to-save/account'
       security:
         - userRestricted: [ "write:help-to-save" ]
       parameters:
@@ -221,8 +223,9 @@ paths:
     get:
       tags:
         - individuals
+      summary: IndividualsHelpToSaveEligibility_GET
       description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
-      operationId: get
+      operationId: get '/individuals/help-to-save/eligibility'
       security:
         - userRestricted: [ "read:help-to-save" ]
       parameters:
@@ -351,11 +354,23 @@ paths:
     get:
       tags:
         - individuals
+      summary: IndividualsHelpToSaveEligibility_GET{nino}
       description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
-      operationId: get
+      operationId: get '/individuals/help-to-save/eligibility/{nino}'
       security:
         - userRestricted: [ "read:help-to-save" ]
       parameters:
+        - name: nino
+          in: path
+          description: >-
+            National Insurance Number.
+            Must conform to the regular expression
+            <code>^((?:[ACEHJLMOPRSWXY][A-CEGHJ-NPR-TW-Z]|B[A-CEHJ-NPR-TW-Z]|G[ACEGHJ-NPR-TW-Z]|[KT][A-CEGHJ-MPR-TW-Z]|N[A-CEGHJL-NPR-SW-Z]|Z[A-CEGHJ-NPR-TW-Y])[0-9]{6}[A-D ]?$</code>
+          required: true
+          style: simple
+          schema:
+          type: string
+          example: AB123456C, MZ006526
         - name: Authorization
           in: header
           description: Bearer [SERVER-TOKEN]
