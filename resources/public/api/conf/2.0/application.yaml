@@ -29,7 +29,6 @@ paths:
       operationId: IndividualsHelpToSaveAccount_GET
       security:
         - userRestricted: [ "read:help-to-save" ]
-        - applicationRestricted : ["read:help-to-save"]
       parameters:
       - name: Authorization
         in: header
@@ -120,8 +119,7 @@ paths:
         UTC offset as outlined in the righthand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
       operationId: IndividualsHelpToSaveAccount_POST
       security:
-        - userRestricted: [ "read:help-to-save" ]
-        - applicationRestricted : ["read:help-to-save"]
+        - userRestricted: [ "write:help-to-save" ]
       parameters:
       - name: Authorization
         in: header
@@ -229,7 +227,6 @@ paths:
       operationId: IndividualsHelpToSaveEligibility_GET
       security:
         - userRestricted: [ "read:help-to-save" ]
-        - applicationRestricted : ["read:help-to-save"]
       parameters:
       - name: Authorization
         in: header
@@ -366,19 +363,7 @@ components:
           refreshUrl: https://api.service.hmrc.gov.uk/oauth/refresh
           scopes:
               "read:help-to-save": "Grants read access"
-              "Write:help-to-save": "Grants write access"
-
-    applicationRestricted:
-      type: oauth2
-      description: |
-        HMRC supports OAuth 2.0 for authenticating application restricted API requests using an OAuth 2.0 Bearer Token in the AUTHORIZATION header.
-        See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/application-restricted-endpoints for details.
-      flows:
-        clientCredentials:
-          tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
-          scopes:
-              "read:help-to-save": "Grants read access"
-              "Write:help-to-save": "Grants write access"
+              "write:help-to-save": "Grants write access"
   schemas:
     errorResponse:
       title: errorResponse
