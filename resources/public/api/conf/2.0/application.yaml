@@ -1,0 +1,643 @@
+openapi: 3.0.3
+info:
+  title: Help To Save
+  description: "The default HMRC / MDTP API platform timeout is 20 seconds, as set by Play.  The timeout for this interface has been\nmodified to 48 seconds.  The caller must set a request timeout of > 48 seconds, eg: >= 50 seconds.\nIt is important that the Vendor maintain strict access procedures to the HMRC Developer Hub covering the Live account,\nand ideally the Test Sandbox Account as well.  This API is a private/restricted application endpoint and due diligence\nneeds to be applied to the account access process in order not to expose the shared Server Token secret.\n\nThis API contains Fraud Detection measures and is audited by HMRC.  This does not mean that the Vendor is absconded from\nthe same due-diligence and procedures must be in place upstream of this API to help prevent fraud.\nA `POST` to the create/update account endpoint can be used to both create and update an account. The\ndistinction between the two is made by checking MDTP checking whether or not an account already exists.\nIf an account already exists, the request is treated as an update account request. Otherwise, the request\nis treated as a create account request. Each account is identified using the NINO as the primary key.\n\n#### Parameters\n\nFor the `POST` account end point, the JSON payload consists of a `header` and `body`. The primary key used to\nidentify accounts is the NINO, which resides in the `body`. MDTP uses the `header` and NS&I are passed the `body`. \n\nThe NINO is an optional parameter in the request body. If no NINO is supplied then a NINO will be derived\nin the MDTP backend systems. If a NINO does not exist then a `403 (Forbidden)` will be returned by the API.\n\nIn a create account request, if some mandatory fields are not supplied, an attempt to retrieve the information\non MDTP will be made.  If such retrieval is not possible a `500 (Internal Server Error)` will be returned by\nthe API. For create account the mandatory fields are:\n- `forename`\n- `surname`\n- `dateOfBirth`\n- `nino`\n- `address1`, `address2` and `postcode`\n- `registrationChannel`\n\nThe exception to the above is `registrationChannel` - for all create account requests this has to be supplied\nin the request body.\n\nIn an update account request, only requests will be accepted where updates to the fields given are supported.\nCurrently, there are no update requests supported.\nIf update requests are received where other fields are populated a `400 (Bad Request)` will be given and no attempt\nto update any details will be made.\n\n\n**For create and update account requests using privileged access, the NINO is a mandatory field.**\n\n\n### Bank Details\nWhen bank details are supplied, they will be checked against an internal HMRC service to check their validity. The\nchecks done by Help to Save are a modulus check on the bank account and sort code and also a check to see if the sort\ncode actually exists. If these checks fail a `400 (Bad Request)`  response will be returned.\n\n\n\n#### Errors\n\nWhen creating accounts, `201 (Created)` is the expected response and `409 (Conflict)` is used to indicate that\nan account has already been created with the given details. Other `4xx` and `5xx` HTTP status codes indicates\nfailure.\n\nFor updating accounts, `200 (OK)` is the expected repsonse. All other HTTP responses should be treated as errors.\n\n\n#### Data Transformations\n\n##### Data Transformations by HMRC:\n\nFor the following fields;\n\n- `forename`\n- `surname`\n- `address1`\n- `address2`\n- `address3`\n- `address4`\n- `address5`\n- `phoneNumber`\n\ncontrol characters `TAB \\t`, `NEWLINE \\n`, `CR \\r` are replaced with single space, consecutive spaces greater than 1\nare replaced with a single space and leading & trailing spaces are removed.\n\n##### Data Transformations by NSI:\n\nFor the following fields;\n\n- `forename`\n- `surname`\n- `address1`\n- `address2`\n- `address3`\n- `address4`\n- `address5`\n- `phoneNumber`\n\naccented characters are replaced with unaccented equivalent characters. For forename and surname, characters that\nare not one of `a-z`, `A-Z`, `&`, `space`, `fullstop`, `comma`, `hyphen` are removed, the first character if it is\none of `&`, `fullstop`, `comma`, `hyphen` is removed, consecutive permissible special characters (`&`, `fullstop`,\n`comma`, `hyphen`) are removed. For surname the last character if it is one of `&`, `fullstop`, `comma`, `hyphen`\nis removed.\n\n#### Diacritics and Legal Considerations\n\nThis section highlights API internal handling of diacritic (accented) chars when the POST create account end point\nis triggered. The following Diacritic handling rules only target the forename & surname.  Address & Telephone fields\nare accepted as-is.\n\nIn this API diacritic characters will be converted to the undecorated underlying chracter. For example, a manual\nconversion of ‘Höben’ normally converts to ‘Hoeben’, but the conversion within the API will be to ‘o’ not ‘oe’,\ni.e ‘Hoben’.  As such, it could be argued that the legal name or address of that person has been changed.  The\nview by HMRC/MDTP & NS&I is that this name change is not legally significant. You may want to consult your legal\nrepresentative to ensure they share the same view.\n\nOnly diacritic chars up to and including Unicode 3.0 at http://www.unicode.org/Public/3.0-Update/UnicodeData-3.0.0.txt\nwill have a 1:1 char conversion attempt.  If say a Scandinavian char ø is presented, the char is removed. E.g.\nsurname \"O'Connor-Jørgensen\" converts to \"O'Connor-Jrgensen\".\n\n#### Digitally Excluded Callers\nWhen creating accounts for digitally excluded people, the communicationPreference field must be set to \"00\" and\nregistrationChannel must be set to \"callCentre\".\n#### Invalid responses\nThere are some combinations of parameters that are allowed by the JSON schema of the response format but will never occur. These are:\n\n* The combination of “hasWTC” and “hasUC” both being false with an eligible response is not possible    \n<pre> \n{\n&nbsp&nbsp“eligibility”: { \n&nbsp&nbsp&nbsp&nbsp“isEligible”  : true,\n&nbsp&nbsp&nbsp&nbsp“hasWTC”      : false,\n&nbsp&nbsp&nbsp&nbsp“hasUC”       : false\n&nbsp&nbsp},\n&nbsp&nbsp  “accountExists” : false\n}\n</pre> \n\n* If an account does not already exists there will always be an accompanying object describing the eligibility result\n<pre> \n{ “accountExists” : false }\n</pre> \n\n* If an account already exists there will never be an accompanying “eligibility” object\n<pre> \n{\n&nbsp&nbsp“eligibility”   : { … },\n&nbsp&nbsp“accountExists” : true \n}\n</pre>\nThe request to get account information will use the National Insurance Number (NINO) of the user as the account identifier. The NINO is inferred from the user's Government Gateway login session.
+
+  \nOverview:
+  \nHelp to Save (‘HtS’) is a new government scheme to encourage people on low incomes to build up a “rainy day” fund. \nHelp to Save will target working families on the lowest incomes to help them build up their savings. The scheme will be open to 3.5 million adults in receipt of Universal Credit with minimum weekly household earnings equivalent to 16 hours at the National Living Wage, or those in receipt of Working Tax Credit.
+  
+  \nA customer can deposit up to a maximum of £50 per month in the account. It will work by providing a 50% government bonus on the highest amount saved into a HtS account. The bonus is paid after two years with an option to save for a further two years, meaning that people can save up to £2,400 and benefit from government bonuses worth up to £1,200. Savers will be able to use the funds in any way they wish. The published implementation date for this is Q2/2018, but the project will have a controlled go-live with a pilot population in Q1/2018.
+  
+  \nWhat is this API for? \nThis is a private API on the HMRC API Platform with user-restricted access for the Help to Save (HtS) product that behaves as a proxy to manage accounts on NS&I.
+
+  \nBefore invoking the create account endpoint, the caller is assumed to have already checked that the applicant is Eligible for a account creation."
+
+  contact: {}
+  version: '2.0'
+servers:
+- url: https://test-api.service.hmrc.gov.uk
+  description: Sandbox
+- url: https://api.service.hmrc.gov.uk/
+  description: Production
+paths:
+  /individuals/help-to-save/account:
+    get:
+      tags:
+      - individuals
+      summary: IndividualsHelpToSaveAccount_GET
+      description: Get help-to-save account information
+      operationId: IndividualsHelpToSaveAccount_GET
+      security:
+        - userRestricted: [ "read:help-to-save" ]
+        - applicationRestricted : ["read:help-to-save"]
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer [SERVER-TOKEN]
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse'
+                - description: Account information was succsessfully retreived
+                  example:
+                    accountNumber: '1100000000001'
+                    headroom: 40
+                    closed: false
+                    blockedFromPayment: false
+                    balance: 123.45
+                    bonusTerms:
+                    - startDate: '20180101'
+                      endDate: '20191231'
+                      bonusEstimate: 50
+                    - startDate: '20200101'
+                      endDate: '20211231'
+                      bonusEstimate: 150
+              example:
+                accountNumber: '1100000000001'
+                headroom: 40
+                closed: false
+                blockedFromPayment: false
+                balance: 123.45
+                bonusTerms:
+                - startDate: '20180101'
+                  endDate: '20191231'
+                  bonusEstimate: 50
+                - startDate: '20200101'
+                  endDate: '20211231'
+                  bonusEstimate: 150
+        '403':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
+                - example:
+                    code: FORBIDDEN
+                    message: Missing NINO
+              example:
+                code: FORBIDDEN
+                message: Missing NINO
+        '404':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
+                - description: account does not exist
+                  example:
+                    code: NOT FOUND
+                    message: Account doesn't exist
+              example:
+                code: NOT FOUND
+                message: Account doesn't exist
+      deprecated: false
+    post:
+      tags:
+      - individuals
+      summary: IndividualsHelpToSaveAccount_POST
+      description: >
+        Sends a request to create or update an account on behalf of the user, noting the value fields below are all |
+
+        example values with the exception of fields Accept and Content-Type which should be presented as quoted string |
+
+        values as shown. For further information on field formats and examples, please see |
+
+        https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide, noting the timezone should be a |
+
+        UTC offset as outlined in the righthand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
+      operationId: IndividualsHelpToSaveAccount_POST
+      security:
+        - userRestricted: [ "read:help-to-save" ]
+        - applicationRestricted : ["read:help-to-save"]
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer [SERVER-TOKEN]
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/IndividualsHelpToSaveAccountrequest'
+              - example:
+                  header:
+                    version: '1.0'
+                    createdTimestamp: 2017-11-22 23:11:09 GMT
+                    clientCode: CODE
+                    requestCorrelationId: 123e4567-e89b-12d3-a456-426655440000
+                  body:
+                    nino: AB123456A
+                    forename: Alex
+                    surname: O'Connor
+                    dateOfBirth: '19920423'
+                    contactDetails:
+                      address1: 86 Ashopton Road
+                      address2: Blackpool
+                      postcode: FY43 1FB
+                      countryCode: GB
+                      communicationPreference: '00'
+                    registrationChannel: callCentre
+            example:
+              header:
+                version: '1.0'
+                createdTimestamp: 2017-11-22 23:11:09 GMT
+                clientCode: CODE
+                requestCorrelationId: 123e4567-e89b-12d3-a456-426655440000
+              body:
+                nino: AB123456A
+                forename: Alex
+                surname: O'Connor
+                dateOfBirth: '19920423'
+                contactDetails:
+                  address1: 86 Ashopton Road
+                  address2: Blackpool
+                  postcode: FY43 1FB
+                  countryCode: GB
+                  communicationPreference: '00'
+                registrationChannel: callCentre
+        required: true
+      responses:
+        '200':
+          description: The Help to Save account has been updated successfully
+          headers: {}
+          content: {}
+        '201':
+          description: The Help to Save account has been created successfully
+          headers: {}
+          content: {}
+        '400':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
+                - description: Bad Request
+                  example:
+                    code: BAD_NINO
+                    message: NINO doesn't match the expected regex
+              examples:
+                example-1:
+                  value:
+                    code: BAD_NINO
+                    message: NINO doesn't match the expected regex
+                example-2:
+                  value:
+                    code: INVALID_BANK_DETAILS
+                    message: bank details were invalid
+        '409':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
+                - description: Conflict http response
+                  example:
+                    code: ACCOUNT_ALREADY_EXISTS
+                    message: Account create request received for account that already exists
+              example:
+                code: ACCOUNT_ALREADY_EXISTS
+                message: Account create request received for account that already exists
+      deprecated: false
+  /individuals/help-to-save/eligibility:
+    get:
+      tags:
+      - individuals
+      summary: IndividualsHelpToSaveEligibility_GET
+      description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
+      operationId: IndividualsHelpToSaveEligibility_GET
+      security:
+        - userRestricted: [ "read:help-to-save" ]
+        - applicationRestricted : ["read:help-to-save"]
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer [SERVER-TOKEN]
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: ''
+          headers:
+            X-Correlation-ID:
+              description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+              content:
+                text/plain:
+                  schema:
+                    type: string
+                    description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse'
+                - example:
+                    eligibility:
+                      isEligible: true
+                      hasWTC: true
+                      hasUC: true
+                    accountExists: false
+              examples:
+                example-1:
+                  description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit and in receipt of UC and their household income is sufficient
+                  value:
+                    eligibility:
+                      isEligible: true
+                      hasWTC: true
+                      hasUC: true
+                    accountExists: false
+                example-2:
+                  description: The person is eligible for Help to Save as they are in receipt of UC and their household income is sufficient
+                  value:
+                    eligibility:
+                      isEligible: true
+                      hasWTC: false
+                      hasUC: true
+                    accountExists: false
+                example-3:
+                  description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit
+                  value:
+                    eligibility:
+                      isEligible: true
+                      hasWTC: true
+                      hasUC: false
+                    accountExists: false
+                example-4:
+                  description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and in receipt of UC but their household income is insufficient
+                  value:
+                    eligibility:
+                      isEligible: false
+                      hasWTC: true
+                      hasUC: true
+                    accountExists: false
+                example-5:
+                  description: The person is ineligible for Help to Save as they are not entitled to WTC and are in receipt of UC but their household income is insufficient
+                  value:
+                    eligibility:
+                      isEligible: false
+                      hasWTC: false
+                      hasUC: true
+                    accountExists: false
+                example-6:
+                  description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and they are not in receipt of UC
+                  value:
+                    eligibility:
+                      isEligible: false
+                      hasWTC: true
+                      hasUC: false
+                    accountExists: false
+                example-7:
+                  description: The person is ineligible for Help to Save as they are not entitled to WTC and not in receipt of UC
+                  value:
+                    eligibility:
+                      isEligible: false
+                      hasWTC: false
+                      hasUC: false
+                    accountExists: false
+                example-8:
+                  description: The person already has a Help to Save account
+                  value:
+                    accountExists: true
+        '400':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse400'
+                - description: Bad NINO response
+                  example:
+                    code: BAD_NINO
+                    message: NINO doesn't match the expected regex
+              example:
+                code: BAD_NINO
+                message: NINO doesn't match the expected regex
+        '403':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse400'
+                - description: No NINO response
+                  example:
+                    code: NO_NINO
+                    message: NINO could not be found
+              example:
+                code: NO_NINO
+                message: NINO could not be found
+      deprecated: false
+components:
+  securitySchemes:
+    userRestricted:
+      type: oauth2
+      description: |
+        HMRC supports OAuth 2.0 for authenticating user restricted API requests using an OAuth 2.0 Bearer Token in the AUTHORIZATION header.
+        See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/user-restricted-endpoints for details.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.service.hmrc.gov.uk/oauth/authorize
+          tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
+          refreshUrl: https://api.service.hmrc.gov.uk/oauth/refresh
+          scopes:
+              "read:help-to-save": "Grants read access"
+              "Write:help-to-save": "Grants write access"
+
+    applicationRestricted:
+      type: oauth2
+      description: |
+        HMRC supports OAuth 2.0 for authenticating application restricted API requests using an OAuth 2.0 Bearer Token in the AUTHORIZATION header.
+        See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/application-restricted-endpoints for details.
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
+          scopes:
+              "read:help-to-save": "Grants read access"
+              "Write:help-to-save": "Grants write access"
+  schemas:
+    errorResponse:
+      title: errorResponse
+      required:
+      - code
+      type: object
+      properties:
+        code:
+          type: string
+    BankDetails:
+      title: BankDetails
+      required:
+      - accountNumber
+      - sortCode
+      - accountName
+      type: object
+      properties:
+        accountNumber:
+          maxLength: 8
+          minLength: 1
+          pattern: ^.{1,8}$
+          type: string
+        sortCode:
+          maxLength: 6
+          minLength: 6
+          pattern: ^[0-9]{6}$
+          type: string
+          example: '123456'
+        accountName:
+          maxLength: 35
+          minLength: 2
+          pattern: ^.{2,35}$
+          type: string
+        rollNumber:
+          maxLength: 18
+          minLength: 4
+          pattern: ^([0-9a-zA-Z\/\.-]{4,18})$
+          type: string
+    Body:
+      title: Body
+      required:
+      - registrationChannel
+      type: object
+      properties:
+        nino:
+          maxLength: 9
+          minLength: 9
+          pattern: ^(([A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z])([0-9]{2})([0-9]{2})([0-9]{2})([A-D]{1})|((XX)(99)(99)(99)(X)))$
+          type: string
+        forename:
+          maxLength: 26
+          minLength: 1
+          pattern: ^.{1,26}$
+          type: string
+        surname:
+          maxLength: 300
+          minLength: 1
+          pattern: ^.{1,300}$
+          type: string
+        dateOfBirth:
+          maxLength: 8
+          minLength: 8
+          pattern: ^[0-9]{4}(01|02|03|04|05|06|07|08|09|10|11|12)[0-9]{2}$
+          type: string
+        contactDetails:
+          $ref: '#/components/schemas/ContactDetails'
+        registrationChannel:
+          maxLength: 10
+          pattern: ^online$|^callCentre$
+          type: string
+        bankDetails:
+          $ref: '#/components/schemas/BankDetails'
+    BonusTerm:
+      title: BonusTerm
+      required:
+      - startDate
+      - endDate
+      - bonusEstimate
+      type: object
+      properties:
+        startDate:
+          type: string
+          description: The start date of the bonus term, in YYYMMdd format
+        endDate:
+          type: string
+          description: The end date of the bonus term, in YYYMMdd format
+        bonusEstimate:
+          type: number
+          description: the estimate of the bonus to be paid to the customer in this bonus term
+    ContactDetails:
+      title: ContactDetails
+      type: object
+      properties:
+        address1:
+          maxLength: 35
+          pattern: ^.{1,35}$
+          type: string
+        address2:
+          maxLength: 35
+          pattern: ^.{1,35}$
+          type: string
+        address3:
+          maxLength: 35
+          pattern: ^.{1,35}$
+          type: string
+        address4:
+          maxLength: 35
+          pattern: ^.{1,35}$
+          type: string
+        address5:
+          maxLength: 35
+          pattern: ^.{1,35}$
+          type: string
+        postcode:
+          maxLength: 10
+          pattern: ^.{1,10}$
+          type: string
+        countryCode:
+          maxLength: 2
+          minLength: 2
+          pattern: '[A-Z][A-Z]'
+          type: string
+        communicationPreference:
+          maxLength: 2
+          minLength: 2
+          pattern: 00|02
+          type: string
+        phoneNumber:
+          maxLength: 15
+          pattern: ^.{1,15}$
+          type: string
+        email:
+          maxLength: 254
+          pattern: ^.{1,64}@.{1,252}$
+          type: string
+    Eligibility:
+      title: Eligibility
+      required:
+      - isEligible
+      - hasWTC
+      - hasUC
+      type: object
+      properties:
+        isEligible:
+          type: boolean
+        hasWTC:
+          type: boolean
+        hasUC:
+          type: boolean
+    Header:
+      title: Header
+      required:
+      - version
+      - createdTimestamp
+      - clientCode
+      - requestCorrelationId
+      type: object
+      properties:
+        version:
+          maxLength: 5
+          pattern: ^[0-9]+.[0-9]+$
+          type: string
+        createdTimestamp:
+          maxLength: 25
+          pattern: ^[1|2][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-2][0-9]:[0-5][0-9]:[0-6][0-9] [A-Z]{1,5}$
+          type: string
+        clientCode:
+          maxLength: 20
+          pattern: ^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$
+          type: string
+        requestCorrelationId:
+          maxLength: 36
+          pattern: ^[0-9a-f-]{1,36}$
+          type: string
+          description: If the help-to-save create account API is called after a call to this eligibility check API, the X-Correlation-ID value from the eligibility check response should be passed as the requestCorrelationId value in the request to the create account API.
+    IndividualsHelpToSaveAccountrequest:
+      title: IndividualsHelpToSaveAccountrequest
+      required:
+      - header
+      - body
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/Header'
+        body:
+          $ref: '#/components/schemas/Body'
+      description: A JSON schema to validate a Help To Save - Create or Update Account JSON payload
+    IndividualsHelpToSaveAccountresponse:
+      title: IndividualsHelpToSaveAccountresponse
+      required:
+      - accountNumber
+      - headroom
+      - closed
+      - blockedFromPayment
+      - balance
+      - bonusTerms
+      type: object
+      properties:
+        accountNumber:
+          maxLength: 30
+          type: string
+          description: The account number
+        headroom:
+          type: number
+          description: How much money can still be paid into the account in the current month
+        closed:
+          type: boolean
+          description: Whether or not the account is closed
+        blockedFromPayment:
+          type: boolean
+          description: Whether or not the account is blocked from payments
+        balance:
+          type: number
+          description: The balance of the account
+        bonusTerms:
+          type: array
+          items:
+            $ref: '#/components/schemas/BonusTerm'
+          description: A list of bonus terms. There will always be two bonus terms
+      description: A JSON schema to validate a Help To Save - Get Account JSON payload
+    IndividualsHelpToSaveAccountresponse400:
+      title: IndividualsHelpToSaveAccountresponse400
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      example:
+        code: BAD_NINO
+        message: NINO doesn't match the expected regex
+    IndividualsHelpToSaveEligibilityresponse:
+      title: IndividualsHelpToSaveEligibilityresponse
+      required:
+      - accountExists
+      type: object
+      properties:
+        eligibility:
+          $ref: '#/components/schemas/Eligibility'
+        accountExists:
+          type: boolean
+      description: JSON schema for Ok Help to Save eligibility check response
+    IndividualsHelpToSaveEligibilityresponse400:
+      title: IndividualsHelpToSaveEligibilityresponse400
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      example:
+        code: BAD_NINO
+        message: NINO doesn't match the expected regex
+tags:
+- name: individuals
+  description: ''

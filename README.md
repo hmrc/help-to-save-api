@@ -33,21 +33,26 @@ Unit tests
 Run `sbt test` on the terminal to run the unit tests.
 
 
-Testing the RAML documentation locally   
+Testing the YAML documentation locally   
 --------------------------------------
 To test the RAML documentation, run this command to use service manager to start the prerequisite microservices:
 
-```
-sm --start API_DOCUMENTATION API_DOCUMENTATION_FRONTEND THIRD_PARTY_DEVELOPER_FRONTEND API_DEFINITION ASSETS_FRONTEND -f
-``` 
+- Clone the api-documentation-frontend GitHub repository.
+- Run the new cloned api-documentation-frontend microservice using its run_local_with_dependencies script.
 
-Then start up `help-to-save-api` on port `7004` using
+```
+sm --start API_DEFINITION THIRD_PARTY_APPLICATION API_EXAMPLE_MICROSERVICE API_PLATFORM_MICROSERVICE THIRD_PARTY_DEVELOPER_FRONTEND CONTACT_FRONTEND API_PLATFORM_XML_SERVICES
+sbt "run -Dhttp.port=9680 $*"
+```
+- Enter the URL of the OpenAPI specification file that is being developed. For example if running open-api-example-microservice locally then enter URL `http://localhost:servicePort/api/conf/1.0/application.yaml`
+- Run the API containing the new OpenAPI specification locally: start up `help-to-save-api` on port `7004` using
+
 ```
 sbt run
 
 ```
-in the `help-to-save-api` repo. Go to `http://127.0.0.1:9680/api-documentation/docs/api` on a browser
-and go to `PreviewRAML` on the left. In the box to enter the URL put in `http://127.0.0.1:7004/api/conf/2.0/application.raml`.
+in the `help-to-save-api` repo. Navigate to the preview page at ` 'http://localhost:9680/api-documentation/docs/openapi/preview` on a browser
+and go to `PreviewYAML` on the left. In the box to enter the URL put in `http://localhost:7004/api/conf/2.0/application.yaml`.
 If everything is OK you should see the api documentation. Otherwise, it should tell you what's wrong with the documentation
 
 
