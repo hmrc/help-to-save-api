@@ -15,27 +15,28 @@ info:
   contact: {}
   version: '2.0'
 servers:
-- url: https://test-api.service.hmrc.gov.uk
-  description: Sandbox
-- url: https://api.service.hmrc.gov.uk/
-  description: Production
+  - url: https://test-api.service.hmrc.gov.uk
+    description: Sandbox
+  - url: https://api.service.hmrc.gov.uk/
+    description: Production
+    variables: {}
 paths:
   /individuals/help-to-save/account:
     get:
       tags:
-      - individuals
+        - individuals
       description: Get help-to-save account information
       operationId: get
       security:
         - userRestricted: [ "read:help-to-save" ]
       parameters:
-      - name: Authorization
-        in: header
-        description: Bearer [SERVER-TOKEN]
-        required: true
-        style: simple
-        schema:
-          type: string
+        - name: Authorization
+          in: header
+          description: Bearer [SERVER-TOKEN]
+          required: true
+          style: simple
+          schema:
+            type: string
       responses:
         '200':
           description: ''
@@ -44,21 +45,21 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse'
-                - description: Account information was succsessfully retreived
-                  example:
-                    accountNumber: '1100000000001'
-                    headroom: 40
-                    closed: false
-                    blockedFromPayment: false
-                    balance: 123.45
-                    bonusTerms:
-                    - startDate: '20180101'
-                      endDate: '20191231'
-                      bonusEstimate: 50
-                    - startDate: '20200101'
-                      endDate: '20211231'
-                      bonusEstimate: 150
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse'
+                  - description: Account information was succsessfully retreived
+                    example:
+                      accountNumber: '1100000000001'
+                      headroom: 40
+                      closed: false
+                      blockedFromPayment: false
+                      balance: 123.45
+                      bonusTerms:
+                        - startDate: '20180101'
+                          endDate: '20191231'
+                          bonusEstimate: 50
+                        - startDate: '20200101'
+                          endDate: '20211231'
+                          bonusEstimate: 150
               example:
                 accountNumber: '1100000000001'
                 headroom: 40
@@ -66,12 +67,12 @@ paths:
                 blockedFromPayment: false
                 balance: 123.45
                 bonusTerms:
-                - startDate: '20180101'
-                  endDate: '20191231'
-                  bonusEstimate: 50
-                - startDate: '20200101'
-                  endDate: '20211231'
-                  bonusEstimate: 150
+                  - startDate: '20180101'
+                    endDate: '20191231'
+                    bonusEstimate: 50
+                  - startDate: '20200101'
+                    endDate: '20211231'
+                    bonusEstimate: 150
         '403':
           description: ''
           headers: {}
@@ -79,10 +80,10 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
-                - example:
-                    code: FORBIDDEN
-                    message: Missing NINO
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
+                  - example:
+                      code: FORBIDDEN
+                      message: Missing NINO
               example:
                 code: FORBIDDEN
                 message: Missing NINO
@@ -93,18 +94,18 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
-                - description: account does not exist
-                  example:
-                    code: NOT FOUND
-                    message: Account doesn't exist
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
+                  - description: account does not exist
+                    example:
+                      code: NOT FOUND
+                      message: Account doesn't exist
               example:
                 code: NOT FOUND
                 message: Account doesn't exist
       deprecated: false
     post:
       tags:
-      - individuals
+        - individuals
       description: >
         Sends a request to create or update an account on behalf of the user, noting the value fields below are all |
 
@@ -119,38 +120,38 @@ paths:
       security:
         - userRestricted: [ "write:help-to-save" ]
       parameters:
-      - name: Authorization
-        in: header
-        description: Bearer [SERVER-TOKEN]
-        required: true
-        style: simple
-        schema:
-          type: string
+        - name: Authorization
+          in: header
+          description: Bearer [SERVER-TOKEN]
+          required: true
+          style: simple
+          schema:
+            type: string
       requestBody:
         description: ''
         content:
           application/json:
             schema:
               allOf:
-              - $ref: '#/components/schemas/IndividualsHelpToSaveAccountrequest'
-              - example:
-                  header:
-                    version: '1.0'
-                    createdTimestamp: 2017-11-22 23:11:09 GMT
-                    clientCode: CODE
-                    requestCorrelationId: 123e4567-e89b-12d3-a456-426655440000
-                  body:
-                    nino: AB123456A
-                    forename: Alex
-                    surname: O'Connor
-                    dateOfBirth: '19920423'
-                    contactDetails:
-                      address1: 86 Ashopton Road
-                      address2: Blackpool
-                      postcode: FY43 1FB
-                      countryCode: GB
-                      communicationPreference: '00'
-                    registrationChannel: callCentre
+                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountrequest'
+                - example:
+                    header:
+                      version: '1.0'
+                      createdTimestamp: 2017-11-22 23:11:09 GMT
+                      clientCode: CODE
+                      requestCorrelationId: 123e4567-e89b-12d3-a456-426655440000
+                    body:
+                      nino: AB123456A
+                      forename: Alex
+                      surname: O'Connor
+                      dateOfBirth: '19920423'
+                      contactDetails:
+                        address1: 86 Ashopton Road
+                        address2: Blackpool
+                        postcode: FY43 1FB
+                        countryCode: GB
+                        communicationPreference: '00'
+                      registrationChannel: callCentre
             example:
               header:
                 version: '1.0'
@@ -186,11 +187,11 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
-                - description: Bad Request
-                  example:
-                    code: BAD_NINO
-                    message: NINO doesn't match the expected regex
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
+                  - description: Bad Request
+                    example:
+                      code: BAD_NINO
+                      message: NINO doesn't match the expected regex
               examples:
                 example-1:
                   value:
@@ -207,11 +208,11 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
-                - description: Conflict http response
-                  example:
-                    code: ACCOUNT_ALREADY_EXISTS
-                    message: Account create request received for account that already exists
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveAccountresponse400'
+                  - description: Conflict http response
+                    example:
+                      code: ACCOUNT_ALREADY_EXISTS
+                      message: Account create request received for account that already exists
               example:
                 code: ACCOUNT_ALREADY_EXISTS
                 message: Account create request received for account that already exists
@@ -219,19 +220,19 @@ paths:
   /individuals/help-to-save/eligibility:
     get:
       tags:
-      - individuals
+        - individuals
       description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
       operationId: get
       security:
         - userRestricted: [ "read:help-to-save" ]
       parameters:
-      - name: Authorization
-        in: header
-        description: Bearer [SERVER-TOKEN]
-        required: true
-        style: simple
-        schema:
-          type: string
+        - name: Authorization
+          in: header
+          description: Bearer [SERVER-TOKEN]
+          required: true
+          style: simple
+          schema:
+            type: string
       responses:
         '200':
           description: ''
@@ -247,13 +248,13 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse'
-                - example:
-                    eligibility:
-                      isEligible: true
-                      hasWTC: true
-                      hasUC: true
-                    accountExists: false
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse'
+                  - example:
+                      eligibility:
+                        isEligible: true
+                        hasWTC: true
+                        hasUC: true
+                      accountExists: false
               examples:
                 example-1:
                   description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit and in receipt of UC and their household income is sufficient
@@ -322,11 +323,11 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse400'
-                - description: Bad NINO response
-                  example:
-                    code: BAD_NINO
-                    message: NINO doesn't match the expected regex
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse400'
+                  - description: Bad NINO response
+                    example:
+                      code: BAD_NINO
+                      message: NINO doesn't match the expected regex
               example:
                 code: BAD_NINO
                 message: NINO doesn't match the expected regex
@@ -337,11 +338,141 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse400'
-                - description: No NINO response
-                  example:
-                    code: NO_NINO
-                    message: NINO could not be found
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse400'
+                  - description: No NINO response
+                    example:
+                      code: NO_NINO
+                      message: NINO could not be found
+              example:
+                code: NO_NINO
+                message: NINO could not be found
+      deprecated: false
+  /individuals/help-to-save/eligibility/{nino}:
+    get:
+      tags:
+        - individuals
+      description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
+      operationId: get
+      security:
+        - userRestricted: [ "read:help-to-save" ]
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer [SERVER-TOKEN]
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          headers:
+            X-Correlation-ID:
+              description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+              content:
+                text/plain:
+                  schema:
+                    type: string
+                    description: An id used for debugging purposes. It should match the regex "^([A-Z]|[a-z]|[0-9]|-){1,40}$"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse'
+                  - example:
+                      eligibility:
+                        isEligible: true
+                        hasWTC: true
+                        hasUC: true
+                      accountExists: false
+              examples:
+                example-1:
+                  description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit and in receipt of UC and their household income is sufficient
+                  value:
+                    eligibility:
+                      isEligible: true
+                      hasWTC: true
+                      hasUC: true
+                    accountExists: false
+                example-2:
+                  description: The person is eligible for Help to Save as they are in receipt of UC and their household income is sufficient
+                  value:
+                    eligibility:
+                      isEligible: true
+                      hasWTC: false
+                      hasUC: true
+                    accountExists: false
+                example-3:
+                  description: The person is eligible for Help to Save as they are entitled to WTC and in receipt of positive WTC/CTC Tax Credit
+                  value:
+                    eligibility:
+                      isEligible: true
+                      hasWTC: true
+                      hasUC: false
+                    accountExists: false
+                example-4:
+                  description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and in receipt of UC but their household income is insufficient
+                  value:
+                    eligibility:
+                      isEligible: false
+                      hasWTC: true
+                      hasUC: true
+                    accountExists: false
+                example-5:
+                  description: The person is ineligible for Help to Save as they are not entitled to WTC and are in receipt of UC but their household income is insufficient
+                  value:
+                    eligibility:
+                      isEligible: false
+                      hasWTC: false
+                      hasUC: true
+                    accountExists: false
+                example-6:
+                  description: The person is ineligible for Help to Save as they are entitled to WTC but not in receipt of positive WTC/CTC Tax Credit (nil TC) and they are not in receipt of UC
+                  value:
+                    eligibility:
+                      isEligible: false
+                      hasWTC: true
+                      hasUC: false
+                    accountExists: false
+                example-7:
+                  description: The person is ineligible for Help to Save as they are not entitled to WTC and not in receipt of UC
+                  value:
+                    eligibility:
+                      isEligible: false
+                      hasWTC: false
+                      hasUC: false
+                    accountExists: false
+                example-8:
+                  description: The person already has a Help to Save account
+                  value:
+                    accountExists: true
+        '400':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse400'
+                  - description: Bad NINO response
+                    example:
+                      code: BAD_NINO
+                      message: NINO doesn't match the expected regex
+              example:
+                code: BAD_NINO
+                message: NINO doesn't match the expected regex
+        '403':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/IndividualsHelpToSaveEligibilityresponse400'
+                  - description: No NINO response
+                    example:
+                      code: NO_NINO
+                      message: NINO could not be found
               example:
                 code: NO_NINO
                 message: NINO could not be found
@@ -359,13 +490,13 @@ components:
           tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
           refreshUrl: https://api.service.hmrc.gov.uk/oauth/refresh
           scopes:
-              "read:help-to-save": "Grants read access"
-              "write:help-to-save": "Grants write access"
+            "read:help-to-save": "Grants read access"
+            "write:help-to-save": "Grants write access"
   schemas:
     errorResponse:
       title: errorResponse
       required:
-      - code
+        - code
       type: object
       properties:
         code:
@@ -373,9 +504,9 @@ components:
     BankDetails:
       title: BankDetails
       required:
-      - accountNumber
-      - sortCode
-      - accountName
+        - accountNumber
+        - sortCode
+        - accountName
       type: object
       properties:
         accountNumber:
@@ -402,7 +533,7 @@ components:
     Body:
       title: Body
       required:
-      - registrationChannel
+        - registrationChannel
       type: object
       properties:
         nino:
@@ -436,9 +567,9 @@ components:
     BonusTerm:
       title: BonusTerm
       required:
-      - startDate
-      - endDate
-      - bonusEstimate
+        - startDate
+        - endDate
+        - bonusEstimate
       type: object
       properties:
         startDate:
@@ -499,9 +630,9 @@ components:
     Eligibility:
       title: Eligibility
       required:
-      - isEligible
-      - hasWTC
-      - hasUC
+        - isEligible
+        - hasWTC
+        - hasUC
       type: object
       properties:
         isEligible:
@@ -513,10 +644,10 @@ components:
     Header:
       title: Header
       required:
-      - version
-      - createdTimestamp
-      - clientCode
-      - requestCorrelationId
+        - version
+        - createdTimestamp
+        - clientCode
+        - requestCorrelationId
       type: object
       properties:
         version:
@@ -539,8 +670,8 @@ components:
     IndividualsHelpToSaveAccountrequest:
       title: IndividualsHelpToSaveAccountrequest
       required:
-      - header
-      - body
+        - header
+        - body
       type: object
       properties:
         header:
@@ -551,12 +682,12 @@ components:
     IndividualsHelpToSaveAccountresponse:
       title: IndividualsHelpToSaveAccountresponse
       required:
-      - accountNumber
-      - headroom
-      - closed
-      - blockedFromPayment
-      - balance
-      - bonusTerms
+        - accountNumber
+        - headroom
+        - closed
+        - blockedFromPayment
+        - balance
+        - bonusTerms
       type: object
       properties:
         accountNumber:
@@ -584,8 +715,8 @@ components:
     IndividualsHelpToSaveAccountresponse400:
       title: IndividualsHelpToSaveAccountresponse400
       required:
-      - code
-      - message
+        - code
+        - message
       type: object
       properties:
         code:
@@ -598,7 +729,7 @@ components:
     IndividualsHelpToSaveEligibilityresponse:
       title: IndividualsHelpToSaveEligibilityresponse
       required:
-      - accountExists
+        - accountExists
       type: object
       properties:
         eligibility:
@@ -609,8 +740,8 @@ components:
     IndividualsHelpToSaveEligibilityresponse400:
       title: IndividualsHelpToSaveEligibilityresponse400
       required:
-      - code
-      - message
+        - code
+        - message
       type: object
       properties:
         code:
@@ -621,5 +752,5 @@ components:
         code: BAD_NINO
         message: NINO doesn't match the expected regex
 tags:
-- name: individuals
-  description: ''
+  - name: individuals
+    description: ''
