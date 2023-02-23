@@ -16,19 +16,24 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
+import akka.stream.Materializer
 import com.typesafe.config.Config
 import controllers.Assets
+
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.libs.json.{Format, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.filters.cors.CORSActionBuilder
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess.Version
 import uk.gov.hmrc.helptosaveapi.views.txt
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import scala.concurrent.ExecutionContext
+
 @Singleton
-class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets)
+class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets) (implicit materializer:         Materializer, executionContext: ExecutionContext)
   extends BackendController(cc) {
 
   val access: Version ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
@@ -39,8 +44,10 @@ class DocumentationController @Inject() (configuration: Configuration, cc: Contr
     Ok(txt.definition(access, versionEnabled)).as("application/json")
   }
 
-  def raml(version: String, file: String): Action[AnyContent] =
-    assets.at(s"/public/api/conf/$version", file)
+  def yaml(version: String, file: String): Action[AnyContent] =
+    CORSActionBuilder(configuration).async { implicit request =>
+      assets.at(s"/public/api/conf/$version", file)(request)
+    }
 
 }
 
