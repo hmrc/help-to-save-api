@@ -24,9 +24,8 @@ paths:
     get:
       tags:
       - individuals
-      summary: IndividualsHelpToSaveAccount_GET
       description: Get help-to-save account information
-      operationId: IndividualsHelpToSaveAccount_GET
+      operationId: get
       security:
         - userRestricted: [ "read:help-to-save" ]
       parameters:
@@ -106,7 +105,6 @@ paths:
     post:
       tags:
       - individuals
-      summary: IndividualsHelpToSaveAccount_POST
       description: >
         Sends a request to create or update an account on behalf of the user, noting the value fields below are all |
 
@@ -117,7 +115,7 @@ paths:
         https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide, noting the timezone should be a |
 
         UTC offset as outlined in the righthand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
-      operationId: IndividualsHelpToSaveAccount_POST
+      operationId: post
       security:
         - userRestricted: [ "write:help-to-save" ]
       parameters:
@@ -222,9 +220,8 @@ paths:
     get:
       tags:
       - individuals
-      summary: IndividualsHelpToSaveEligibility_GET
       description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
-      operationId: IndividualsHelpToSaveEligibility_GET
+      operationId: get
       security:
         - userRestricted: [ "read:help-to-save" ]
       parameters:
