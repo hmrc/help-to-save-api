@@ -568,7 +568,7 @@ components:
           minLength: 4
           pattern: ^([0-9a-zA-Z\/\.-]{4,18})$
           type: string
-    Body:
+    RequestBody:
       title: Body
       required:
         - registrationChannel
@@ -679,7 +679,7 @@ components:
           type: boolean
         hasUC:
           type: boolean
-    Header:
+    RequestHeader:
       title: Header
       required:
         - version
@@ -713,9 +713,9 @@ components:
       type: object
       properties:
         header:
-          $ref: '#/components/schemas/Header'
+          - $ref: '#/components/schemas/RequestHeader'
         body:
-          $ref: '#/components/schemas/Body'
+          - $ref: '#/components/schemas/RequestBody'
       description: A JSON schema to validate a Help To Save - Create or Update Account JSON payload
     IndividualsHelpToSaveAccountResponse:
       title: IndividualsHelpToSaveAccountResponse
@@ -761,9 +761,6 @@ components:
           type: string
         message:
           type: string
-      example 1:
-        code: FORBIDDEN
-        message: Missing NINO
     IndividualsHelpToSaveAccountResponse404:
       title: IndividualsHelpToSaveAccountResponse404
       required:
@@ -775,9 +772,6 @@ components:
           type: string
         message:
           type: string
-      example 1:
-        code: NOT FOUND
-        message: Account doesn't exist
     IndividualsHelpToSaveAccountResponse400:
       title: IndividualsHelpToSaveAccountResponse400
       required:
@@ -789,12 +783,6 @@ components:
           type: string
         message:
           type: string
-      example 1:
-        code: BAD_NINO
-        message: NINO doesn't match the expected regex
-      example 2:
-        code: INVALID_BANK_DETAILS
-        message: Bank details were invalid
     IndividualsHelpToSaveAccountResponse409:
       title: IndividualsHelpToSaveAccountResponse409
       required:
@@ -806,9 +794,6 @@ components:
           type: string
         message:
           type: string
-      example:
-        code: ACCOUNT_ALREADY_EXISTS
-        message: Account create request received for account that already exists
     IndividualsHelpToSaveEligibilitySuccessResponse:
       title: IndividualsHelpToSaveEligibilitySuccessResponse
       required:
