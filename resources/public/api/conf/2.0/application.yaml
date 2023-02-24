@@ -350,13 +350,13 @@ paths:
                 code: NO_NINO
                 message: NINO could not be found
       deprecated: false
-  /individuals/help-to-save/eligibility/{nino}:
+  /individuals/help-to-save/eligibility/[nino]:
     get:
       tags:
         - individuals
       summary: IndividualsHelpToSaveEligibility_GET{nino}
       description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
-      operationId: get '/individuals/help-to-save/eligibility/{nino}'
+      operationId: get '/individuals/help-to-save/eligibility/[nino]'
       security:
         - userRestricted: [ "read:help-to-save" ]
       parameters:
