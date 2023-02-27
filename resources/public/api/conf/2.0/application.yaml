@@ -25,7 +25,7 @@ paths:
     get:
       tags:
         - individuals
-      summary: IndividualsHelpToSaveAccount_GET
+      summary: get
       description: Get help-to-save account information
       operationId: get '/individuals/help-to-save/account'
       security:
@@ -108,7 +108,7 @@ paths:
     post:
       tags:
         - individuals
-      summary: IndividualsHelpToSaveAccount_POST
+      summary: post
       description: >
         Sends a request to create or update an account on behalf of the user, noting the value fields below are all |
 
@@ -221,7 +221,7 @@ paths:
     get:
       tags:
         - individuals
-      summary: IndividualsHelpToSaveEligibility_GET
+      summary: get
       description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
       operationId: get '/individuals/help-to-save/eligibility'
       security:
@@ -353,7 +353,7 @@ paths:
     get:
       tags:
         - individuals
-      summary: IndividualsHelpToSaveEligibility_GET{nino}
+      summary: get
       description: Sends a request to check the eligibility of an applicant, also checks if the applicant already has an account
       operationId: get '/individuals/help-to-save/eligibility/{nino}'
       security:
