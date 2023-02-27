@@ -14,7 +14,7 @@ info:
 
   contact: {}
   version: '2.0'
-  servers:
+servers:
   - url: https://test-api.service.hmrc.gov.uk
     description: Sandbox
   - url: https://api.service.hmrc.gov.uk/
@@ -368,8 +368,8 @@ paths:
           required: true
           style: simple
           schema:
-          type: string
-          example: AB123456C, MZ006526
+            type: string
+            example: AB123456C, MZ006526
         - name: Authorization
           in: header
           description: Bearer [SERVER-TOKEN]
@@ -713,9 +713,9 @@ components:
       type: object
       properties:
         header:
-          - $ref: '#/components/schemas/RequestHeader'
+          $ref: '#/components/schemas/RequestHeader'
         body:
-          - $ref: '#/components/schemas/RequestBody'
+          $ref: '#/components/schemas/RequestBody'
       description: A JSON schema to validate a Help To Save - Create or Update Account JSON payload
     IndividualsHelpToSaveAccountResponse:
       title: IndividualsHelpToSaveAccountResponse
