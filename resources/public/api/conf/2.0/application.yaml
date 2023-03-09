@@ -577,10 +577,15 @@ components:
       title: errorResponse
       required:
         - code
+        - message
       type: object
       properties:
         code:
           type: string
+          description: The error code
+        message:
+          type: string
+          description: The error message
     BankDetails:
       title: BankDetails
       required:
@@ -801,8 +806,10 @@ components:
       properties:
         code:
           type: string
+          description: FORBIDDEN
         message:
           type: string
+          description: Missing NINO
     IndividualsHelpToSaveAccountResponse404:
       title: IndividualsHelpToSaveAccountResponse404
       required:
@@ -812,8 +819,10 @@ components:
       properties:
         code:
           type: string
+          description: NOT FOUND
         message:
           type: string
+          description: Account doesn't exist
     IndividualsHelpToSaveAccountResponse400:
       title: IndividualsHelpToSaveAccountResponse400
       required:
@@ -823,8 +832,10 @@ components:
       properties:
         code:
           type: string
+          description: BAD_NINO
         message:
           type: string
+          description: NINO doesn't match the expected regex
     IndividualsHelpToSaveAccountResponse409:
       title: IndividualsHelpToSaveAccountResponse409
       required:
@@ -834,8 +845,10 @@ components:
       properties:
         code:
           type: string
+          description: ACCOUNT_ALREADY_EXISTS
         message:
           type: string
+          description: Account create request received for account that already exists
     IndividualsHelpToSaveEligibilitySuccessResponse:
       title: IndividualsHelpToSaveEligibilitySuccessResponse
       required:
