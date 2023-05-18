@@ -8,6 +8,8 @@ import wartremover.Wart
 
 val appName = "help-to-save-api"
 
+val silencerVersion = "1.7.7"
+
 lazy val appDependencies: Seq[ModuleID] = Seq(ws) ++ AppDependencies.compile ++ AppDependencies.test
 
 lazy val plugins: Seq[Plugins] = Seq.empty
@@ -61,7 +63,6 @@ lazy val microservice = Project(appName, file("."))
   // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
   // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
   // imcompatible with a lot of WordSpec
-
   .settings(
     wartremoverExcluded ++=
       (Compile / routes).value ++
@@ -81,9 +82,12 @@ lazy val microservice = Project(appName, file("."))
     IntegrationTest / unmanagedSourceDirectories := Seq((IntegrationTest / baseDirectory).value / "it"),
     addTestReportOption(IntegrationTest, "int-test-reports"),
     //testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
-    IntegrationTest / parallelExecution := false
+    IntegrationTest / parallelExecution := false,
+    libraryDependencies ++= Seq(
+      compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+      "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
+    )
   )
-  
 
 lazy val compileAll = taskKey[Unit]("Compiles sources in all configurations.")
 
