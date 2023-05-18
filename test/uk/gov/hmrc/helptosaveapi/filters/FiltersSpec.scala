@@ -16,34 +16,22 @@
 
 package uk.gov.hmrc.helptosaveapi.filters
 
-import com.kenshoo.play.metrics.MetricsFilter
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
-import uk.gov.hmrc.play.bootstrap.filters._
 
 class FiltersSpec extends TestSupport {
 
-  val mockMDCFilter = new MDCFilter(fakeApplication.materializer, fakeApplication.configuration, appName)
+  "The Filters" must {
 
-  class EmptyMicroserviceFilters
-      extends MicroserviceFilters(
-        stub[MetricsFilter],
-        stub[AuditFilter],
-        stub[LoggingFilter],
-        stub[CacheControlFilter],
-        mockMDCFilter
-      )
-
-  val mockMicroServiceFilters = mock[MicroserviceFilters]
-  val mockXSSProtectionFilter = mock[XSSProtectionFilter]
-
-  val filters = new Filters(mockMicroServiceFilters, mockXSSProtectionFilter)
-
-  "Filters" must {
-
-    "include the XSSProtectionFilter" in {
-      filters.filters should contain(mockXSSProtectionFilter)
+    "add a 'X-XSS-Protection' header to all requests" in {
+      val result = route(fakeApplication, FakeRequest(GET, "/test")).get
+      headers(result) should contain(X_XSS_PROTECTION -> "1; mode=block")
     }
 
+    "add a 'X-Content-Type-Options' header to all requests" in {
+      val result = route(fakeApplication, FakeRequest(GET, "/test")).get
+      headers(result) should contain(X_CONTENT_TYPE_OPTIONS -> "nosniff")
+    }
   }
-
 }
