@@ -349,6 +349,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         }
 
         "handles the case of missing email when the communicationPreference is set to 02" in {
+          reset(mockPagerDuty)
+
           val request = createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02")
           val fakeRequestWithBody = FakeRequest().withJsonBody(Json.toJson(request))
 
