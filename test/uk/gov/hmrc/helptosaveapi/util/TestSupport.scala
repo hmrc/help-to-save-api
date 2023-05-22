@@ -18,23 +18,23 @@ package uk.gov.hmrc.helptosaveapi.util
 
 import akka.stream.Materializer
 import com.codahale.metrics.{Counter, Timer}
-import com.kenshoo.play.metrics.{Metrics ⇒ PlayMetrics}
 import com.typesafe.config.ConfigFactory
 import controllers.Assets
-import org.scalamock.scalatest.MockFactory
-import play.api.Configuration
+import org.mockito.ArgumentMatchersSugar.*
+import org.mockito.IdiomaticMockito
 import play.api.http.HttpErrorHandler
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.ControllerComponents
+import play.api.{Application, Configuration}
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.validators.EmailValidation
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
 
-class TestSupport extends UnitSpec with MockFactory {
+class TestSupport extends UnitSpec with IdiomaticMockito {
 
-  lazy val fakeApplication =
+  lazy val fakeApplication: Application =
     new GuiceApplicationBuilder()
       .configure(
         Configuration(
@@ -64,11 +64,7 @@ class TestSupport extends UnitSpec with MockFactory {
 
   val httpErrorHandler: HttpErrorHandler = mock[HttpErrorHandler]
 
-  val mockMetrics = new Metrics(stub[PlayMetrics]) {
-    override def timer(name: String): Timer = new Timer()
-
-    override def counter(name: String): Counter = new Counter()
-  }
+  val mockMetrics: Metrics = fakeApplication.injector.instanceOf[Metrics]
 
   implicit lazy val logMessageTransformer: LogMessageTransformer =
     fakeApplication.injector.instanceOf[LogMessageTransformer]

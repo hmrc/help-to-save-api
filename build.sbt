@@ -2,11 +2,12 @@ import sbt.Keys._
 import sbt._
 import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 import uk.gov.hmrc.SbtAutoBuildPlugin
 import wartremover.Wart
 
 val appName = "help-to-save-api"
+
+val silencerVersion = "1.7.11"
 
 lazy val appDependencies: Seq[ModuleID] = Seq(ws) ++ AppDependencies.compile ++ AppDependencies.test
 
@@ -53,7 +54,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalaSettings: _*)
   .settings(majorVersion := 2)
   .settings(scalaVersion := "2.12.13")
-  .settings(publishingSettings: _*)
   .settings(defaultSettings(): _*)
   .settings(PlayKeys.playDefaultPort := 7004)
   .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "resources")
@@ -62,7 +62,6 @@ lazy val microservice = Project(appName, file("."))
   // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
   // scalamock, (Equals) seems to struggle with stub generator AutoGen and (NonUnitStatements) is
   // imcompatible with a lot of WordSpec
-
   .settings(
     wartremoverExcluded ++=
       (Compile / routes).value ++
@@ -82,9 +81,12 @@ lazy val microservice = Project(appName, file("."))
     IntegrationTest / unmanagedSourceDirectories := Seq((IntegrationTest / baseDirectory).value / "it"),
     addTestReportOption(IntegrationTest, "int-test-reports"),
     //testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
-    IntegrationTest / parallelExecution := false
+    IntegrationTest / parallelExecution := false,
+    libraryDependencies ++= Seq(
+      compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+      "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
+    )
   )
-  
 
 lazy val compileAll = taskKey[Unit]("Compiles sources in all configurations.")
 

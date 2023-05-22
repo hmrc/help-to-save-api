@@ -27,5 +27,3 @@ There are some combinations of parameters that are allowed by the JSON schema of
 &nbsp&nbsp“accountExists” : true 
 }
 </pre>
-
-

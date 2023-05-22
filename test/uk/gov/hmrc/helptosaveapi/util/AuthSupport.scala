@@ -16,42 +16,35 @@
 
 package uk.gov.hmrc.helptosaveapi.util
 
+import org.mockito.ArgumentMatchersSugar.*
+import org.mockito.stubbing.ScalaOngoingStubbing
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait AuthSupport extends TestSupport {
 
   val nino = "AE123456C"
 
-  val ggCredentials = GGCredId("123-gg")
+  val ggCredentials: GGCredId = GGCredId("123-gg")
 
-  val privilegedCredentials = PAClientId("123-pa")
+  val privilegedCredentials: PAClientId = PAClientId("123-pa")
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   def mockAuthResultWithFail()(ex: Throwable): Unit =
-    (mockAuthConnector
-      .authorise(_: Predicate, _: Retrieval[Option[String] ~ retrieve.Credentials])(
-        _: HeaderCarrier,
-        _: ExecutionContext
-      ))
-      .expects(authProviders, *, *, *)
-      .returning(Future.failed(ex))
+    mockAuthConnector
+      .authorise(*, *)(*, *)
+      .returns(Future.failed(ex))
 
-  def mockAuthResultWithSuccess[A](expectedRetrieval: Retrieval[A])(result: A) =
-    (mockAuthConnector
-      .authorise(_: Predicate, _: Retrieval[A])(_: HeaderCarrier, _: ExecutionContext))
-      .expects(authProviders, expectedRetrieval, *, *)
-      .returning(Future.successful(result))
-
+  def mockAuthResultWithSuccess[A](expectedRetrieval: Retrieval[A])(result: A): ScalaOngoingStubbing[Future[A]] =
+    mockAuthConnector
+      .authorise(*, expectedRetrieval)(*, *)
+      .returns(Future.successful(result))
 }
 
 object AuthSupport {
@@ -59,7 +52,5 @@ object AuthSupport {
   implicit class TildeOps[A, B](val t: A ~ B) {
 
     def and[C](c: C): A ~ B ~ C = new ~(t, c)
-
   }
-
 }
