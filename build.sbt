@@ -14,19 +14,6 @@ lazy val appDependencies: Seq[ModuleID] = Seq(ws) ++ AppDependencies.compile ++ 
 lazy val plugins: Seq[Plugins] = Seq.empty
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
-lazy val scoverageSettings = {
-  import scoverage.ScoverageKeys
-  Seq(
-    // Semicolon-separated list of regexs matching classes to exclude
-    ScoverageKeys.coverageExcludedPackages := "<empty>;.*Reverse.*;.*config.*;.*(AuthService|BuildInfo|Routes|JsErrorOps|Metrics).*;.*http.*",
-    ScoverageKeys.coverageExcludedFiles := ".*ApplicationRegistration.*;.*RegistrationModule.*",
-    ScoverageKeys.coverageMinimumStmtTotal := 95,
-    ScoverageKeys.coverageFailOnMinimum := true,
-    ScoverageKeys.coverageHighlighting := true,
-    Test / parallelExecution := false
-  )
-}
-
 lazy val wartRemoverSettings = {
   // list of warts here: http://www.wartremover.org/doc/warts.html
   val excludedWarts = Seq(
@@ -50,7 +37,8 @@ lazy val microservice = Project(appName, file("."))
     Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtDistributablesPlugin) ++ plugins: _*
   )
   .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
-  .settings(playSettings ++ scoverageSettings: _*)
+  .settings(playSettings)
+  .settings(CodeCoverageSettings.settings *)
   .settings(scalaSettings: _*)
   .settings(majorVersion := 2)
   .settings(scalaVersion := "2.12.13")
