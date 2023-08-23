@@ -1,6 +1,6 @@
 import sbt.Keys._
 import sbt._
-import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings}
+import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.SbtAutoBuildPlugin
 import wartremover.Wart
@@ -62,14 +62,7 @@ lazy val microservice = Project(appName, file("."))
   )
   .settings(scalacOptions += "-Xcheckinit")
   .settings(Compile / scalacOptions -= "utf8")
-  .configs(IntegrationTest)
-  .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(
-    IntegrationTest / Keys.fork := false,
-    IntegrationTest / unmanagedSourceDirectories := Seq((IntegrationTest / baseDirectory).value / "it"),
-    addTestReportOption(IntegrationTest, "int-test-reports"),
-    //testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
-    IntegrationTest / parallelExecution := false,
     libraryDependencies ++= Seq(
       compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
       "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
@@ -80,6 +73,5 @@ lazy val compileAll = taskKey[Unit]("Compiles sources in all configurations.")
 
 compileAll := {
   val a = (Test / compile).value
-  val b = (IntegrationTest / compile).value
   ()
 }
