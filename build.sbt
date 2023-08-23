@@ -1,18 +1,11 @@
-import sbt.Keys._
-import sbt._
-import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
+import sbt.Keys.*
+import sbt.*
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import uk.gov.hmrc.SbtAutoBuildPlugin
 import wartremover.Wart
 
 val appName = "help-to-save-api"
 
 val silencerVersion = "1.7.11"
-
-lazy val appDependencies: Seq[ModuleID] = Seq(ws) ++ AppDependencies.compile ++ AppDependencies.test
-
-lazy val plugins: Seq[Plugins] = Seq.empty
-lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
 lazy val wartRemoverSettings = {
   // list of warts here: http://www.wartremover.org/doc/warts.html
@@ -30,18 +23,11 @@ lazy val wartRemoverSettings = {
   )
 }
 
-lazy val catsSettings = scalacOptions += "-Ypartial-unification"
-
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(
-    Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtDistributablesPlugin) ++ plugins: _*
-  )
-  .settings(playSettings)
+  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .settings(CodeCoverageSettings.settings *)
-  .settings(scalaSettings: _*)
   .settings(majorVersion := 2)
   .settings(scalaVersion := "2.12.13")
-  .settings(defaultSettings(): _*)
   .settings(PlayKeys.playDefaultPort := 7004)
   .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "resources")
   .settings(scalacOptions += "-P:silencer:pathFilters=routes")
@@ -55,21 +41,11 @@ lazy val microservice = Project(appName, file("."))
         Seq(sourceManaged.value / "main" / "sbt-buildinfo" / "BuildInfo.scala")
   )
   .settings(
-    libraryDependencies ++= appDependencies,
-    retrieveManaged := false
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
   )
-  .settings(scalacOptions += "-Xcheckinit")
-  .settings(Compile / scalacOptions -= "utf8")
   .settings(
     libraryDependencies ++= Seq(
       compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
       "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
     )
   )
-
-lazy val compileAll = taskKey[Unit]("Compiles sources in all configurations.")
-
-compileAll := {
-  val a = (Test / compile).value
-  ()
-}
