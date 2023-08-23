@@ -1,9 +1,8 @@
 help-to-save-api
 ================
 
-Allows requests to Help to Save from third parties outside of MDTP through the API platform. Access to this API is private - if access
-is required please contact the Help to Save team. 
-
+Allows requests to Help to Save from third parties outside MDTP through the API platform. Access to this API is private - if access
+is required please contact the Help to Save team.
 
 Table of Contents
 =================
@@ -41,7 +40,7 @@ To test the RAML documentation, run this command to use service manager to start
 - Run the new cloned api-documentation-frontend microservice using its run_local_with_dependencies script.
 
 ```
-sm --start API_DEFINITION THIRD_PARTY_APPLICATION API_EXAMPLE_MICROSERVICE API_PLATFORM_MICROSERVICE THIRD_PARTY_DEVELOPER_FRONTEND CONTACT_FRONTEND API_PLATFORM_XML_SERVICES
+sm2 --start API_DEFINITION THIRD_PARTY_APPLICATION API_EXAMPLE_MICROSERVICE API_PLATFORM_MICROSERVICE THIRD_PARTY_DEVELOPER_FRONTEND CONTACT_FRONTEND API_PLATFORM_XML_SERVICES
 sbt "run -Dhttp.port=9680 $*"
 ```
 - Enter the URL of the OpenAPI specification file that is being developed. For example if running open-api-example-microservice locally then enter URL `http://localhost:servicePort/api/conf/1.0/application.yaml`
