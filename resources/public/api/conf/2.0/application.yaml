@@ -64,14 +64,14 @@ paths:
         - $ref: '#/components/parameters/acceptHeader'
       responses:
         '200':
-          description: Account information was succsessfully retreived
+          description: Account information was successfully retrieved
           headers: {}
           content:
             application/json:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/IndividualsHelpToSaveAccountResponse'
-                  - description: Account information was succsessfully retreived
+                  - description: Account information was successfully retrieved
                     example:
                       accountNumber: '1100000000001'
                       headroom: 40
@@ -141,7 +141,7 @@ paths:
 
         https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide, noting the timezone should be a |
 
-        UTC offset as outlined in the righthand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
+        UTC offset as outlined in the right hand column at https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
           \n#### Authorisation
         
           \nThis endpoint is [user-restricted](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/user-restricted-endpoints) and requires `Authorization` header containing an OAUTH 2.0 Bearer Token with the `write:help-to-save` scope.
