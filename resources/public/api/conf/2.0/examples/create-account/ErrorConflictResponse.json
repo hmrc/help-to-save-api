@@ -1,4 +1,0 @@
-{
-  "code": "ACCOUNT_ALREADY_EXISTS",
-  "message": "Account create request received for account that already exists"
-}
