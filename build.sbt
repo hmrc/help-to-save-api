@@ -36,7 +36,6 @@ lazy val microservice = Project(appName, file("."))
   .enablePlugins(
     Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtDistributablesPlugin) ++ plugins: _*
   )
-  .settings(addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17"))
   .settings(playSettings)
   .settings(CodeCoverageSettings.settings *)
   .settings(scalaSettings: _*)
@@ -44,7 +43,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalaVersion := "2.12.13")
   .settings(defaultSettings(): _*)
   .settings(PlayKeys.playDefaultPort := 7004)
-  .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "resources")
   .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "resources")
   .settings(scalacOptions += "-P:silencer:pathFilters=routes")
   // disable some wart remover checks in tests - (Any, Null, PublicInference) seems to struggle with
