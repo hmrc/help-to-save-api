@@ -78,7 +78,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   )(response: Either[String, Unit]) =
     mockCreateAccountRequestValidatorM
       .validateRequest(request)
-      .returns(fromEither(response).bimap(e ⇒ NonEmptyList.of(e), _ ⇒ request))
+      .returns(fromEither(response).bimap(e => NonEmptyList.of(e), _ => request))
 
   private def mockEligibilityCheckRequestValidator(
     nino: String
@@ -92,7 +92,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       .checkEligibility(nino, correlationId)(*, *)
       .returns(
         response.fold(
-          e ⇒ Future.failed(new Exception(e)),
+          e => Future.failed(new Exception(e)),
           Future.successful
         )
       )
@@ -104,7 +104,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       .createAccount(expectedBody, *, *, *)
       .returns(
         response.fold(
-          e ⇒ Future.failed(new Exception(e)),
+          e => Future.failed(new Exception(e)),
           Future.successful
         )
       )
@@ -116,7 +116,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       .getAccount(nino, systemId, *)(*, *)
       .returns(
         response.fold(
-          e ⇒ Future.failed(new Exception(e)),
+          e => Future.failed(new Exception(e)),
           Future.successful
         )
       )
@@ -128,7 +128,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       .storeEmail(encodedEmail, nino, correlationId)(*, *)
       .returns(
         response.fold(
-          e ⇒ Future.failed(new Exception(e)),
+          e => Future.failed(new Exception(e)),
           Future.successful
         )
       )
@@ -156,8 +156,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         Future.successful(
           response
             .fold(
-              _ ⇒ HttpResponse(500, ""),
-              isValid ⇒ HttpResponse(200, Json.parse(s"""{"isValid":$isValid}"""), Map.empty[String, Seq[String]])
+              _ => HttpResponse(500, ""),
+              isValid => HttpResponse(200, Json.parse(s"""{"isValid":$isValid}"""), Map.empty[String, Seq[String]])
             )
         )
       )
@@ -168,7 +168,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
     helpToSaveConnector
       .getUserEnrolmentStatus(nino, correlationId)(*, *)
       .returns(
-        jsonResponse.fold[Future[HttpResponse]](Future.failed(new Exception("Oh no!"))) { body ⇒
+        jsonResponse.fold[Future[HttpResponse]](Future.failed(new Exception("Oh no!"))) { body =>
           Future.successful(HttpResponse(200, body, Map.empty[String, Seq[String]]))
         }
       )
@@ -475,7 +475,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
               minimalJson("online")
                 .as[JsObject]
                 .deepMerge(
-                  JsObject(List("body" → JsObject(List("nino" → JsString("nino")))))
+                  JsObject(List("body" -> JsObject(List("nino" -> JsString("nino")))))
                 )
             )
 
@@ -505,8 +505,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
                 .deepMerge(
                   JsObject(
                     List(
-                      "body" → JsObject(
-                        List("contactDetails" → JsObject(List("communicationPreference" → JsString("comms"))))
+                      "body" -> JsObject(
+                        List("contactDetails" -> JsObject(List("communicationPreference" -> JsString("comms"))))
                       )
                     )
                   )
@@ -536,7 +536,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
                 .as[JsObject]
                 .deepMerge(
                   JsObject(
-                    List("body" → JsObject(List("contactDetails" → JsObject(List("email" → JsString("email"))))))
+                    List("body" -> JsObject(List("contactDetails" -> JsObject(List("email" -> JsString("email"))))))
                   )
                 )
             )
@@ -761,7 +761,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
               minimalJson("online")
                 .as[JsObject]
                 .deepMerge(
-                  JsObject(List("body" → JsObject(List("nino" → JsString("nino1")))))
+                  JsObject(List("body" -> JsObject(List("nino" -> JsString("nino1")))))
                 )
             )
 
@@ -1015,8 +1015,8 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         )
 
         await(resultFuture) match {
-          case Left(e: ApiValidationError) ⇒ e.code shouldBe "VALIDATION_ERROR"
-          case other ⇒ fail(s"Expected Left(ApiValidationError) but got $other")
+          case Left(e: ApiValidationError) => e.code shouldBe "VALIDATION_ERROR"
+          case other => fail(s"Expected Left(ApiValidationError) but got $other")
         }
       }
     }

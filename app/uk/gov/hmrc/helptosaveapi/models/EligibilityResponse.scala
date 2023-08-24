@@ -29,9 +29,9 @@ object EligibilityResponse {
 
     override def writes(response: EligibilityResponse): JsValue =
       response match {
-        case a: ApiEligibilityResponse ⇒
+        case a: ApiEligibilityResponse =>
           Json.toJson(a)
-        case b: AccountAlreadyExists ⇒
+        case b: AccountAlreadyExists =>
           accountAlreadyExistsJson
       }
   }
@@ -41,11 +41,11 @@ object EligibilityResponse {
 
     override def reads(json: JsValue): JsResult[EligibilityResponse] =
       json.asOpt[ApiEligibilityResponse] match {
-        case Some(eligibilityResponse) ⇒ JsSuccess(eligibilityResponse)
-        case None ⇒
+        case Some(eligibilityResponse) => JsSuccess(eligibilityResponse)
+        case None =>
           json.\("accountExists").asOpt[Boolean] match {
-            case Some(true) ⇒ JsSuccess(AccountAlreadyExists())
-            case _ ⇒ JsError(s"couldn't parse eligibility json from mongo, json=$json")
+            case Some(true) => JsSuccess(AccountAlreadyExists())
+            case _ => JsError(s"couldn't parse eligibility json from mongo, json=$json")
           }
       }
   }

@@ -32,12 +32,12 @@ class DocumentationControllerSpec extends TestSupport {
   val access: String = "PRIVATE"
 
   val configuration: Configuration = Configuration(
-    "api.access.version-2.0.type" → access,
-    "api.access.version-2.0.enabled" → true
+    "api.access.version-2.0.type" -> access,
+    "api.access.version-2.0.enabled" -> true
   )
   val controller = new DocumentationController(configuration, mockCc, mockAssets)
 
-  val apiAccess: String ⇒ APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
+  val apiAccess: String => APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
   "definition" must {
     "return the definition txt file when called" in {

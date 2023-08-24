@@ -39,9 +39,9 @@ class APIHttpHeaderValidatorSpec extends TestSupport{
         validator.validateHttpHeaders(true)(requestWithHeaders(headers))
 
       val validRequestHeaders: Map[String, String] = Map(
-        APIHttpHeaderValidator.expectedTxmHeaders.map(_ → "value") ++ List(
-          HeaderNames.CONTENT_TYPE → ContentTypes.JSON,
-          HeaderNames.ACCEPT → "application/vnd.hmrc.2.0+json"
+        APIHttpHeaderValidator.expectedTxmHeaders.map(_ -> "value") ++ List(
+          HeaderNames.CONTENT_TYPE -> ContentTypes.JSON,
+          HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"
         ): _*
       )
 
@@ -51,8 +51,8 @@ class APIHttpHeaderValidatorSpec extends TestSupport{
     "handling eligibility requests" must {
 
       val validRequestHeaders: Map[String, String] = Map(
-        APIHttpHeaderValidator.expectedTxmHeaders.map(_ → "value") ++ List(
-          HeaderNames.ACCEPT → "application/vnd.hmrc.2.0+json"
+        APIHttpHeaderValidator.expectedTxmHeaders.map(_ -> "value") ++ List(
+          HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"
         ): _*
       )
 
@@ -64,7 +64,7 @@ class APIHttpHeaderValidatorSpec extends TestSupport{
 
     def testCommon(
       headers: Map[String, String],
-      result: Map[String, String] ⇒ ValidatedNel[String, Request[Any]],
+      result: Map[String, String] => ValidatedNel[String, Request[Any]],
       checkContentType: Boolean
     ): Unit = {
 
@@ -95,8 +95,8 @@ class APIHttpHeaderValidatorSpec extends TestSupport{
         }
 
         "does not have all the expected TxM headers" in {
-          (1 to APIHttpHeaderValidator.expectedTxmHeaders.size).foreach { size ⇒
-            APIHttpHeaderValidator.expectedTxmHeaders.combinations(size).foreach { h ⇒
+          (1 to APIHttpHeaderValidator.expectedTxmHeaders.size).foreach { size =>
+            APIHttpHeaderValidator.expectedTxmHeaders.combinations(size).foreach { h =>
               result(headers -- h).isInvalid shouldBe true
             }
           }

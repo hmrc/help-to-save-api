@@ -21,7 +21,7 @@ import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AuthorisationException.fromString
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, nino ⇒ v2Nino}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, nino => v2Nino}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, Logging}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -39,9 +39,9 @@ class AuthSpec extends AuthSupport {
 
   val retrieve: Retrieval[Option[String] ~ Option[Credentials]] = v2Nino and credentials
 
-  private def callAuth = auth.authorised(retrieve) { _ ⇒
+  private def callAuth = auth.authorised(retrieve) { _ =>
     {
-      case nino ~ credentials ⇒
+      case nino ~ credentials =>
         Future.successful(Ok("authSuccess"))
     }
   }
@@ -61,21 +61,21 @@ class AuthSpec extends AuthSupport {
       def mockAuthWith(error: String) = mockAuthResultWithFail()(fromString(error))
 
       val exceptions = List(
-        "InsufficientConfidenceLevel" → Status.FORBIDDEN,
-        "InsufficientEnrolments" → Status.FORBIDDEN,
-        "UnsupportedAffinityGroup" → Status.FORBIDDEN,
-        "UnsupportedCredentialRole" → Status.FORBIDDEN,
-        "UnsupportedAuthProvider" → Status.FORBIDDEN,
-        "BearerTokenExpired" → Status.UNAUTHORIZED,
-        "MissingBearerToken" → Status.UNAUTHORIZED,
-        "InvalidBearerToken" → Status.UNAUTHORIZED,
-        "SessionRecordNotFound" → Status.UNAUTHORIZED,
-        "IncorrectCredentialStrength" → Status.FORBIDDEN,
-        "unknown-blah" → Status.INTERNAL_SERVER_ERROR
+        "InsufficientConfidenceLevel" -> Status.FORBIDDEN,
+        "InsufficientEnrolments" -> Status.FORBIDDEN,
+        "UnsupportedAffinityGroup" -> Status.FORBIDDEN,
+        "UnsupportedCredentialRole" -> Status.FORBIDDEN,
+        "UnsupportedAuthProvider" -> Status.FORBIDDEN,
+        "BearerTokenExpired" -> Status.UNAUTHORIZED,
+        "MissingBearerToken" -> Status.UNAUTHORIZED,
+        "InvalidBearerToken" -> Status.UNAUTHORIZED,
+        "SessionRecordNotFound" -> Status.UNAUTHORIZED,
+        "IncorrectCredentialStrength" -> Status.FORBIDDEN,
+        "unknown-blah" -> Status.INTERNAL_SERVER_ERROR
       )
 
       exceptions.foreach {
-        case (error, expectedStatus) ⇒
+        case (error, expectedStatus) =>
           mockAuthWith(error)
           val result = callAuth(FakeRequest())
           status(result) shouldBe expectedStatus

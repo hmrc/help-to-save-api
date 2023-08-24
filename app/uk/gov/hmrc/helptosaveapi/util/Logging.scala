@@ -50,15 +50,15 @@ trait LogMessageTransformer {
 @Singleton
 class LogMessageTransformerImpl @Inject() (configuration: Configuration) extends LogMessageTransformer {
 
-  private val ninoPrefix: String ⇒ String =
-    if (configuration.underlying.getBoolean("nino-logging.enabled")) { nino ⇒
+  private val ninoPrefix: String => String =
+    if (configuration.underlying.getBoolean("nino-logging.enabled")) { nino =>
       s"For NINO [$nino], "
-    } else { _ ⇒
+    } else { _ =>
       ""
     }
 
-  private val logAdditionalParams: Seq[(String, String)] ⇒ String = { params ⇒
-    params.toList.foldLeft("") { (acc, tuple) ⇒
+  private val logAdditionalParams: Seq[(String, String)] => String = { params =>
+    params.toList.foldLeft("") { (acc, tuple) =>
       s"${acc}For ${tuple._1} [${tuple._2}], "
     }
   }

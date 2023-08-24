@@ -101,7 +101,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
     nino: String,
     correlationId: UUID
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(eligibilityCheckUrl, Map("nino" → nino), Map(correlationIdHeaderName -> correlationId.toString))
+    http.get(eligibilityCheckUrl, Map("nino" -> nino), Map(correlationIdHeaderName -> correlationId.toString))
 
   override def getAccount(nino: String, systemId: String, correlationId: UUID)(
     implicit hc: HeaderCarrier,
@@ -132,7 +132,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
     nino: String,
     correlationId: UUID
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    http.get(getEnrolmentStatusURL, Map("nino" → nino), Map(correlationIdHeaderName -> correlationId.toString))
+    http.get(getEnrolmentStatusURL, Map("nino" -> nino), Map(correlationIdHeaderName -> correlationId.toString))
 }
 
 object HelpToSaveConnectorImpl {

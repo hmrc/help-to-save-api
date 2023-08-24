@@ -25,7 +25,7 @@ import uk.gov.hmrc.helptosaveapi.models.{ApiAccessError, ApiBackendError, ApiErr
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountField._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 
-private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
+private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService =>
 
   def fillInMissingDetailsGG(
     json: JsValue, // scalastyle:ignore cyclomatic.complexity
@@ -35,29 +35,29 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
     import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountRequest._
 
     json.registrationChannel() match {
-      case Some(JsString(registrationChannel)) ⇒
+      case Some(JsString(registrationChannel)) =>
         json.nino() match {
-          case Some(JsString(bodyNINO)) ⇒
+          case Some(JsString(bodyNINO)) =>
             retrievedUserDetails.nino match {
-              case Some(retrievedNINO) ⇒
+              case Some(retrievedNINO) =>
                 if (bodyNINO =!= retrievedNINO) {
                   Left(ApiAccessError())
                 } else {
                   collate(json, missingDetails, retrievedUserDetails, retrievedNINO, registrationChannel)
                 }
-              case None ⇒ Left(ApiAccessError()) // No retrieved NINO
+              case None => Left(ApiAccessError()) // No retrieved NINO
             }
-          case Some(_) ⇒ Left(ApiValidationError("nino is not of expected type String"))
-          case None ⇒ // No bodyNINO
+          case Some(_) => Left(ApiValidationError("nino is not of expected type String"))
+          case None => // No bodyNINO
             retrievedUserDetails.nino match {
-              case Some(nino) ⇒ collate(json, missingDetails, retrievedUserDetails, nino, registrationChannel)
-              case None ⇒ Left(ApiAccessError())
+              case Some(nino) => collate(json, missingDetails, retrievedUserDetails, nino, registrationChannel)
+              case None => Left(ApiAccessError())
             }
         }
 
-      case Some(_) ⇒ Left(ApiValidationError("registration channel is not of expected type String"))
+      case Some(_) => Left(ApiValidationError("registration channel is not of expected type String"))
 
-      case None ⇒ Left(ApiValidationError("No registration channel was given"))
+      case None => Left(ApiValidationError("No registration channel was given"))
     }
 
   }
@@ -80,66 +80,66 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService ⇒
           .communicationPreference()
           .fold {
             if (registrationChannel === "online") {
-              CommunicationPreference → Some(toJsValue("02"))
+              CommunicationPreference -> Some(toJsValue("02"))
             } else if (registrationChannel === "callCentre") {
-              CommunicationPreference → Some(toJsValue("00"))
+              CommunicationPreference -> Some(toJsValue("00"))
             } else {
-              CommunicationPreference → None
+              CommunicationPreference -> None
             }
-          }(CommunicationPreference → Some(_))
+          }(CommunicationPreference -> Some(_))
 
       val email: List[(CreateAccountField, Option[JsValue])] =
         json
           .email()
           .fold(
             if (registrationChannel === "online") {
-              List(Email → retrievedUserDetails.email.map(toJsValue(_)))
+              List(Email -> retrievedUserDetails.email.map(toJsValue(_)))
             } else {
               List.empty
             }
-          )(e ⇒ List(Email → Some(e)))
+          )(e => List(Email -> Some(e)))
 
       communicationPreference :: email ::: missingDetails.toList.flatMap {
-        case Forename ⇒
-          List(Forename → retrievedUserDetails.forename.map(toJsValue(_)))
+        case Forename =>
+          List(Forename -> retrievedUserDetails.forename.map(toJsValue(_)))
 
-        case Surname ⇒
-          List(Surname → retrievedUserDetails.surname.map(toJsValue(_)))
+        case Surname =>
+          List(Surname -> retrievedUserDetails.surname.map(toJsValue(_)))
 
-        case DateOfBirth ⇒
-          List(DateOfBirth → retrievedUserDetails.dateOfBirth.map(CreateAccountBody.dateFormat.writes))
+        case DateOfBirth =>
+          List(DateOfBirth -> retrievedUserDetails.dateOfBirth.map(CreateAccountBody.dateFormat.writes))
 
-        case NINO ⇒
-          List(NINO → Some(toJsValue(nino)))
+        case NINO =>
+          List(NINO -> Some(toJsValue(nino)))
 
-        case CreateAccountField.Address ⇒
+        case CreateAccountField.Address =>
           val addressFields: Option[List[(CreateAccountField, Option[JsValue])]] =
             (
               retrievedUserDetails.address.flatMap(_.line1),
               retrievedUserDetails.address.flatMap(_.line2),
               retrievedUserDetails.address.flatMap(_.postCode)
             ).mapN {
-              case (l1, l2, p) ⇒
+              case (l1, l2, p) =>
                 List[(CreateAccountField, JsValue)](
-                  AddressLine1 → toJsValue(l1),
-                  AddressLine2 → toJsValue(l2),
-                  Postcode → toJsValue(p),
-                  AddressLine3 → toJsValue(retrievedUserDetails.address.flatMap(_.line3)),
-                  AddressLine4 → toJsValue(retrievedUserDetails.address.flatMap(_.line4)),
-                  AddressLine5 → toJsValue(retrievedUserDetails.address.flatMap(_.line5)),
-                  CountryCode → toJsValue(retrievedUserDetails.address.flatMap(_.countryCode))
-                ).map { case (k, v) ⇒ k → Some(v) }
+                  AddressLine1 -> toJsValue(l1),
+                  AddressLine2 -> toJsValue(l2),
+                  Postcode -> toJsValue(p),
+                  AddressLine3 -> toJsValue(retrievedUserDetails.address.flatMap(_.line3)),
+                  AddressLine4 -> toJsValue(retrievedUserDetails.address.flatMap(_.line4)),
+                  AddressLine5 -> toJsValue(retrievedUserDetails.address.flatMap(_.line5)),
+                  CountryCode -> toJsValue(retrievedUserDetails.address.flatMap(_.countryCode))
+                ).map { case (k, v) => k -> Some(v) }
             }
-          addressFields.getOrElse(List(CreateAccountField.Address → None))
+          addressFields.getOrElse(List(CreateAccountField.Address -> None))
 
-        case RegistrationChannel ⇒
-          List(RegistrationChannel → None)
+        case RegistrationChannel =>
+          List(RegistrationChannel -> None)
       }
     }
 
     val (data, stillMissing) = {
-      collatedData.collect { case (field, Some(value)) ⇒ field → value }.toMap →
-        collatedData.collect { case (field, None) ⇒ field }
+      collatedData.collect { case (field, Some(value)) => field -> value }.toMap ->
+        collatedData.collect { case (field, None) => field }
     }
 
     if (stillMissing.nonEmpty) {

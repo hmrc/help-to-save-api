@@ -19,7 +19,7 @@ package uk.gov.hmrc.helptosaveapi.repo
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.mongo.test.MongoSupport
 
-trait MongoTestSupport extends MongoSupport with BeforeAndAfterEach with BeforeAndAfterAll { this: Suite ⇒
+trait MongoTestSupport extends MongoSupport with BeforeAndAfterEach with BeforeAndAfterAll { this: Suite =>
 
   abstract override def beforeEach(): Unit = {
     super.beforeEach()

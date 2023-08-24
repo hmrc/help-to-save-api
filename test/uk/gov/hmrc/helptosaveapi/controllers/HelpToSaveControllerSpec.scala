@@ -196,7 +196,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
             val expectedRetrievedUserDetails =
               u.copy(forename = Some("c"), surname = Some("d"), dateOfBirth = Some(LocalDate.of(3, 2, 1)))
-            retrieval → expectedRetrievedUserDetails
+            retrieval -> expectedRetrievedUserDetails
           }
 
           mockAuthResultWithSuccess(v2AuthProviderId)(ggCredentials)

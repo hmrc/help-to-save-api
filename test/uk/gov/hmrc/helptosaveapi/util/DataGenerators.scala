@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.helptosaveapi.util
 
-import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
-
 import org.scalacheck.Gen
+import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest, RetrievedUserDetails}
-import uk.gov.hmrc.smartstub.AutoGen
+import uk.gov.hmrc.smartstub.{AdvGen, Enumerable}
+
+import java.time.{Instant, LocalDate, ZoneId, ZonedDateTime}
 
 object DataGenerators {
 
@@ -31,24 +32,24 @@ object DataGenerators {
 
   val createAccountHeaderGen: Gen[CreateAccountHeader] =
     for {
-      version ← Gen.identifier
-      date ← Gen.choose(0L, 100L).map(t ⇒ ZonedDateTime.ofInstant(Instant.ofEpochSecond(t), ZoneId.of("Etc/UTC")))
-      clientCode ← clientCode
-      correlationId ← Gen.uuid
+      version <- Gen.identifier
+      date <- Gen.choose(0L, 100L).map(t => ZonedDateTime.ofInstant(Instant.ofEpochSecond(t), ZoneId.of("Etc/UTC")))
+      clientCode <- clientCode
+      correlationId <- Gen.uuid
     } yield CreateAccountHeader(version, date, clientCode, correlationId)
 
   val contactDetailsGen: Gen[ContactDetails] =
     for {
-      line1 ← Gen.identifier
-      line2 ← Gen.identifier
-      line3 ← Gen.option(Gen.identifier)
-      line4 ← Gen.option(Gen.identifier)
-      line5 ← Gen.option(Gen.identifier)
-      postcode ← Gen.identifier
-      countryCode ← Gen.option(Gen.alphaStr)
-      communicationPreference ← Gen.alphaStr
-      phoneNumber ← Gen.option(Gen.numStr)
-      email ← Gen.option(Gen.alphaStr)
+      line1 <- Gen.identifier
+      line2 <- Gen.identifier
+      line3 <- Gen.option(Gen.identifier)
+      line4 <- Gen.option(Gen.identifier)
+      line5 <- Gen.option(Gen.identifier)
+      postcode <- Gen.identifier
+      countryCode <- Gen.option(Gen.alphaStr)
+      communicationPreference <- Gen.alphaStr
+      phoneNumber <- Gen.option(Gen.numStr)
+      email <- Gen.option(Gen.alphaStr)
     } yield ContactDetails(
       line1,
       line2,
@@ -64,30 +65,50 @@ object DataGenerators {
 
   val bankDetailsGen: Gen[BankDetails] =
     for {
-      sortCode ← Gen.numStr
-      accountNumber ← Gen.numStr
-      accountName ← Gen.alphaStr
-      rollNumber ← Gen.option(Gen.identifier)
+      sortCode <- Gen.numStr
+      accountNumber <- Gen.numStr
+      accountName <- Gen.alphaStr
+      rollNumber <- Gen.option(Gen.identifier)
     } yield BankDetails(accountNumber, sortCode, accountName, rollNumber)
 
   val validCreateAccountBodyGen: Gen[CreateAccountBody] =
     for {
-      nino ← Gen.identifier
-      name ← Gen.alphaStr
-      surname ← Gen.alphaStr
-      dob ← Gen.choose(1L, 100L).map(LocalDate.ofEpochDay)
-      contactDetails ← contactDetailsGen
-      registrationChannel ← Gen.alphaStr
-      bankDetails ← Gen.option(bankDetailsGen)
-      systemId ← clientCode.map(code ⇒ "MDTP-API-" + code)
+      nino <- Gen.identifier
+      name <- Gen.alphaStr
+      surname <- Gen.alphaStr
+      dob <- Gen.choose(1L, 100L).map(LocalDate.ofEpochDay)
+      contactDetails <- contactDetailsGen
+      registrationChannel <- Gen.alphaStr
+      bankDetails <- Gen.option(bankDetailsGen)
+      systemId <- clientCode.map(code => "MDTP-API-" + code)
     } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel, bankDetails, systemId)
 
   val validCreateAccountRequestGen: Gen[CreateAccountRequest] =
     for {
-      header ← createAccountHeaderGen
-      body ← validCreateAccountBodyGen
+      header <- createAccountHeaderGen
+      body <- validCreateAccountBodyGen
     } yield CreateAccountRequest(header, body)
 
-  val retrievedUserDetailsGen: Gen[RetrievedUserDetails] = AutoGen[RetrievedUserDetails]
+  val addressGen: Gen[ItmpAddress] =
+    for {
+      line1 <- Gen.option(Gen.alphaStr)
+      line2 <- Gen.option(Gen.alphaStr)
+      line3 <- Gen.option(Gen.alphaStr)
+      line4 <- Gen.option(Gen.alphaStr)
+      line5 <- Gen.option(Gen.alphaStr)
+      postCode <- Gen.option(Gen.postcode)
+      countryName <- Gen.option(Gen.alphaStr)
+      countryCode <- Gen.option(Gen.alphaStr)
+    } yield ItmpAddress(line1, line2, line3, line4, line5, postCode, countryName, countryCode)
+
+  val retrievedUserDetailsGen: Gen[RetrievedUserDetails] =
+    for {
+    nino <- Gen.option(Enumerable.instances.ninoEnum.gen)
+    forename <- Gen.option(Gen.forename())
+    surname <- Gen.option(Gen.surname)
+    dateOfBirth <- Gen.option(Gen.date)
+    address <- Gen.option(addressGen)
+    email <- Gen.option(Gen.alphaStr)
+  } yield RetrievedUserDetails(nino, forename, surname, dateOfBirth, address, email)
 
 }

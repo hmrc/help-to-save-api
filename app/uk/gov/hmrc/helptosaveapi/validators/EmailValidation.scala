@@ -39,16 +39,16 @@ class EmailValidation @Inject() (configuration: Configuration) {
 
   private def invalid[A](message: String): ValidatedNel[String, A] = Invalid(NonEmptyList[String](message, Nil))
 
-  private def validatedFromBoolean[A](a: A)(predicate: A ⇒ Boolean, ifFalse: ⇒ String): ValidatedNel[String, A] =
+  private def validatedFromBoolean[A](a: A)(predicate: A => Boolean, ifFalse: => String): ValidatedNel[String, A] =
     if (predicate(a)) Valid(a) else invalid(ifFalse)
 
   private def charactersBeforeAndAfterChar(c: Char)(s: String): Option[(Int, Int)] = {
     @tailrec
     def loop(chars: List[Char], count: Int): Option[(Int, Int)] = chars match {
-      case Nil ⇒ None
-      case h :: t ⇒
+      case Nil => None
+      case h :: t =>
         if (h === c) {
-          Some(count → t.length)
+          Some(count -> t.length)
         } else {
           loop(t, count + 1)
         }
@@ -75,14 +75,14 @@ class EmailValidation @Inject() (configuration: Configuration) {
       validatedFromBoolean(domainPart)(_.contains('.'), invalidEmailError)
 
     val hasTextAfterAtSymbolButBeforeDotCheck: ValidOrErrorStrings[String] = validatedFromBoolean(domainPart)(
-      { text ⇒
+      { text =>
         text.contains('.') && text.substring(0, text.indexOf('.')).length > 0
       },
       invalidEmailError
     )
 
     val hasTextAfterDotCheck: ValidOrErrorStrings[String] = validatedFromBoolean(domainPart)(
-      { text ⇒
+      { text =>
         text.contains('.') && text.substring(text.lastIndexOf('.') + 1).length > 0
       },
       invalidEmailError
@@ -111,6 +111,6 @@ class EmailValidation @Inject() (configuration: Configuration) {
       domainLengthCheck,
       localBlankCheck,
       domainBlankCheck
-    ).mapN { case _ ⇒ trimmed }
+    ).mapN { case _ => trimmed }
   }
 }

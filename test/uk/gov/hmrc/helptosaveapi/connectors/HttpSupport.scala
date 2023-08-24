@@ -23,7 +23,7 @@ import uk.gov.hmrc.http.{HttpResponse, _}
 
 import scala.concurrent.Future
 
-trait HttpSupport { this: IdiomaticMockito with Matchers ⇒
+trait HttpSupport { this: IdiomaticMockito with Matchers =>
 
   val mockHttp: HttpClient = mock[HttpClient]
 

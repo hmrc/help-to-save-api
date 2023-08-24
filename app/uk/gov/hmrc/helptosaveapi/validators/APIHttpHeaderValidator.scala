@@ -34,21 +34,21 @@ class APIHttpHeaderValidator extends Logging {
   def contentTypeCheck(implicit request: Request[_]): ValidatedOrErrorString[Option[String]] =
     validationFromBoolean(request.contentType)(
       _.contains(ContentTypes.JSON),
-      contentType ⇒ s"content type was not JSON: ${contentType.getOrElse("")}"
+      contentType => s"content type was not JSON: ${contentType.getOrElse("")}"
     )
 
   def acceptCheck(implicit request: Request[_]): ValidatedOrErrorString[Headers] =
     validationFromBoolean(request.headers)(
       _.get(HeaderNames.ACCEPT).exists(_ === expectedAcceptType),
-      _ ⇒ s"accept header should match: '$expectedAcceptType'"
+      _ => s"accept header should match: '$expectedAcceptType'"
     )
 
   def txmHeadersCheck(implicit request: Request[_]): ValidatedOrErrorString[List[String]] = {
     val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(
-      expectedKey ⇒
+      expectedKey =>
         validationFromBoolean(expectedKey)(
           request.headers.get(_).isDefined,
-          _ ⇒ s"Could not find header '$expectedKey'"
+          _ => s"Could not find header '$expectedKey'"
         )
     )
     listOfValidations.traverse[Validation, String](identity)
@@ -56,9 +56,9 @@ class APIHttpHeaderValidator extends Logging {
 
   def validateHttpHeaders[A](contentTypeCk: Boolean)(implicit request: Request[A]): ValidatedOrErrorString[Request[A]] =
     if (contentTypeCk) {
-      (contentTypeCheck, acceptCheck, txmHeadersCheck).mapN { case _ ⇒ request }
+      (contentTypeCheck, acceptCheck, txmHeadersCheck).mapN { case _ => request }
     } else {
-      (acceptCheck, txmHeadersCheck).mapN { case _ ⇒ request }
+      (acceptCheck, txmHeadersCheck).mapN { case _ => request }
     }
 
 }

@@ -37,8 +37,8 @@ package object util {
 
   def maskNino(original: String): String =
     Option(original) match {
-      case Some(text) ⇒ ninoRegex.replaceAllIn(text, "<NINO>")
-      case None ⇒ original
+      case Some(text) => ninoRegex.replaceAllIn(text, "<NINO>")
+      case None => original
     }
 
   def base64Encode(input: String): String = new String(Base64.getEncoder.encode(input.getBytes))

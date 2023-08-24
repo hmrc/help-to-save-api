@@ -22,7 +22,7 @@ object Validation {
 
   type Validation[A] = ValidatedNel[String, A]
 
-  def validationFromBoolean[T, E](t: T)(predicate: T ⇒ Boolean, error: T ⇒ E): ValidatedNel[E, T] =
+  def validationFromBoolean[T, E](t: T)(predicate: T => Boolean, error: T => E): ValidatedNel[E, T] =
     if (predicate(t)) {
       Validated.Valid(t)
     } else {

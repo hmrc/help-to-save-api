@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 
 private[services] trait EmailBehaviour {
-  this: HelpToSaveApiService with Logging ⇒
+  this: HelpToSaveApiService with Logging =>
 
   val helpToSaveConnector: HelpToSaveConnector
   val pagerDutyAlerting: PagerDutyAlerting
@@ -44,12 +44,12 @@ private[services] trait EmailBehaviour {
     val correlationIdHeader = "requestCorrelationId" -> correlationId.toString
     helpToSaveConnector
       .storeEmail(base64Encode(email), nino, correlationId)
-      .map[Either[ApiError, Unit]] { response ⇒
+      .map[Either[ApiError, Unit]] { response =>
         response.status match {
-          case Status.OK ⇒
+          case Status.OK =>
             logger.info("successfully stored email for the api user", nino, correlationIdHeader)
             Right(())
-          case other: Int ⇒
+          case other: Int =>
             logger.warn(
               s"unexpected status storing email in mongo for the api user, status: $other",
               nino,
@@ -60,7 +60,7 @@ private[services] trait EmailBehaviour {
         }
       }
       .recover {
-        case e ⇒
+        case e =>
           logger.warn(s"error during storing email for the api user, error=${e.getMessage}")
           pagerDutyAlerting.alert("could not store email in mongo for the api user")
           Left(ApiBackendError())

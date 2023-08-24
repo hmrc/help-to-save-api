@@ -31,7 +31,7 @@ class HttpResponseOpsSpec extends TestSupport {
 
   case class ThrowingHttpResponse() extends HttpResponse {
 
-    override def header(key: String): Option[String] = allHeaders.get(key).flatMap { list ⇒
+    override def header(key: String): Option[String] = allHeaders.get(key).flatMap { list =>
       list.headOption
     }
 

@@ -26,29 +26,29 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait Auth extends AuthorisedFunctions { this: BackendController with Logging ⇒
+trait Auth extends AuthorisedFunctions { this: BackendController with Logging =>
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 
-  type HtsAction[A] = Request[AnyContent] ⇒ A ⇒ Future[Result]
+  type HtsAction[A] = Request[AnyContent] => A => Future[Result]
 
   def authorised[A](retrievals: Retrieval[A])(action: HtsAction[A]): Action[AnyContent] =
-    Action.async { implicit request ⇒
+    Action.async { implicit request =>
       authorised(authProviders)
         .retrieve(retrievals) { action(request) }
         .recover { handleFailure() }
     }
 
   def handleFailure(): PartialFunction[Throwable, Result] = {
-    case e: NoActiveSession ⇒
+    case e: NoActiveSession =>
       logger.warn(s"no active session was found for api user, reason: ${e.reason}")
       Unauthorized
 
-    case e: InternalError ⇒
+    case e: InternalError =>
       logger.warn(s"Could not authenticate user due to internal error: ${e.reason}")
       InternalServerError
 
-    case ex: AuthorisationException ⇒
+    case ex: AuthorisationException =>
       logger.warn(s"could not authenticate api user, error: ${ex.reason}")
       Forbidden
   }
