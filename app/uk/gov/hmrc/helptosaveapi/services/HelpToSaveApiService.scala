@@ -294,7 +294,7 @@ class HelpToSaveApiServiceImpl @Inject() (
   )(implicit request: Request[AnyContent], hc: HeaderCarrier, ec: ExecutionContext): CheckEligibilityResponseType =
     enrolmentStatus match {
       case Some(Enrolled(_)) => Right(AccountAlreadyExists())
-      case other => {
+      case _ =>
         val timer = metrics.apiEligibilityCallTimer.time()
         val correlationIdHeader = correlationIdHeaderName -> correlationId.toString
 
@@ -342,8 +342,6 @@ class HelpToSaveApiServiceImpl @Inject() (
 
         val _ = timer.stop()
         result
-
-      }
     }
 
   private def getUserEnrolmentStatus(
@@ -404,7 +402,7 @@ class HelpToSaveApiServiceImpl @Inject() (
               response
                 .parseJson[HtsAccount]
                 .bimap(
-                  e => {
+                  _ => {
                     ApiBackendError()
                   },
                   a => Some(fromHtsAccount(a))
@@ -430,7 +428,7 @@ class HelpToSaveApiServiceImpl @Inject() (
     body.validate[CreateAccountRequest] match {
       case JsSuccess(createAccountRequest, _) =>
         (
-          httpHeaderValidator.validateHttpHeaders(true)(request),
+          httpHeaderValidator.validateHttpHeaders(contentTypeCk = true)(request),
           createAccountRequestValidator.validateRequest(createAccountRequest)
         ).mapN { case (_, b) => b }
           .fold(
@@ -515,7 +513,7 @@ class HelpToSaveApiServiceImpl @Inject() (
     correlationIdHeader: (String, String),
     timer: Timer.Context
   )(f: String => CheckEligibilityResponseType)(implicit request: Request[_]): CheckEligibilityResponseType =
-    (httpHeaderValidator.validateHttpHeaders(false), eligibilityRequestValidator.validateNino(nino))
+    (httpHeaderValidator.validateHttpHeaders(contentTypeCk = false), eligibilityRequestValidator.validateNino(nino))
       .mapN { case (_, b) => b }
       .fold(
         e => {
@@ -533,7 +531,7 @@ class HelpToSaveApiServiceImpl @Inject() (
     f: () => GetAccountResponseType
   )(implicit request: Request[_]): GetAccountResponseType =
     httpHeaderValidator
-      .validateHttpHeaders(false)
+      .validateHttpHeaders(contentTypeCk = false)
       .toEither
       .fold[GetAccountResponseType](
         e => {
@@ -570,7 +568,7 @@ object HelpToSaveApiServiceImpl {
 
   // scalastyle:off magic.number
   private implicit class EligibilityCheckResponseOps(val r: EligibilityCheckResponse) extends AnyVal {
-    def toApiEligibility(): Either[String, EligibilityResponse] =
+    def toApiEligibility: Either[String, EligibilityResponse] =
       (r.eligibilityCheckResult.resultCode, r.eligibilityCheckResult.reasonCode) match {
         case (1, 6) =>
           Right(
@@ -619,7 +617,7 @@ object HelpToSaveApiServiceImpl {
     implicit val format: Format[CreateAccountErrorResponse] = Json.format[CreateAccountErrorResponse]
 
     implicit class CreateAccountErrorResponseOps(val errorResponse: CreateAccountErrorResponse) extends AnyVal {
-      def toJson(): JsValue = format.writes(errorResponse)
+      def toJson: JsValue = format.writes(errorResponse)
     }
 
   }

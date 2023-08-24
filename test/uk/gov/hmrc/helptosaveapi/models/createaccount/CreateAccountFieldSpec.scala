@@ -45,30 +45,30 @@ class CreateAccountFieldSpec extends AnyWordSpec with Matchers {
       "returns missing mandatory fields" when {
 
         "no mandatory fields are missing" in {
-          CreateAccountField.missingMandatoryFields(validRequest.toJson()) shouldBe Set.empty
+          CreateAccountField.missingMandatoryFields(validRequest.toJson) shouldBe Set.empty
         }
 
         "forename is missing" in {
           CreateAccountField.missingMandatoryFields(
-            validRequest.copy(body = validBody.copy(forename = None)).toJson()
+            validRequest.copy(body = validBody.copy(forename = None)).toJson
           ) shouldBe Set(Forename)
         }
 
         "surname is missing" in {
           CreateAccountField.missingMandatoryFields(
-            validRequest.copy(body = validBody.copy(surname = None)).toJson()
+            validRequest.copy(body = validBody.copy(surname = None)).toJson
           ) shouldBe Set(Surname)
         }
 
         "date of birth is missing" in {
           CreateAccountField.missingMandatoryFields(
-            validRequest.copy(body = validBody.copy(dateOfBirth = None)).toJson()
+            validRequest.copy(body = validBody.copy(dateOfBirth = None)).toJson
           ) shouldBe Set(DateOfBirth)
         }
 
         "nino is missing" in {
           CreateAccountField.missingMandatoryFields(
-            validRequest.copy(body = validBody.copy(nino = None)).toJson()
+            validRequest.copy(body = validBody.copy(nino = None)).toJson
           ) shouldBe Set(NINO)
         }
 
@@ -76,7 +76,7 @@ class CreateAccountFieldSpec extends AnyWordSpec with Matchers {
           CreateAccountField.missingMandatoryFields(
             validRequest
               .copy(body = validBody.copy(contactDetails = validContactDetails.copy(address1 = None)))
-              .toJson()
+              .toJson
           ) shouldBe Set(CreateAccountField.Address)
         }
 
@@ -84,7 +84,7 @@ class CreateAccountFieldSpec extends AnyWordSpec with Matchers {
           CreateAccountField.missingMandatoryFields(
             validRequest
               .copy(body = validBody.copy(contactDetails = validContactDetails.copy(address2 = None)))
-              .toJson()
+              .toJson
           ) shouldBe Set(CreateAccountField.Address)
         }
 
@@ -92,13 +92,13 @@ class CreateAccountFieldSpec extends AnyWordSpec with Matchers {
           CreateAccountField.missingMandatoryFields(
             validRequest
               .copy(body = validBody.copy(contactDetails = validContactDetails.copy(postcode = None)))
-              .toJson()
+              .toJson
           ) shouldBe Set(CreateAccountField.Address)
         }
 
         "registration channel is missing" in {
           CreateAccountField.missingMandatoryFields(
-            validRequest.copy(body = validBody.copy(registrationChannel = None)).toJson()
+            validRequest.copy(body = validBody.copy(registrationChannel = None)).toJson
           ) shouldBe Set(RegistrationChannel)
         }
 
@@ -203,7 +203,7 @@ object CreateAccountFieldSpec {
 
     implicit class TestCreateAccountRequestOps(val r: TestCreateAccountRequest) extends AnyVal {
 
-      def toJson(): JsValue = Json.toJson(r)
+      def toJson: JsValue = Json.toJson(r)
 
       def withForename(s: Option[String]): TestCreateAccountRequest =
         r.copy(body = r.body.copy(forename = s))

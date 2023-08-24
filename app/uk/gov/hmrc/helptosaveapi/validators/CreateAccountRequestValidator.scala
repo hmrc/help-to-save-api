@@ -165,7 +165,7 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     * characters found which are contained in `ignore` are not returned
     */
   private def specialCharacters(s: String, ignore: List[Char]): List[Char] =
-    s.replaceAllLiterally(" ", "").filter(isSpecial(_, ignore)).toList.distinct
+    s.replaceAll(" ", "").filter(isSpecial(_, ignore)).toList.distinct
 
   /** Does the given string contain `n` or more consecutive special characters? */
   private def containsNConsecutiveSpecialCharacters(s: String, n: Int): Boolean =
