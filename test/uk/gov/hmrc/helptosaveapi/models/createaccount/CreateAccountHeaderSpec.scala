@@ -46,7 +46,7 @@ class CreateAccountHeaderSpec extends AnyWordSpec with Matchers {
           "\"20:33:37 2017-11-23\"",
           "\"2017/11/23 20:33:37 GMT\"",
           "true"
-        ).foreach(s ⇒ Json.parse(jsonString(s)).validate[CreateAccountHeader] shouldBe a[JsError])
+        ).foreach(s => Json.parse(jsonString(s)).validate[CreateAccountHeader] shouldBe a[JsError])
       }
 
     }

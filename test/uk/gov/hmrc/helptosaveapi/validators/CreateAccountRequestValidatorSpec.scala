@@ -88,7 +88,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckPrope
       }
 
       "has an phone number with allowed special characters" in {
-        validator.allowedPhoneNumberSpecialCharacters.foreach { c ⇒
+        validator.allowedPhoneNumberSpecialCharacters.foreach { c =>
           testIsValid(
             CreateAccountRequest(
               validCreateAccountHeader,
@@ -109,7 +109,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckPrope
       "have a phone number" which {
 
         "does not contain any digits" in {
-          validator.allowedPhoneNumberSpecialCharacters.foreach { c ⇒
+          validator.allowedPhoneNumberSpecialCharacters.foreach { c =>
             testIsInvalid(
               CreateAccountRequest(
                 validCreateAccountHeader,
@@ -121,7 +121,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckPrope
         }
 
         "contains disallowed characters" in {
-          forAll { (c: Char) ⇒
+          forAll { (c: Char) =>
             whenever(!c.isDigit && !validator.allowedPhoneNumberSpecialCharacters.contains(c)) {
               testIsInvalid(
                 CreateAccountRequest(

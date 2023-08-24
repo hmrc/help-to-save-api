@@ -61,18 +61,18 @@ class HelpToSaveController @Inject() (
 
   def apiErrorToResult(e: ApiError):Result = { e match
     {
-      case _: ApiAccessError ⇒ Forbidden(Json.toJson(e))
-      case _: ApiValidationError ⇒ BadRequest(Json.toJson(e))
-      case _: ApiBackendError ⇒ InternalServerError(Json.toJson(e))
+      case _: ApiAccessError => Forbidden(Json.toJson(e))
+      case _: ApiValidationError => BadRequest(Json.toJson(e))
+      case _: ApiBackendError => InternalServerError(Json.toJson(e))
     }
   }
 
-  def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials ⇒
+  def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request => credentials =>
     def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
       result match {
         case Left(e: ApiError) =>
           apiErrorToResult(e)
-        case Right(CreateAccountSuccess(alreadyHadAccount)) ⇒
+        case Right(CreateAccountSuccess(alreadyHadAccount)) =>
           if (alreadyHadAccount) {
             Conflict
           } else {
@@ -81,15 +81,15 @@ class HelpToSaveController @Inject() (
       }
 
     AccessType.fromLegacyCredentials(credentials) match {
-      case Right(PrivilegedAccess) ⇒
+      case Right(PrivilegedAccess) =>
         helpToSaveApiService.createAccountPrivileged(request).map(handleResult)
 
-      case Right(UserRestricted) ⇒
+      case Right(UserRestricted) =>
         // we can't do the user retrievals before this point because the user retrievals
         // will definitely fail with a 500 response from auth for privileged access
-        authorised(userInfoRetrievals and v2Nino) { _ ⇒
+        authorised(userInfoRetrievals and v2Nino) { _ =>
           {
-            case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ authNino ⇒
+            case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ authNino =>
               val retrievedDetails = RetrievedUserDetails(
                 authNino,
                 itmpName.flatMap(_.givenName).orElse(ggName.flatMap(_.name)),
@@ -102,29 +102,29 @@ class HelpToSaveController @Inject() (
           }
         }(request)
 
-      case Left(e) ⇒
+      case Left(e) =>
         logger.warn(s"Received create account request with unsupported credentials provider type: $e")
         unsupportedCredentialsProviderResult
     }
   }
 
-  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request ⇒ credentials ⇒
+  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request => credentials =>
     val correlationId = UUID.randomUUID()
 
     val result: Future[Result] =
       AccessType.fromLegacyCredentials(credentials) match {
-        case Right(UserRestricted) ⇒
-          authorised(v2Nino) { _ ⇒
+        case Right(UserRestricted) =>
+          authorised(v2Nino) { _ =>
             _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
           }(request)
 
-        case Right(PrivilegedAccess) ⇒
+        case Right(PrivilegedAccess) =>
           logger.warn(
             s"no nino exists in the api url, but nino from auth exists and providerType is not 'GovernmentGateway', $correlationId"
           )
           toFuture(Forbidden)
 
-        case Left(e) ⇒
+        case Left(e) =>
           logger.warn(
             s"Received check eligibility request with unsupported credentials provider type: $e, $correlationId"
           )
@@ -136,35 +136,35 @@ class HelpToSaveController @Inject() (
   }
 
   def checkEligibility(urlNino: String): Action[AnyContent] = authorised(v2AuthProviderId) {
-    implicit request ⇒ credentials ⇒
+    implicit request => credentials =>
       val correlationId = UUID.randomUUID()
       val result: Future[Result] =
         AccessType.fromLegacyCredentials(credentials) match {
-          case Right(UserRestricted) ⇒
-            authorised(v2Nino) { _ ⇒
+          case Right(UserRestricted) =>
+            authorised(v2Nino) { _ =>
               _.fold[Future[Result]] {
                 logger.warn(
                   s"nino exists in the api url and nino not successfully retrieved from auth but providerType is GG, $correlationId"
                 )
                 Forbidden
-              } { retrievedNino ⇒
+              } { retrievedNino =>
                 if (retrievedNino === urlNino) {
                   getEligibility(retrievedNino, correlationId)
                 } else {
                   logger.warn(
                     "NINO from the api url doesn't match with auth retrieved nino",
                     s"retrieved [$retrievedNino], request [$urlNino]",
-                    "CorrelationId" → correlationId.toString
+                    "CorrelationId" -> correlationId.toString
                   )
                   Forbidden
                 }
               }
             }(request)
 
-          case Right(PrivilegedAccess) ⇒
+          case Right(PrivilegedAccess) =>
             getEligibility(urlNino, correlationId)
 
-          case Left(e) ⇒
+          case Left(e) =>
             logger.warn(
               s"Received check eligibility request with unsupported credentials provider type: $e, $correlationId"
             )
@@ -179,24 +179,24 @@ class HelpToSaveController @Inject() (
     correlationId: UUID
   )(implicit request: Request[AnyContent], hc: HeaderCarrier): Future[Result] =
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
-      case Right(response) ⇒ Ok(toJson(response))
+      case Right(response) => Ok(toJson(response))
       case Left (e: ApiError) =>
         apiErrorToResult(e)
     }
 
-  def getAccount(): Action[AnyContent] = authorised(v2Nino) { implicit request ⇒
+  def getAccount(): Action[AnyContent] = authorised(v2Nino) { implicit request =>
     _ match {
-      case Some(nino) ⇒
+      case Some(nino) =>
         helpToSaveApiService
           .getAccount(nino)
           .map {
-            case Right(Some(account)) ⇒ Ok(Json.toJson(account))
-            case Right(None) ⇒ NotFound
+            case Right(Some(account)) => Ok(Json.toJson(account))
+            case Right(None) => NotFound
             case Left(e: ApiError) =>
               apiErrorToResult(e)
           }
 
-      case None ⇒
+      case None =>
         logger.warn("There was no nino retrieved from auth")
         Forbidden
 

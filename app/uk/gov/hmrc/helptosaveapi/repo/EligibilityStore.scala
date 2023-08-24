@@ -73,22 +73,22 @@ class MongoEligibilityStore @Inject()(mongoComponent: MongoComponent,
     correlationId: UUID
   )(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponseWithNINO]]] =
     doFindById(correlationId.toString)
-      .map { maybeCache ⇒
+      .map { maybeCache =>
         val response: OptionT[EitherStringOr, EligibilityResponseWithNINO] = for {
-          cache ← OptionT.fromOption[EitherStringOr](maybeCache)
-          data ← OptionT.fromOption[EitherStringOr](Some(cache.data))
-          result ← OptionT.liftF[EitherStringOr, EligibilityResponseWithNINO](
+          cache <- OptionT.fromOption[EitherStringOr](maybeCache)
+          data <- OptionT.fromOption[EitherStringOr](Some(cache.data))
+          result <- OptionT.liftF[EitherStringOr, EligibilityResponseWithNINO](
                     (data \ "eligibility")
                       .validate[EligibilityResponseWithNINO]
                       .asEither
-                      .leftMap(e ⇒ s"Could not parse data: ${e.mkString("; ")}")
+                      .leftMap(e => s"Could not parse data: ${e.mkString("; ")}")
                   )
         } yield result
 
         response.value
       }
       .recover {
-        case e ⇒
+        case e =>
           Left(e.getMessage)
       }
 
@@ -99,10 +99,10 @@ class MongoEligibilityStore @Inject()(mongoComponent: MongoComponent,
       correlationId.toString,
       "eligibility",
       Json.toJson(EligibilityResponseWithNINO(eligibility, nino))
-    ).map[Either[String, Unit]] { dbUpdate ⇒
+    ).map[Either[String, Unit]] { dbUpdate =>
           Right(())
     }.recover {
-        case e ⇒
+        case e =>
           Left(e.getMessage)
       }
 

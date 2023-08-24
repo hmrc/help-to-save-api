@@ -48,7 +48,7 @@ object CreateAccountBody {
     val allowedSeparators: Set[Char] = Set(' ', '-', '–', '−', '—', '_')
     implicit val reads: Reads[BankDetails] = Json
       .reads[BankDetails]
-      .map(bankDetails ⇒ bankDetails.copy(sortCode = bankDetails.sortCode.filterNot(allowedSeparators.contains)))
+      .map(bankDetails => bankDetails.copy(sortCode = bankDetails.sortCode.filterNot(allowedSeparators.contains)))
 
     implicit val writes: Writes[BankDetails] = Json.writes[BankDetails]
   }
@@ -79,16 +79,16 @@ object CreateAccountBody {
 
   implicit val writes: Writes[CreateAccountBody] = Json.writes[CreateAccountBody]
 
-  def reads(clientCode: String): Reads[CreateAccountBody] = Reads[CreateAccountBody] { jsValue ⇒
+  def reads(clientCode: String): Reads[CreateAccountBody] = Reads[CreateAccountBody] { jsValue =>
     for {
-      nino ← (jsValue \ "nino").validate[String]
-      forename ← (jsValue \ "forename").validate[String]
-      surname ← (jsValue \ "surname").validate[String]
-      dateOfBirth ← (jsValue \ "dateOfBirth").validate[LocalDate]
-      contactDetails ← (jsValue \ "contactDetails").validate[ContactDetails]
-      registrationChannel ← (jsValue \ "registrationChannel").validate[String]
-      nbaDetails ← (jsValue \ "bankDetails").validateOpt[BankDetails]
-      systemId ← JsSuccess("MDTP-API-" + clientCode)
+      nino <- (jsValue \ "nino").validate[String]
+      forename <- (jsValue \ "forename").validate[String]
+      surname <- (jsValue \ "surname").validate[String]
+      dateOfBirth <- (jsValue \ "dateOfBirth").validate[LocalDate]
+      contactDetails <- (jsValue \ "contactDetails").validate[ContactDetails]
+      registrationChannel <- (jsValue \ "registrationChannel").validate[String]
+      nbaDetails <- (jsValue \ "bankDetails").validateOpt[BankDetails]
+      systemId <- JsSuccess("MDTP-API-" + clientCode)
     } yield CreateAccountBody(
       nino,
       forename,

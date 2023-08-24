@@ -121,18 +121,18 @@ class CreateAccountFieldSpec extends AnyWordSpec with Matchers {
 
         CreateAccountField.insertFields(
           Map(
-            Forename → JsString("name"),
-            Surname → JsString("surname"),
-            DateOfBirth → JsString("dob"),
-            NINO → JsString("nino"),
-            AddressLine1 → JsString("address1"),
-            AddressLine2 → JsString("address2"),
-            AddressLine3 → JsString("address3"),
-            AddressLine4 → JsString("address4"),
-            AddressLine5 → JsString("address5"),
-            Postcode → JsString("postcode"),
-            CountryCode → JsString("countryCode"),
-            Email → JsString("email")
+            Forename -> JsString("name"),
+            Surname -> JsString("surname"),
+            DateOfBirth -> JsString("dob"),
+            NINO -> JsString("nino"),
+            AddressLine1 -> JsString("address1"),
+            AddressLine2 -> JsString("address2"),
+            AddressLine3 -> JsString("address3"),
+            AddressLine4 -> JsString("address4"),
+            AddressLine5 -> JsString("address5"),
+            Postcode -> JsString("postcode"),
+            CountryCode -> JsString("countryCode"),
+            Email -> JsString("email")
           )
         )(json) shouldBe Json.parse("""
                                       |{
@@ -159,8 +159,8 @@ class CreateAccountFieldSpec extends AnyWordSpec with Matchers {
 
         CreateAccountField.insertFields(
           Map(
-            RegistrationChannel → JsString("channel"),
-            CreateAccountField.Address → JsString("address")
+            RegistrationChannel -> JsString("channel"),
+            CreateAccountField.Address -> JsString("address")
           )
         )(json) shouldBe json
 

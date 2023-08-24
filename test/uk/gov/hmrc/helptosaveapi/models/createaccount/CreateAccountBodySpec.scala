@@ -87,7 +87,7 @@ class CreateAccountBodySpec extends TestSupport {
           "\"23041992\"",
           "\"23-04-1992\"",
           "true"
-        ).foreach(s ⇒ Json.parse(jsonString(s)).validate[CreateAccountBody](reads) shouldBe a[JsError])
+        ).foreach(s => Json.parse(jsonString(s)).validate[CreateAccountBody](reads) shouldBe a[JsError])
       }
 
       "strip out any spaces in the sortcode" in {

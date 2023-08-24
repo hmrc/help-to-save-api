@@ -42,7 +42,7 @@ object CreateAccountHeader {
   implicit val format: Format[CreateAccountHeader] = Json.format[CreateAccountHeader]
 
   implicit val show: Show[CreateAccountHeader] =
-    Show.show(createAccountHeader ⇒ s"""{version: ${createAccountHeader.version},
+    Show.show(createAccountHeader => s"""{version: ${createAccountHeader.version},
           createdTimestamp: ${createAccountHeader.createdTimestamp},
           clientCode: ${createAccountHeader.clientCode},
           requestCorrelationId: ${createAccountHeader.requestCorrelationId}

@@ -26,8 +26,8 @@ class ValidationSpec extends TestSupport {
       val i = 1
       def validation[A] = Validation.validationFromBoolean[Int, String](i) _
 
-      validation(_ < 0, _ ⇒ "uh oh") shouldBe Validated.Invalid(NonEmptyList.of("uh oh"))
-      validation(_ > 0, _ ⇒ "uh oh") shouldBe Validated.Valid(i)
+      validation(_ < 0, _ => "uh oh") shouldBe Validated.Invalid(NonEmptyList.of("uh oh"))
+      validation(_ > 0, _ => "uh oh") shouldBe Validated.Valid(i)
     }
 
   }

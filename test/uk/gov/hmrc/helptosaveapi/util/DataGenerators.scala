@@ -32,24 +32,24 @@ object DataGenerators {
 
   val createAccountHeaderGen: Gen[CreateAccountHeader] =
     for {
-      version ← Gen.identifier
-      date ← Gen.choose(0L, 100L).map(t ⇒ ZonedDateTime.ofInstant(Instant.ofEpochSecond(t), ZoneId.of("Etc/UTC")))
-      clientCode ← clientCode
-      correlationId ← Gen.uuid
+      version <- Gen.identifier
+      date <- Gen.choose(0L, 100L).map(t => ZonedDateTime.ofInstant(Instant.ofEpochSecond(t), ZoneId.of("Etc/UTC")))
+      clientCode <- clientCode
+      correlationId <- Gen.uuid
     } yield CreateAccountHeader(version, date, clientCode, correlationId)
 
   val contactDetailsGen: Gen[ContactDetails] =
     for {
-      line1 ← Gen.identifier
-      line2 ← Gen.identifier
-      line3 ← Gen.option(Gen.identifier)
-      line4 ← Gen.option(Gen.identifier)
-      line5 ← Gen.option(Gen.identifier)
-      postcode ← Gen.identifier
-      countryCode ← Gen.option(Gen.alphaStr)
-      communicationPreference ← Gen.alphaStr
-      phoneNumber ← Gen.option(Gen.numStr)
-      email ← Gen.option(Gen.alphaStr)
+      line1 <- Gen.identifier
+      line2 <- Gen.identifier
+      line3 <- Gen.option(Gen.identifier)
+      line4 <- Gen.option(Gen.identifier)
+      line5 <- Gen.option(Gen.identifier)
+      postcode <- Gen.identifier
+      countryCode <- Gen.option(Gen.alphaStr)
+      communicationPreference <- Gen.alphaStr
+      phoneNumber <- Gen.option(Gen.numStr)
+      email <- Gen.option(Gen.alphaStr)
     } yield ContactDetails(
       line1,
       line2,
@@ -65,28 +65,28 @@ object DataGenerators {
 
   val bankDetailsGen: Gen[BankDetails] =
     for {
-      sortCode ← Gen.numStr
-      accountNumber ← Gen.numStr
-      accountName ← Gen.alphaStr
-      rollNumber ← Gen.option(Gen.identifier)
+      sortCode <- Gen.numStr
+      accountNumber <- Gen.numStr
+      accountName <- Gen.alphaStr
+      rollNumber <- Gen.option(Gen.identifier)
     } yield BankDetails(accountNumber, sortCode, accountName, rollNumber)
 
   val validCreateAccountBodyGen: Gen[CreateAccountBody] =
     for {
-      nino ← Gen.identifier
-      name ← Gen.alphaStr
-      surname ← Gen.alphaStr
-      dob ← Gen.choose(1L, 100L).map(LocalDate.ofEpochDay)
-      contactDetails ← contactDetailsGen
-      registrationChannel ← Gen.alphaStr
-      bankDetails ← Gen.option(bankDetailsGen)
-      systemId ← clientCode.map(code ⇒ "MDTP-API-" + code)
+      nino <- Gen.identifier
+      name <- Gen.alphaStr
+      surname <- Gen.alphaStr
+      dob <- Gen.choose(1L, 100L).map(LocalDate.ofEpochDay)
+      contactDetails <- contactDetailsGen
+      registrationChannel <- Gen.alphaStr
+      bankDetails <- Gen.option(bankDetailsGen)
+      systemId <- clientCode.map(code => "MDTP-API-" + code)
     } yield CreateAccountBody(nino, name, surname, dob, contactDetails, registrationChannel, bankDetails, systemId)
 
   val validCreateAccountRequestGen: Gen[CreateAccountRequest] =
     for {
-      header ← createAccountHeaderGen
-      body ← validCreateAccountBodyGen
+      header <- createAccountHeaderGen
+      body <- validCreateAccountBodyGen
     } yield CreateAccountRequest(header, body)
 
   val addressGen: Gen[ItmpAddress] =

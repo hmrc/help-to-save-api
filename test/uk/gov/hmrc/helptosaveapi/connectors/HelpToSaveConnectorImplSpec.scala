@@ -39,7 +39,7 @@ class HelpToSaveConnectorImplSpec
     val nino = "AE123456C"
     val systemId = "systemId"
     val correlationId = UUID.randomUUID()
-    val headers = Map("X-Correlation-ID" → correlationId.toString)
+    val headers = Map("X-Correlation-ID" -> correlationId.toString)
 
     "creating an account" must {
 
@@ -48,7 +48,7 @@ class HelpToSaveConnectorImplSpec
           Arbitrary(DataGenerators.validCreateAccountBodyGen)
         implicit val correlationIdArb: Arbitrary[UUID] = Arbitrary(Gen.uuid)
 
-        forAll { (body: CreateAccountBody, correlationId: UUID, clientCode: String, status: Int, response: String) ⇒
+        forAll { (body: CreateAccountBody, correlationId: UUID, clientCode: String, status: Int, response: String) =>
           mockPost(
             "http://localhost:7001/help-to-save/create-account",
             CreateAccountInfo(body, 8, clientCode),
@@ -71,7 +71,7 @@ class HelpToSaveConnectorImplSpec
 
       "call correct url and return the response as is" in {
 
-        mockGet(eligibilityUrl, Map("nino" → nino), headers)(Some(HttpResponse(200, json, Map.empty[String, Seq[String]])))
+        mockGet(eligibilityUrl, Map("nino" -> nino), headers)(Some(HttpResponse(200, json, Map.empty[String, Seq[String]])))
         val result = await(connector.checkEligibility(nino, correlationId))
         result.status shouldBe 200
         result.json shouldBe json

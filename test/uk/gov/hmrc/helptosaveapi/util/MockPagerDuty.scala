@@ -18,7 +18,7 @@ package uk.gov.hmrc.helptosaveapi.util
 
 import org.mockito.IdiomaticMockito
 
-trait MockPagerDuty { this: IdiomaticMockito ⇒
+trait MockPagerDuty { this: IdiomaticMockito =>
 
   val mockPagerDuty: PagerDutyAlerting = mock[PagerDutyAlerting]
 
