@@ -10,7 +10,7 @@ lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .settings(CodeCoverageSettings.settings *)
   .settings(majorVersion := 2)
-  .settings(scalaVersion := "2.12.13")
+  .settings(scalaVersion := "2.13.11")
   .settings(PlayKeys.playDefaultPort := 7004)
   .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "resources")
   .settings(scalacOptions += "-P:silencer:pathFilters=routes")
@@ -23,3 +23,5 @@ lazy val microservice = Project(appName, file("."))
       "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
     )
   )
+
+libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
