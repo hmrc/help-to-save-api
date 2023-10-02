@@ -408,7 +408,7 @@ class HelpToSaveApiServiceImpl @Inject() (
                   a => Some(fromHtsAccount(a))
                 )
             case NOT_FOUND =>
-              logger.warn(s"NS&I have returned a status of NOT FOUND, response body: ${response.body}")
+              logger.warn("NS&I have returned a status of NOT FOUND")
               Right(None)
             case other =>
               logger.warn(s"An error occurred when trying to get the account via the connector, status: $other")
@@ -494,7 +494,7 @@ class HelpToSaveApiServiceImpl @Inject() (
                   case Failure(error) =>
                     metrics.apiValidateBankDetailsErrorCounter.inc()
                     logger.warn(
-                      s"couldn't parse /validate-bank-details response from BE, error=${error.getMessage}. Body was ${response.body}"
+                      s"couldn't parse /validate-bank-details response from BE, error=${error.getMessage}."
                     )
                     Left(ApiBackendError())
                 }
