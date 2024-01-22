@@ -33,8 +33,8 @@ object DataGenerators {
   val createAccountHeaderGen: Gen[CreateAccountHeader] =
     for {
       version <- Gen.identifier
-      date <- Gen.choose(0L, 100L).map(t => ZonedDateTime.ofInstant(Instant.ofEpochSecond(t), ZoneId.of("Etc/UTC")))
       clientCode <- clientCode
+      date          <- Gen.choose(0L, 100L).map(t => ZonedDateTime.ofInstant(Instant.ofEpochSecond(t), ZoneId.of("UTC")))
       correlationId <- Gen.uuid
     } yield CreateAccountHeader(version, date, clientCode, correlationId)
 
