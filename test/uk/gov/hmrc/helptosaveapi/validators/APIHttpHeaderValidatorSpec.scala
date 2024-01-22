@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.validators
 
-import cats.data.Validated.{Invalid,Valid}
+import cats.data.Validated.{Invalid, Valid}
 import cats.data.{NonEmptyList, ValidatedNel}
 import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc._
@@ -24,7 +24,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 import play.api.data.validation._
 
-class APIHttpHeaderValidatorSpec extends TestSupport{
+class APIHttpHeaderValidatorSpec extends TestSupport {
 
   val validator: APIHttpHeaderValidator = new APIHttpHeaderValidator
 
@@ -40,8 +40,8 @@ class APIHttpHeaderValidatorSpec extends TestSupport{
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ -> "value") ++ List(
-          HeaderNames.CONTENT_TYPE -> ContentTypes.JSON,
-          HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"
+          HeaderNames.CONTENT_TYPE                      -> ContentTypes.JSON,
+          HeaderNames.ACCEPT                            -> "application/vnd.hmrc.2.0+json"
         ): _*
       )
 
@@ -52,7 +52,7 @@ class APIHttpHeaderValidatorSpec extends TestSupport{
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ -> "value") ++ List(
-          HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"
+          HeaderNames.ACCEPT                            -> "application/vnd.hmrc.2.0+json"
         ): _*
       )
 

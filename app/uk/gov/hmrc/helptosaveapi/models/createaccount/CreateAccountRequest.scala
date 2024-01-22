@@ -27,7 +27,7 @@ object CreateAccountRequest {
   implicit val reads: Reads[CreateAccountRequest] = Reads[CreateAccountRequest] { jsValue =>
     for {
       header <- (jsValue \ "header").validate[CreateAccountHeader]
-      body <- (jsValue \ "body").validate[CreateAccountBody](CreateAccountBody.reads(header.clientCode))
+      body   <- (jsValue \ "body").validate[CreateAccountBody](CreateAccountBody.reads(header.clientCode))
     } yield CreateAccountRequest(header, body)
   }
 

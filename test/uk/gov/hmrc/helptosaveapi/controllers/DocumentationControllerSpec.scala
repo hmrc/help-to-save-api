@@ -32,7 +32,7 @@ class DocumentationControllerSpec extends TestSupport {
   val access: String = "PRIVATE"
 
   val configuration: Configuration = Configuration(
-    "api.access.version-2.0.type" -> access,
+    "api.access.version-2.0.type"    -> access,
     "api.access.version-2.0.enabled" -> true
   )
   val controller = new DocumentationController(configuration, mockCc, mockAssets)
@@ -53,7 +53,8 @@ class DocumentationControllerSpec extends TestSupport {
   "yaml" must {
     "return the yaml documentation when called" in {
       val result: Future[Result] = controller.yaml("2.0", "application.yaml")(FakeRequest())
-      val raml = Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/2.0/application.yaml")).mkString
+      val raml =
+        Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/2.0/application.yaml")).mkString
       status(result) shouldBe OK
       contentAsString(result) shouldBe raml
     }

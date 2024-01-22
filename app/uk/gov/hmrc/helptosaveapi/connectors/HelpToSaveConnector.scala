@@ -66,7 +66,7 @@ trait HelpToSaveConnector {
 
 @Singleton
 class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient)()
-  extends HelpToSaveConnector with Logging {
+    extends HelpToSaveConnector with Logging {
 
   private val htsBaseUrl = {
     val protocol = config.underlying.getString("microservice.services.help-to-save.protocol")

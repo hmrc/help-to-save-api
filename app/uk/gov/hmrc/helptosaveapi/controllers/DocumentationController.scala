@@ -33,12 +33,15 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets) (implicit materializer:         Materializer, executionContext: ExecutionContext)
-  extends BackendController(cc) {
+class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets)(
+  implicit materializer: Materializer,
+  executionContext: ExecutionContext
+) extends BackendController(cc) {
 
   val access: Version => APIAccess = APIAccess(configuration.underlying.getConfig("api.access"))
 
-  val versionEnabled: Version => Boolean = version => configuration.underlying.getBoolean(s"api.access.version-$version.enabled")
+  val versionEnabled: Version => Boolean = version =>
+    configuration.underlying.getBoolean(s"api.access.version-$version.enabled")
 
   def definition(): Action[AnyContent] = Action {
     Ok(txt.definition(access, versionEnabled)).as("application/json")

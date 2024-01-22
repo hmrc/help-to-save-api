@@ -199,7 +199,7 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
       s.toList match {
         // only loop over strings that have length two or greater
         case head :: tail => loop(tail, head, 0)
-        case _ => false
+        case _            => false
       }
     } else {
       false

@@ -55,8 +55,7 @@ object EligibilityStore {
 }
 
 @Singleton
-class MongoEligibilityStore @Inject()(mongoComponent: MongoComponent,
-                                      servicesConfig: ServicesConfig)(
+class MongoEligibilityStore @Inject() (mongoComponent: MongoComponent, servicesConfig: ServicesConfig)(
   implicit ec: ExecutionContext
 ) extends EligibilityStore {
 
@@ -65,9 +64,10 @@ class MongoEligibilityStore @Inject()(mongoComponent: MongoComponent,
   val mongoRepo = new MongoCacheRepository(
     mongoComponent = mongoComponent,
     collectionName = "api-eligibility",
-    ttl =  servicesConfig.getDuration("mongo-cache.expireAfter"),
+    ttl = servicesConfig.getDuration("mongo-cache.expireAfter"),
     timestampSupport = new CurrentTimestampSupport,
-    cacheIdType = CacheIdType.SimpleCacheId)(ec)
+    cacheIdType = CacheIdType.SimpleCacheId
+  )(ec)
 
   override def get(
     correlationId: UUID
@@ -76,13 +76,13 @@ class MongoEligibilityStore @Inject()(mongoComponent: MongoComponent,
       .map { maybeCache =>
         val response: OptionT[EitherStringOr, EligibilityResponseWithNINO] = for {
           cache <- OptionT.fromOption[EitherStringOr](maybeCache)
-          data <- OptionT.fromOption[EitherStringOr](Some(cache.data))
+          data  <- OptionT.fromOption[EitherStringOr](Some(cache.data))
           result <- OptionT.liftF[EitherStringOr, EligibilityResponseWithNINO](
-                    (data \ "eligibility")
-                      .validate[EligibilityResponseWithNINO]
-                      .asEither
-                      .leftMap(e => s"Could not parse data: ${e.mkString("; ")}")
-                  )
+                     (data \ "eligibility")
+                       .validate[EligibilityResponseWithNINO]
+                       .asEither
+                       .leftMap(e => s"Could not parse data: ${e.mkString("; ")}")
+                   )
         } yield result
 
         response.value
@@ -100,8 +100,9 @@ class MongoEligibilityStore @Inject()(mongoComponent: MongoComponent,
       "eligibility",
       Json.toJson(EligibilityResponseWithNINO(eligibility, nino))
     ).map[Either[String, Unit]] { dbUpdate =>
-          Right(())
-    }.recover {
+        Right(())
+      }
+      .recover {
         case e =>
           Left(e.getMessage)
       }

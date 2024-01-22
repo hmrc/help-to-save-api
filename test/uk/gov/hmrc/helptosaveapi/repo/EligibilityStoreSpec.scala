@@ -25,7 +25,6 @@ import uk.gov.hmrc.helptosaveapi.util.{Logging, TestSupport}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-
 class EligibilityStoreSpec extends TestSupport with MongoTestSupport with Logging {
 
   val mockMongoComponent: MongoComponent = fakeApplication.injector.instanceOf[MongoComponent]
@@ -38,7 +37,8 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport with Loggin
   "The EligibilityStoreSpec" when {
 
     val nino = "nino"
-    val eligibility = ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = true), accountExists = false)
+    val eligibility =
+      ApiEligibilityResponse(Eligibility(isEligible = true, hasWTC = true, hasUC = true), accountExists = false)
     val eligibilityWithNINO = EligibilityResponseWithNINO(eligibility, nino)
 
     "storing api eligibility" must {
@@ -62,8 +62,8 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport with Loggin
 
       "get the eligibility result and return success result" in new TestProps {
         val cId: UUID = UUID.randomUUID()
-                                  val response: Either[String, Unit] = await(store.put(cId, eligibility, nino))
-                                  logger.info(s"Eligibility result response: ${response.toString} time: ${LocalTime.now()}")
+        val response: Either[String, Unit] = await(store.put(cId, eligibility, nino))
+        logger.info(s"Eligibility result response: ${response.toString} time: ${LocalTime.now()}")
         response shouldBe Right(())
         await(store.get(cId)) shouldBe Right(Some(eligibilityWithNINO))
       }

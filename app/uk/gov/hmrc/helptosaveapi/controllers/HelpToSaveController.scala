@@ -59,12 +59,10 @@ class HelpToSaveController @Inject() (
       v2.Retrievals.itmpAddress and
       v2.Retrievals.email
 
-  def apiErrorToResult(e: ApiError):Result = { e match
-    {
-      case _: ApiAccessError => Forbidden(Json.toJson(e))
-      case _: ApiValidationError => BadRequest(Json.toJson(e))
-      case _: ApiBackendError => InternalServerError(Json.toJson(e))
-    }
+  def apiErrorToResult(e: ApiError): Result = e match {
+    case _: ApiAccessError     => Forbidden(Json.toJson(e))
+    case _: ApiValidationError => BadRequest(Json.toJson(e))
+    case _: ApiBackendError    => InternalServerError(Json.toJson(e))
   }
 
   def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request => credentials =>
@@ -108,30 +106,31 @@ class HelpToSaveController @Inject() (
     }
   }
 
-  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request => credentials =>
-    val correlationId = UUID.randomUUID()
+  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2AuthProviderId) {
+    implicit request => credentials =>
+      val correlationId = UUID.randomUUID()
 
-    val result: Future[Result] =
-      AccessType.fromLegacyCredentials(credentials) match {
-        case Right(UserRestricted) =>
-          authorised(v2Nino) { _ =>
-            _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
-          }(request)
+      val result: Future[Result] =
+        AccessType.fromLegacyCredentials(credentials) match {
+          case Right(UserRestricted) =>
+            authorised(v2Nino) { _ =>
+              _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
+            }(request)
 
-        case Right(PrivilegedAccess) =>
-          logger.warn(
-            s"no nino exists in the api url, but nino from auth exists and providerType is not 'GovernmentGateway', $correlationId"
-          )
-          toFuture(Forbidden)
+          case Right(PrivilegedAccess) =>
+            logger.warn(
+              s"no nino exists in the api url, but nino from auth exists and providerType is not 'GovernmentGateway', $correlationId"
+            )
+            toFuture(Forbidden)
 
-        case Left(e) =>
-          logger.warn(
-            s"Received check eligibility request with unsupported credentials provider type: $e, $correlationId"
-          )
-          unsupportedCredentialsProviderResult
-      }
+          case Left(e) =>
+            logger.warn(
+              s"Received check eligibility request with unsupported credentials provider type: $e, $correlationId"
+            )
+            unsupportedCredentialsProviderResult
+        }
 
-    result.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
+      result.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
 
   }
 
@@ -180,7 +179,7 @@ class HelpToSaveController @Inject() (
   )(implicit request: Request[AnyContent], hc: HeaderCarrier): Future[Result] =
     helpToSaveApiService.checkEligibility(nino, correlationId).map {
       case Right(response) => Ok(toJson(response))
-      case Left (e: ApiError) =>
+      case Left(e: ApiError) =>
         apiErrorToResult(e)
     }
 
@@ -191,7 +190,7 @@ class HelpToSaveController @Inject() (
           .getAccount(nino)
           .map {
             case Right(Some(account)) => Ok(Json.toJson(account))
-            case Right(None) => NotFound
+            case Right(None)          => NotFound
             case Left(e: ApiError) =>
               apiErrorToResult(e)
           }
@@ -204,6 +203,10 @@ class HelpToSaveController @Inject() (
   }
 
   val unsupportedCredentialsProviderResult: Result = {
-    Forbidden(Json.toJson(ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised").asInstanceOf[ApiError]))
+    Forbidden(
+      Json.toJson(
+        ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised").asInstanceOf[ApiError]
+      )
+    )
   }
 }

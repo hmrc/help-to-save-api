@@ -31,11 +31,10 @@ trait HttpSupport { this: IdiomaticMockito with Matchers =>
 
   def mockGet[A](url: String, queryParams: Map[String, String] = emptyMap, headers: Map[String, String] = emptyMap)(
     response: Option[A]
-  ): Unit = {
+  ): Unit =
     mockHttp
       .GET[A](url, queryParams.toSeq)(*, *, *)
       .returns(response.fold(Future.failed[A](new Exception("Test exception message")))(Future.successful))
-  }
 
   def mockPost[A](url: String, body: A, headers: Map[String, String])(result: Option[HttpResponse]): Unit =
     mockHttp

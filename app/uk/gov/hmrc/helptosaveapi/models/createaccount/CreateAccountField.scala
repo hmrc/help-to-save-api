@@ -88,18 +88,18 @@ object CreateAccountField {
     fields.foldLeft(json.as[JsObject]) {
       case (acc, (field, value)) =>
         acc.deepMerge(field match {
-          case Forename => jsObject(NonEmptyList.of("body", "forename") -> value)
-          case Surname => jsObject(NonEmptyList.of("body", "surname") -> value)
-          case DateOfBirth => jsObject(NonEmptyList.of("body", "dateOfBirth") -> value)
-          case NINO => jsObject(NonEmptyList.of("body", "nino") -> value)
-          case AddressLine1 => jsObject(NonEmptyList.of("body", "contactDetails", "address1") -> value)
-          case AddressLine2 => jsObject(NonEmptyList.of("body", "contactDetails", "address2") -> value)
-          case AddressLine3 => jsObject(NonEmptyList.of("body", "contactDetails", "address3") -> value)
-          case AddressLine4 => jsObject(NonEmptyList.of("body", "contactDetails", "address4") -> value)
-          case AddressLine5 => jsObject(NonEmptyList.of("body", "contactDetails", "address5") -> value)
-          case Postcode => jsObject(NonEmptyList.of("body", "contactDetails", "postcode") -> value)
-          case CountryCode => jsObject(NonEmptyList.of("body", "contactDetails", "countryCode") -> value)
-          case Email => jsObject(NonEmptyList.of("body", "contactDetails", "email") -> value)
+          case Forename     => jsObject(NonEmptyList.of("body", "forename")                      -> value)
+          case Surname      => jsObject(NonEmptyList.of("body", "surname")                       -> value)
+          case DateOfBirth  => jsObject(NonEmptyList.of("body", "dateOfBirth")                   -> value)
+          case NINO         => jsObject(NonEmptyList.of("body", "nino")                          -> value)
+          case AddressLine1 => jsObject(NonEmptyList.of("body", "contactDetails", "address1")    -> value)
+          case AddressLine2 => jsObject(NonEmptyList.of("body", "contactDetails", "address2")    -> value)
+          case AddressLine3 => jsObject(NonEmptyList.of("body", "contactDetails", "address3")    -> value)
+          case AddressLine4 => jsObject(NonEmptyList.of("body", "contactDetails", "address4")    -> value)
+          case AddressLine5 => jsObject(NonEmptyList.of("body", "contactDetails", "address5")    -> value)
+          case Postcode     => jsObject(NonEmptyList.of("body", "contactDetails", "postcode")    -> value)
+          case CountryCode  => jsObject(NonEmptyList.of("body", "contactDetails", "countryCode") -> value)
+          case Email        => jsObject(NonEmptyList.of("body", "contactDetails", "email")       -> value)
           case CommunicationPreference =>
             jsObject(NonEmptyList.of("body", "contactDetails", "communicationPreference") -> value)
           case RegistrationChannel | Address => JsObject(Map.empty[String, JsValue])
@@ -110,8 +110,8 @@ object CreateAccountField {
 
     @tailrec
     def loop(l: List[String], acc: JsObject): JsObject = l match {
-      case Nil => acc
-      case head :: Nil => JsObject(List(head -> acc))
+      case Nil          => acc
+      case head :: Nil  => JsObject(List(head -> acc))
       case head :: tail => loop(tail, JsObject(List(head -> acc)))
     }
 
