@@ -117,8 +117,8 @@ class HelpToSaveApiServiceImpl @Inject() (
       } else {
         (for {
           updatedJson <- EitherT.fromEither[Future](
-                         fillInMissingDetailsGG(json, missingMandatoryFields, retrievedUserDetails)
-                       )
+                          fillInMissingDetailsGG(json, missingMandatoryFields, retrievedUserDetails)
+                        )
           r <- EitherT(storeEmailThenCreateAccount(updatedJson, retrievedUserDetails.nino, request))
         } yield r).value
       }
@@ -163,9 +163,9 @@ class HelpToSaveApiServiceImpl @Inject() (
 
           val result: CheckEligibilityResponseType = (p, q).mapN[Either[ApiError, EligibilityResponse]] {
             case (Right(eligibility), Right(true)) => Right(eligibility)
-            case (Right(_), Right(false)) => Left(ApiValidationError("INVALID_BANK_DETAILS"))
-            case (Left(apiError), _) => Left(apiError)
-            case (_, Left(apiError)) => Left(apiError)
+            case (Right(_), Right(false))          => Left(ApiValidationError("INVALID_BANK_DETAILS"))
+            case (Left(apiError), _)               => Left(apiError)
+            case (_, Left(apiError))               => Left(apiError)
           }
 
           result.flatMap {
@@ -175,11 +175,11 @@ class HelpToSaveApiServiceImpl @Inject() (
                   if (body.contactDetails.communicationPreference === "02") {
                     (for {
                       email <- EitherT.fromOption(
-                               body.contactDetails.email,
-                               ApiValidationError(
-                                 "no email found in the request body but communicationPreference is 02"
-                               )
-                             )
+                                body.contactDetails.email,
+                                ApiValidationError(
+                                  "no email found in the request body but communicationPreference is 02"
+                                )
+                              )
                       _ <- EitherT(storeEmail(body.nino, email, header.requestCorrelationId))
                       r <- EitherT(createAccount(body, header, aer))
                     } yield r).value
@@ -281,7 +281,7 @@ class HelpToSaveApiServiceImpl @Inject() (
     val result: EitherT[Future, ApiError, EligibilityResponse] =
       for {
         enrolmentStatus <- EitherT.liftF(getUserEnrolmentStatus(nino, correlationId))
-        ecResult <- EitherT(performCheckEligibility(nino, correlationId, enrolmentStatus))
+        ecResult        <- EitherT(performCheckEligibility(nino, correlationId, enrolmentStatus))
       } yield ecResult
 
     result.value
@@ -604,7 +604,7 @@ object HelpToSaveApiServiceImpl {
           )
 
         case (3, _) => Right(AccountAlreadyExists())
-        case _ => Left(s"invalid combination for eligibility response. Response was '$r'")
+        case _      => Left(s"invalid combination for eligibility response. Response was '$r'")
       }
 
     // scalastyle:on magic.number

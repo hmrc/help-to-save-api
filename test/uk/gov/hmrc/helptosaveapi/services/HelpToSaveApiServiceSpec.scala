@@ -319,7 +319,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           )(Left("error string email"))
 
           val result = await(
-              service.createAccountUserRestricted(fakeRequestWithOnlineRequestWithEmail, RetrievedUserDetails.empty())
+            service.createAccountUserRestricted(fakeRequestWithOnlineRequestWithEmail, RetrievedUserDetails.empty())
           )
           result shouldBe Left(ApiBackendError())
 
@@ -341,7 +341,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           )(Right(HttpResponse(400, "")))
 
           val result = await(
-              service.createAccountUserRestricted(fakeRequestWithOnlineRequestWithEmail, RetrievedUserDetails.empty())
+            service.createAccountUserRestricted(fakeRequestWithOnlineRequestWithEmail, RetrievedUserDetails.empty())
           )
           result shouldBe Left(ApiBackendError())
 
@@ -775,10 +775,10 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           mockCreateAccountRequestValidator(onlineRequestWithEmail)(Right(()))
 
           val result = await(
-              service.createAccountUserRestricted(
-                  fakeRequestWithOnlineRequestWithEmail,
-                  RetrievedUserDetails.empty().copy(nino = Some("other-nino"))
-              )
+            service.createAccountUserRestricted(
+              fakeRequestWithOnlineRequestWithEmail,
+              RetrievedUserDetails.empty().copy(nino = Some("other-nino"))
+            )
           )
           result shouldBe Left(ApiAccessError())
 
@@ -1016,7 +1016,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         await(resultFuture) match {
           case Left(e: ApiValidationError) => e.code shouldBe "VALIDATION_ERROR"
-          case other => fail(s"Expected Left(ApiValidationError) but got $other")
+          case other                       => fail(s"Expected Left(ApiValidationError) but got $other")
         }
       }
     }

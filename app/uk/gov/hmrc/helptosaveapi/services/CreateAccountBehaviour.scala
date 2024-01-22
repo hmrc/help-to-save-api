@@ -51,7 +51,7 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService =>
           case None => // No bodyNINO
             retrievedUserDetails.nino match {
               case Some(nino) => collate(json, missingDetails, retrievedUserDetails, nino, registrationChannel)
-              case None => Left(ApiAccessError())
+              case None       => Left(ApiAccessError())
             }
         }
 
@@ -123,11 +123,11 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService =>
                 List[(CreateAccountField, JsValue)](
                   AddressLine1 -> toJsValue(l1),
                   AddressLine2 -> toJsValue(l2),
-                  Postcode -> toJsValue(p),
+                  Postcode     -> toJsValue(p),
                   AddressLine3 -> toJsValue(retrievedUserDetails.address.flatMap(_.line3)),
                   AddressLine4 -> toJsValue(retrievedUserDetails.address.flatMap(_.line4)),
                   AddressLine5 -> toJsValue(retrievedUserDetails.address.flatMap(_.line5)),
-                  CountryCode -> toJsValue(retrievedUserDetails.address.flatMap(_.countryCode))
+                  CountryCode  -> toJsValue(retrievedUserDetails.address.flatMap(_.countryCode))
                 ).map { case (k, v) => k -> Some(v) }
             }
           addressFields.getOrElse(List(CreateAccountField.Address -> None))

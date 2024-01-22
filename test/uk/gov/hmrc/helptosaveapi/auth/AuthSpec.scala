@@ -62,16 +62,16 @@ class AuthSpec extends AuthSupport {
 
       val exceptions = List(
         "InsufficientConfidenceLevel" -> Status.FORBIDDEN,
-        "InsufficientEnrolments" -> Status.FORBIDDEN,
-        "UnsupportedAffinityGroup" -> Status.FORBIDDEN,
-        "UnsupportedCredentialRole" -> Status.FORBIDDEN,
-        "UnsupportedAuthProvider" -> Status.FORBIDDEN,
-        "BearerTokenExpired" -> Status.UNAUTHORIZED,
-        "MissingBearerToken" -> Status.UNAUTHORIZED,
-        "InvalidBearerToken" -> Status.UNAUTHORIZED,
-        "SessionRecordNotFound" -> Status.UNAUTHORIZED,
+        "InsufficientEnrolments"      -> Status.FORBIDDEN,
+        "UnsupportedAffinityGroup"    -> Status.FORBIDDEN,
+        "UnsupportedCredentialRole"   -> Status.FORBIDDEN,
+        "UnsupportedAuthProvider"     -> Status.FORBIDDEN,
+        "BearerTokenExpired"          -> Status.UNAUTHORIZED,
+        "MissingBearerToken"          -> Status.UNAUTHORIZED,
+        "InvalidBearerToken"          -> Status.UNAUTHORIZED,
+        "SessionRecordNotFound"       -> Status.UNAUTHORIZED,
         "IncorrectCredentialStrength" -> Status.FORBIDDEN,
-        "unknown-blah" -> Status.INTERNAL_SERVER_ERROR
+        "unknown-blah"                -> Status.INTERNAL_SERVER_ERROR
       )
 
       exceptions.foreach {
