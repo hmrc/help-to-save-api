@@ -6,6 +6,7 @@ val appName = "help-to-save-api"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
+  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(CodeCoverageSettings.settings *)
   .settings(onLoadMessage := "")
   .settings(majorVersion := 2)
