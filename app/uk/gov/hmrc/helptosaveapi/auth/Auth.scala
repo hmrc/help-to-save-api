@@ -23,8 +23,7 @@ import uk.gov.hmrc.auth.core.retrieve.Retrieval
 import uk.gov.hmrc.helptosaveapi.util.Logging
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 trait Auth extends AuthorisedFunctions { this: BackendController with Logging =>
 
@@ -32,7 +31,7 @@ trait Auth extends AuthorisedFunctions { this: BackendController with Logging =>
 
   type HtsAction[A] = Request[AnyContent] => A => Future[Result]
 
-  def authorised[A](retrievals: Retrieval[A])(action: HtsAction[A]): Action[AnyContent] =
+  def authorised[A](retrievals: Retrieval[A])(action: HtsAction[A])(implicit ec: ExecutionContext): Action[AnyContent] =
     Action.async { implicit request =>
       authorised(authProviders)
         .retrieve(retrievals) { action(request) }
