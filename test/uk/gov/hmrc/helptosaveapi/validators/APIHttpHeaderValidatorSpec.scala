@@ -22,7 +22,6 @@ import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
-import play.api.data.validation._
 
 class APIHttpHeaderValidatorSpec extends TestSupport {
 

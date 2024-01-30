@@ -17,10 +17,8 @@
 package uk.gov.hmrc.helptosaveapi.util
 
 import akka.stream.Materializer
-import com.codahale.metrics.{Counter, Timer}
 import com.typesafe.config.ConfigFactory
 import controllers.Assets
-import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.IdiomaticMockito
 import play.api.http.HttpErrorHandler
 import play.api.inject.guice.GuiceApplicationBuilder
