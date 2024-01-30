@@ -8,7 +8,6 @@
       "description":"Savings scheme for working people on low income",
       "context":"individuals/help-to-save",
       "isTestSupport": false,
-      "requiresTrust": false,
       "versions":[
         {
           "version":"2.0",
