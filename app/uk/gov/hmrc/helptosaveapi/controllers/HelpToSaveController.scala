@@ -98,7 +98,7 @@ class HelpToSaveController @Inject() (
               )
               helpToSaveApiService.createAccountUserRestricted(request, retrievedDetails).map(handleResult)
           }
-        }(request)
+        }(ec)(request)
 
       case Left(e) =>
         logger.warn(s"Received create account request with unsupported credentials provider type: $e")
@@ -115,7 +115,7 @@ class HelpToSaveController @Inject() (
           case Right(UserRestricted) =>
             authorised(v2Nino) { _ =>
               _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
-            }(request)
+            }(ec)(request)
 
           case Right(PrivilegedAccess) =>
             logger.warn(
@@ -158,7 +158,7 @@ class HelpToSaveController @Inject() (
                   Forbidden
                 }
               }
-            }(request)
+            }(ec)(request)
 
           case Right(PrivilegedAccess) =>
             getEligibility(urlNino, correlationId)
