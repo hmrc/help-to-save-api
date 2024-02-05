@@ -21,9 +21,9 @@ import cats.instances.string._
 import cats.syntax.apply._
 import cats.syntax.eq._
 import play.api.libs.json.{JsString, JsValue, Writes}
-import uk.gov.hmrc.helptosaveapi.models.{ApiAccessError, ApiBackendError, ApiError, ApiValidationError}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountField._
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
+import uk.gov.hmrc.helptosaveapi.models.{ApiAccessError, ApiBackendError, ApiError, ApiValidationError}
 
 private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService =>
 

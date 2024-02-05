@@ -20,9 +20,9 @@ import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import uk.gov.hmrc.helptosaveapi.util.TestSupport
 import play.api.test.Helpers._
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
+import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
 import scala.concurrent.Future
 import scala.io.Source

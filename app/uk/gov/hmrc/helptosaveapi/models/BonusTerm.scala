@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.helptosaveapi.models
 
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-
 import play.api.libs.json.Reads.localDateReads
 import play.api.libs.json.Writes.temporalWrites
 import play.api.libs.json.{Format, Json}
+
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 case class BonusTerm(startDate: LocalDate, endDate: LocalDate, bonusEstimate: BigDecimal)
 

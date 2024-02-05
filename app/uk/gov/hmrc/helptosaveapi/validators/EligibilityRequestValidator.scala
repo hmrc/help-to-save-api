@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.helptosaveapi.validators
 
-import java.util.regex.Matcher
-
 import uk.gov.hmrc.helptosaveapi.util.ValidatedOrErrorString
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
+
+import java.util.regex.Matcher
 
 class EligibilityRequestValidator {
 

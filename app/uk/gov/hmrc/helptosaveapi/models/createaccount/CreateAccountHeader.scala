@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.helptosaveapi.models.createaccount
 
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.UUID
-
 import cats.Show
 import play.api.libs.json.Reads.zonedDateTimeReads
 import play.api.libs.json.Writes.temporalWrites
 import play.api.libs.json._
+
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 case class CreateAccountHeader(
   version: String,
