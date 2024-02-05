@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.helptosaveapi.repo
 
-import java.time.LocalTime
-import java.util.UUID
-
 import uk.gov.hmrc.helptosaveapi.models.{AccountAlreadyExists, ApiEligibilityResponse, Eligibility}
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.util.{Logging, TestSupport}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
+import java.time.LocalTime
+import java.util.UUID
 
 class EligibilityStoreSpec extends TestSupport with MongoTestSupport with Logging {
 

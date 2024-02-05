@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.helptosaveapi.models.createaccount
 
-import java.time.LocalDate
-
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
+
+import java.time.LocalDate
 
 class CreateAccountBodySpec extends TestSupport {
 
