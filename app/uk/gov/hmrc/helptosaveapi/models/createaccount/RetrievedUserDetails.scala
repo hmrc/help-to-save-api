@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.helptosaveapi.models.createaccount
 
-import java.time.LocalDate
 import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
+
+import java.time.LocalDate
 
 case class RetrievedUserDetails(
   nino: Option[String],

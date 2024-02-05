@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.helptosaveapi.connectors
 
-import java.util.UUID
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.EitherValues
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -26,6 +25,8 @@ import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, TestSupport, base64Encode}
 import uk.gov.hmrc.http.HttpResponse
+
+import java.util.UUID
 
 // scalastyle:off magic.number
 class HelpToSaveConnectorImplSpec
