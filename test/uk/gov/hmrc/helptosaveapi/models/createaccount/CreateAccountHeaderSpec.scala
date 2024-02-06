@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.helptosaveapi.models.createaccount
 
-import java.util.UUID
-
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.{JsError, JsSuccess, Json}
+
+import java.util.UUID
 
 class CreateAccountHeaderSpec extends AnyWordSpec with Matchers {
 

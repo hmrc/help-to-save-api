@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.helptosaveapi
 
-import java.util.Base64
-
 import cats.data.{EitherT, ValidatedNel}
 
+import java.util.Base64
 import scala.concurrent.Future
 import scala.util.matching.Regex
 

@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.helptosaveapi.models
 
-import java.time.LocalDate
-
 import play.api.libs.json.{Format, Json}
+
+import java.time.LocalDate
 
 case class HtsBonusTerm(
   bonusEstimate: BigDecimal,

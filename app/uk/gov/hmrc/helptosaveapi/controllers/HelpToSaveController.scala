@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
-import java.time.LocalDate
-import java.util.UUID
 import cats.instances.string._
 import cats.syntax.eq._
 import com.google.inject.Inject
@@ -38,6 +36,8 @@ import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, toFuture}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.LocalDate
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveController @Inject() (
