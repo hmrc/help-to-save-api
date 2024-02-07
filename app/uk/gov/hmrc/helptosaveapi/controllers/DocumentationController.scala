@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package uk.gov.hmrc.helptosaveapi.controllers
 import akka.stream.Materializer
 import com.typesafe.config.Config
 import controllers.Assets
-
-import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.libs.json.{Format, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -30,6 +28,7 @@ import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess.V
 import uk.gov.hmrc.helptosaveapi.views.txt
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.helptosaveapi.validators
 
-import java.util.regex.Matcher
-
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.instances.char._
 import cats.instances.int._
@@ -29,6 +27,7 @@ import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, Create
 import uk.gov.hmrc.helptosaveapi.util.ValidatedOrErrorString
 import uk.gov.hmrc.helptosaveapi.util.Validation.validationFromBoolean
 
+import java.util.regex.Matcher
 import scala.annotation.tailrec
 
 @Singleton

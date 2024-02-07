@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.helptosaveapi.models.createaccount
 
-import java.time.LocalDate
-
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.{BankDetails, ContactDetails}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
+
+import java.time.LocalDate
 
 class CreateAccountBodySpec extends TestSupport {
 

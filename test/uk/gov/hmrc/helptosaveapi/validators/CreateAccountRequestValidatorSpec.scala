@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.helptosaveapi.validators
 
-import java.time.{LocalDate, ZonedDateTime}
-import java.util.UUID
 import cats.data.NonEmptyList
 import cats.data.Validated.Invalid
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.ContactDetails
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountBody, CreateAccountHeader, CreateAccountRequest}
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
+
+import java.time.{LocalDate, ZonedDateTime}
+import java.util.UUID
 
 class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckPropertyChecks {
 

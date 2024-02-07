@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package uk.gov.hmrc.helptosaveapi.services
-
-import java.util.UUID
 
 import cats.data.EitherT
 import cats.instances.future._
@@ -34,9 +32,9 @@ import play.api.mvc.{AnyContent, Request}
 import play.mvc.Http.Status
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
+import uk.gov.hmrc.helptosaveapi.models.Account.fromHtsAccount
 import uk.gov.hmrc.helptosaveapi.models.EnrolmentStatus.Enrolled
 import uk.gov.hmrc.helptosaveapi.models._
-import uk.gov.hmrc.helptosaveapi.models.Account.fromHtsAccount
 import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
@@ -49,9 +47,10 @@ import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, NINO, Pag
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
 import uk.gov.hmrc.http.HeaderCarrier
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[HelpToSaveApiServiceImpl])
 trait HelpToSaveApiService {

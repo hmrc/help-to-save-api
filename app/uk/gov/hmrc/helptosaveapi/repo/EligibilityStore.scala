@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.helptosaveapi.repo
 
-import java.util.UUID
-
 import cats.data.OptionT
 import cats.instances.either._
 import cats.syntax.either._
@@ -25,10 +23,12 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.helptosaveapi.models.EligibilityResponse
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
-import uk.gov.hmrc.mongo.{CurrentTimestampSupport, MongoComponent}
 import uk.gov.hmrc.mongo.cache.{CacheIdType, DataKey, MongoCacheRepository}
+import uk.gov.hmrc.mongo.{CurrentTimestampSupport, MongoComponent}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.http.logging.Mdc.preservingMdc
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[MongoEligibilityStore])
@@ -108,8 +108,12 @@ class MongoEligibilityStore @Inject() (mongoComponent: MongoComponent, servicesC
       }
 
   private[repo] def doFindById(id: String) =
-    mongoRepo.findById(id)
+    preservingMdc {
+      mongoRepo.findById(id)
+    }
 
   private[repo] def doCreateOrUpdate(id: String, key: String, toCache: JsValue) =
-    mongoRepo.put(id)(DataKey(key), toCache)
+    preservingMdc {
+      mongoRepo.put(id)(DataKey(key), toCache)
+    }
 }
