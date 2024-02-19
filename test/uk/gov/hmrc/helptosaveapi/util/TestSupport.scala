@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.util
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.typesafe.config.ConfigFactory
 import controllers.Assets
 import org.mockito.IdiomaticMockito

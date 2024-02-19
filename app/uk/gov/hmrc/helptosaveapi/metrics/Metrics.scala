@@ -16,15 +16,15 @@
 
 package uk.gov.hmrc.helptosaveapi.metrics
 
-import com.codahale.metrics.{Counter, Timer}
+import com.codahale.metrics.{Counter, MetricRegistry, Timer}
 import com.google.inject.{Inject, Singleton}
 
 @Singleton
-class Metrics @Inject() (val metrics: com.kenshoo.play.metrics.Metrics) {
+class Metrics @Inject() (val metrics: MetricRegistry) {
 
-  def timer(name: String): Timer = metrics.defaultRegistry.timer(name)
+  def timer(name: String): Timer = metrics.timer(name)
 
-  def counter(name: String): Counter = metrics.defaultRegistry.counter(name)
+  def counter(name: String): Counter = metrics.counter(name)
 
   def apiCreateAccountCallCounter(source: String): Counter = counter(s"api.create-account.$source.count")
 
