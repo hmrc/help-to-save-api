@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.typesafe.config.Config
 import controllers.Assets
 import play.api.Configuration
