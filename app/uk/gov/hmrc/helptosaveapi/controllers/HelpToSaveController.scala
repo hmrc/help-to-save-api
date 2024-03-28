@@ -49,13 +49,13 @@ class HelpToSaveController @Inject() (
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
   private val userInfoRetrievals = {
-    v2.Retrievals.confidenceLevel and
-      v2.Retrievals.name and
+    v2.Retrievals.name and
       v2.Retrievals.dateOfBirth and
       v2.Retrievals.itmpName and
       v2.Retrievals.itmpDateOfBirth and
       v2.Retrievals.itmpAddress and
-      v2.Retrievals.email
+      v2.Retrievals.email and
+      v2.Retrievals.confidenceLevel
   }
 
   def apiErrorToResult(e: ApiError): Result = e match {
@@ -86,7 +86,7 @@ class HelpToSaveController @Inject() (
         // will definitely fail with a 500 response from auth for privileged access
         authorised(userInfoRetrievals and v2Nino) { _ =>
           {
-            case confidenceLevel ~ ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ authNino =>
+            case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ confidenceLevel ~ authNino =>
               if (confidenceLevel == ConfidenceLevel.L200) {
                 val retrievedDetails = RetrievedUserDetails(
                   authNino,
