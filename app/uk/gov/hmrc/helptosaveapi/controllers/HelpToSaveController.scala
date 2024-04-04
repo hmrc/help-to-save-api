@@ -23,9 +23,9 @@ import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc._
-import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId => v2AuthProviderId, nino => v2Nino}
-import uk.gov.hmrc.auth.core.retrieve.{v2, Name => RetrievedName, _}
+import uk.gov.hmrc.auth.core.{AuthConnector, ConfidenceLevel}
 import uk.gov.hmrc.helptosaveapi.auth.Auth
 import uk.gov.hmrc.helptosaveapi.models.AccessType.{PrivilegedAccess, UserRestricted}
 import uk.gov.hmrc.helptosaveapi.models._
@@ -36,7 +36,6 @@ import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, toFuture}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import java.time.LocalDate
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,15 +48,15 @@ class HelpToSaveController @Inject() (
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
-  val userInfoRetrievals: Retrieval[Option[RetrievedName] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[
-    LocalDate
-  ] ~ Option[ItmpAddress] ~ Option[String]] =
+  private val userInfoRetrievals = {
     v2.Retrievals.name and
       v2.Retrievals.dateOfBirth and
       v2.Retrievals.itmpName and
       v2.Retrievals.itmpDateOfBirth and
       v2.Retrievals.itmpAddress and
-      v2.Retrievals.email
+      v2.Retrievals.email and
+      v2.Retrievals.confidenceLevel
+  }
 
   def apiErrorToResult(e: ApiError): Result = e match {
     case _: ApiAccessError     => Forbidden(Json.toJson(e))
@@ -87,16 +86,20 @@ class HelpToSaveController @Inject() (
         // will definitely fail with a 500 response from auth for privileged access
         authorised(userInfoRetrievals and v2Nino) { _ =>
           {
-            case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ authNino =>
-              val retrievedDetails = RetrievedUserDetails(
-                authNino,
-                itmpName.flatMap(_.givenName).orElse(ggName.flatMap(_.name)),
-                itmpName.flatMap(_.familyName).orElse(ggName.flatMap(_.lastName)),
-                itmpDob.orElse(dob),
-                itmpAddress,
-                email
-              )
-              helpToSaveApiService.createAccountUserRestricted(request, retrievedDetails).map(handleResult)
+            case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ confidenceLevel ~ authNino =>
+              if (confidenceLevel == ConfidenceLevel.L200) {
+                val retrievedDetails = RetrievedUserDetails(
+                  authNino,
+                  itmpName.flatMap(_.givenName).orElse(ggName.flatMap(_.name)),
+                  itmpName.flatMap(_.familyName).orElse(ggName.flatMap(_.lastName)),
+                  itmpDob.orElse(dob),
+                  itmpAddress,
+                  email
+                )
+                helpToSaveApiService.createAccountUserRestricted(request, retrievedDetails).map(handleResult)
+              } else {
+                Future.successful(Unauthorized("Insufficient confidence level"))
+              }
           }
         }(ec)(request)
 
@@ -198,7 +201,6 @@ class HelpToSaveController @Inject() (
       case None =>
         logger.warn("There was no nino retrieved from auth")
         Forbidden
-
     }
   }
 
