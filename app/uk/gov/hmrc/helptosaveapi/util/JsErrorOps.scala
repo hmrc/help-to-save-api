@@ -18,6 +18,8 @@ package uk.gov.hmrc.helptosaveapi.util
 
 import play.api.libs.json.JsError
 
+import scala.language.implicitConversions
+
 object JsErrorOps {
 
   implicit def jsErrorOps(error: JsError): JsErrorOps = new JsErrorOps(error)

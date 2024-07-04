@@ -37,6 +37,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.util.UUID
+import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 
 class HelpToSaveController @Inject() (
@@ -64,6 +65,7 @@ class HelpToSaveController @Inject() (
     case _: ApiBackendError    => InternalServerError(Json.toJson(e))
   }
 
+  @nowarn //silence warning of deprecated v2AuthProviderId
   def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request => credentials =>
     def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
       result match {
@@ -109,6 +111,7 @@ class HelpToSaveController @Inject() (
     }
   }
 
+  @nowarn //silence warning of deprecated v2AuthProviderId
   def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2AuthProviderId) {
     implicit request => credentials =>
       val correlationId = UUID.randomUUID()
@@ -137,6 +140,7 @@ class HelpToSaveController @Inject() (
 
   }
 
+  @nowarn //silence warning of deprecated v2AuthProviderId
   def checkEligibility(urlNino: String): Action[AnyContent] = authorised(v2AuthProviderId) {
     implicit request => credentials =>
       val correlationId = UUID.randomUUID()
