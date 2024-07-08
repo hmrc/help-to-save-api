@@ -11,6 +11,8 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalaVersion := "2.13.12")
   .settings(PlayKeys.playDefaultPort := 7004)
   .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "resources")
+  //silence authprovider warnings - we need to use the deprecated authprovider
+  .settings(scalacOptions += "-Wconf:cat=deprecation:silent")
   .settings(scalacOptions += "-Wconf:src=routes/.*:s")
   .settings(scalacOptions += "-Wconf:src=txt/.*:s") //silence warning from txt files
   .settings(scalafmtOnCompile := true)
