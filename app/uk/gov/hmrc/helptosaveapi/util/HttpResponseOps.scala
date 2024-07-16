@@ -20,6 +20,7 @@ import play.api.libs.json.{JsError, Reads}
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps._
 import uk.gov.hmrc.http.HttpResponse
 
+import scala.language.implicitConversions
 import scala.util.Try
 
 object HttpResponseOps {

@@ -20,6 +20,7 @@ import cats.data.{EitherT, ValidatedNel}
 
 import java.util.Base64
 import scala.concurrent.Future
+import scala.language.implicitConversions
 import scala.util.matching.Regex
 
 package object util {
