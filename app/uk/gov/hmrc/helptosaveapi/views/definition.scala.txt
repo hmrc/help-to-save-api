@@ -16,19 +16,5 @@
           "endpointsEnabled":@enabled("""2.0""")
         }
       ]
-    },
-    "scopes": [
-        {
-          "key": "read:help-to-save",
-          "name": "Get Help to save Eligibility for an applicant",
-          "description": "Get Help to save Eligibility for an applicant",
-          "confidenceLevel": 200
-        },
-        {
-          "key": "write:help-to-save",
-          "name": "Create Help to save Account for an applicant",
-          "description": "Create Help to save Account for an applicant",
-          "confidenceLevel": 200
-        }
-    ]
+    }
 }
