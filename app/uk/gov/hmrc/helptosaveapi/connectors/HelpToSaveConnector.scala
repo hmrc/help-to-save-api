@@ -85,42 +85,34 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
-  val headers: (String, String) = "correlationIdHeaderName" -> "correlationId.toString"
-
   override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] = {
-//    http.post(
-//      createAccountUrl,
-//      CreateAccountInfo(body, eligibilityReason, clientCode),
-//      Map(correlationIdHeaderName -> correlationId.toString)
-//    )
-    val body = CreateAccountInfo(body, eligibilityReason, clientCode)
-    http
+    val reqBody = CreateAccountInfo(body, eligibilityReason, clientCode)
+    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
+      http
       .post(url"$createAccountUrl")
       .transform(_.addHttpHeaders(headers))
-      .withBody(Json.toJson(body))
+      .withBody(Json.toJson(reqBody))
       .execute[HttpResponse]
   }
 
   override def checkEligibility(
     nino: String,
     correlationId: UUID
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-//    http.get(eligibilityCheckUrl, Map("nino" -> nino), Map(correlationIdHeaderName -> correlationId.toString))
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] ={
+    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
     http.get(url"$eligibilityCheckUrl?nino=$nino").transform(_.addHttpHeaders(headers)).execute[HttpResponse]
+  }
+
 
   override def getAccount(nino: String, systemId: String, correlationId: UUID)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] = {
     val url = getAccountUrl(nino)
-//    http.get(
-//      getAccountUrl(nino),
-//      Map("systemId"              -> systemId, "correlationId" -> correlationId.toString),
-//      Map(correlationIdHeaderName -> correlationId.toString)
-//    )
+    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
     http
       .get(url"$url")
       .transform(_.addHttpHeaders(headers))
@@ -130,37 +122,33 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
   override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[HttpResponse] =
-//    http.get(
-//      storeEmailURL,
-//      Map("email"                 -> encodedEmail, "nino" -> nino),
-//      Map(correlationIdHeaderName -> correlationId.toString)
-//    )
+  ): Future[HttpResponse] = {
+    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
     http
       .get(url"$storeEmailURL?email=$encodedEmail&nino=$nino")
       .transform(_.addHttpHeaders(headers))
       .execute[HttpResponse]
+  }
 
   override def validateBankDetails(
     request: ValidateBankDetailsRequest
   )(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse] = {
-//    http.post(s"$htsBaseUrl/validate-bank-details", request)
-    val requestBody = ValidateBankDetailsRequest
     http
       .post(url"$htsBaseUrl/validate-bank-details")
-      .withBody(Json.toJson(ValidateBankDetailsRequest))
+      .withBody(Json.toJson(request))
       .execute[HttpResponse]
   }
 
   override def getUserEnrolmentStatus(
     nino: String,
     correlationId: UUID
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-//    http.get(getEnrolmentStatusURL, Map("nino" -> nino), Map(correlationIdHeaderName -> correlationId.toString))
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
     http
       .get(url"$getEnrolmentStatusURL?nino=$nino")
       .transform(_.addHttpHeaders(headers))
       .execute[HttpResponse]
+  }
 }
 
 object HelpToSaveConnectorImpl {

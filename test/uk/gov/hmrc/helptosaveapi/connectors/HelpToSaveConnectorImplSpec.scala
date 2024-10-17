@@ -92,7 +92,7 @@ class HelpToSaveConnectorImplSpec
             Map.empty,
             Map("X-Correlation-ID" -> correlationId.toString),
             Some(Json.toJson(CreateAccountInfo(createAccountBody, 8, "1234")).toString())
-          ) thenReturn (httpResponse.status, httpResponse.body)
+          ).thenReturn (httpResponse.status, httpResponse.body)
           val result = await(connector.createAccount(createAccountBody, correlationId, "1234", 8))
           result.status shouldBe httpResponse.status
           result.body shouldBe httpResponse.body
@@ -113,7 +113,7 @@ class HelpToSaveConnectorImplSpec
           eligibilityUrl,
           Map("nino" -> nino),
           headers
-        ) thenReturn (httpResponse.status, httpResponse.body)
+        ).thenReturn (httpResponse.status, httpResponse.body)
         val result = await(connector.checkEligibility(nino, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
@@ -155,7 +155,7 @@ class HelpToSaveConnectorImplSpec
           getAccountUrl,
           Map("systemId" -> systemId, "correlationId" -> correlationId.toString),
           headers
-        ) thenReturn (httpResponse.status, httpResponse.body)
+        ).thenReturn (httpResponse.status, httpResponse.body)
         val result = await(connector.getAccount(nino, systemId, correlationId))
         result.status shouldBe 200
         result.json shouldBe json
@@ -172,7 +172,7 @@ class HelpToSaveConnectorImplSpec
           storeEmailUrl,
           Map("email" -> email, "nino" -> nino),
           headers
-        ) thenReturn (httpResponse.status, httpResponse.body)
+        ).thenReturn (httpResponse.status, httpResponse.body)
 
         val result = await(connector.storeEmail(email, nino, correlationId))
         result.status shouldBe 200
@@ -188,7 +188,7 @@ class HelpToSaveConnectorImplSpec
           "/help-to-save/validate-bank-details",
           headers = Map.empty,
           body = Some(Json.toJson(request).toString())
-        ) thenReturn (httpResponse.status, httpResponse.body)
+        ).thenReturn (httpResponse.status, httpResponse.body)
         val result = await(connector.validateBankDetails(request))
         result.status shouldBe httpResponse.status
         result.body shouldBe httpResponse.body

@@ -29,13 +29,13 @@ class HttpResponseOpsSpec extends TestSupport {
   implicit val test1Format: Format[Test1] = Json.format[Test1]
   implicit val test2Format: Format[Test2] = Json.format[Test2]
 
-  case class ThrowingHttpResponse() extends HttpResponse {
+  abstract case class ThrowingHttpResponse() extends HttpResponse {
 
     override def header(key: String): Option[String] = allHeaders.get(key).flatMap { list =>
       list.headOption
     }
 
-    override def allHeaders: Map[String, Seq[String]] = Map.empty
+    def allHeaders: Map[String, Seq[String]] = Map.empty
 
     override def status: Int = 0
 
