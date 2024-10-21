@@ -152,10 +152,9 @@ class HelpToSaveConnectorImplSpec
       "call the correct url and return the response as is" in {
         val httpResponse = HttpResponse(200, json, Map.empty[String, Seq[String]])
         when(
-          GET,
-          getAccountUrl,
-          Map("systemId" -> systemId, "correlationId" -> correlationId.toString),
-          headers
+          method = GET,
+          uri = getAccountUrl,
+          headers= headers
         ).thenReturn(httpResponse.status, httpResponse.body)
         val result = await(connector.getAccount(nino, systemId, correlationId))
         result.status shouldBe 200
