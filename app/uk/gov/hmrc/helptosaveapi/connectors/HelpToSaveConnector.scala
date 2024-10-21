@@ -23,7 +23,8 @@ import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccoun
 import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
 import uk.gov.hmrc.helptosaveapi.util.Logging
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.client.HttpClientV2
 
 import java.util.UUID
@@ -88,10 +89,10 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
   override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[HttpResponse] = {
+  ): Future[HttpResponse]= {
     val reqBody = CreateAccountInfo(body, eligibilityReason, clientCode)
-    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
-      http
+    val headers: (String, String) = s"$correlationIdHeaderName" -> s"$correlationId"
+    http
       .post(url"$createAccountUrl")
       .transform(_.addHttpHeaders(headers))
       .withBody(Json.toJson(reqBody))
@@ -101,29 +102,29 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
   override def checkEligibility(
     nino: String,
     correlationId: UUID
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] ={
-    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val headers: (String, String) = s"$correlationIdHeaderName" -> s"$correlationId"
     http.get(url"$eligibilityCheckUrl?nino=$nino").transform(_.addHttpHeaders(headers)).execute[HttpResponse]
   }
-
 
   override def getAccount(nino: String, systemId: String, correlationId: UUID)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] = {
     val url = getAccountUrl(nino)
-    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
-    http
+    val headers: (String, String) = s"$correlationIdHeaderName" -> s"$correlationId"
+    val result = http
       .get(url"$url")
       .transform(_.addHttpHeaders(headers))
       .execute[HttpResponse]
+    result
   }
 
   override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] = {
-    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
+    val headers: (String, String) = s"$correlationIdHeaderName" -> s"$correlationId"
     http
       .get(url"$storeEmailURL?email=$encodedEmail&nino=$nino")
       .transform(_.addHttpHeaders(headers))
@@ -132,18 +133,17 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
 
   override def validateBankDetails(
     request: ValidateBankDetailsRequest
-  )(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse] = {
+  )(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse] =
     http
       .post(url"$htsBaseUrl/validate-bank-details")
       .withBody(Json.toJson(request))
       .execute[HttpResponse]
-  }
 
   override def getUserEnrolmentStatus(
     nino: String,
     correlationId: UUID
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val headers: (String, String) = s"${correlationIdHeaderName}" -> s"${correlationId}"
+    val headers: (String, String) = s"$correlationIdHeaderName" -> s"$correlationId"
     http
       .get(url"$getEnrolmentStatusURL?nino=$nino")
       .transform(_.addHttpHeaders(headers))
