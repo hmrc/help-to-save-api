@@ -4,7 +4,7 @@ import sbt._
 object AppDependencies {
   val hmrc = "uk.gov.hmrc"
   val playVersion = "play-30"
-  val hmrcBootstrapVersion = "8.4.0"
+  val hmrcBootstrapVersion = "9.0.0"
   val hmrcMongoVersion = "1.7.0"
 
   val compile: Seq[ModuleID] = Seq(
