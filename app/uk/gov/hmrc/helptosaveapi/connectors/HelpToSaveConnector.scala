@@ -113,8 +113,9 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
   ): Future[HttpResponse] = {
     val url = getAccountUrl(nino)
     val headers: (String, String) = s"$correlationIdHeaderName" -> s"$correlationId"
+    val queryParams = Map("systemId" -> systemId, "correlationId" -> correlationId.toString)
     val result = http
-      .get(url"$url")
+      .get(url"$url?$queryParams")
       .transform(_.addHttpHeaders(headers))
       .execute[HttpResponse]
     result
