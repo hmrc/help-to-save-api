@@ -21,6 +21,5 @@ object AppDependencies {
     "uk.gov.hmrc"             %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
     "org.mockito"             %% "mockito-scala"                 % "1.17.30"            % scope,
     "org.scalatestplus"       %% "scalacheck-1-17"               % "3.2.18.0"           % scope,
-    "com.github.tomakehurst"   % "wiremock"                      % "3.0.0-beta-7"       % scope
   )
 }
