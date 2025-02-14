@@ -16,7 +16,7 @@ object AppDependencies {
     hmrc                      %% "stub-data-generator"           % "1.2.0"              % scope,
     "uk.gov.hmrc.mongo"       %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
     "uk.gov.hmrc"             %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
-    "org.mockito"             %% "mockito-scala"                 % "1.17.30"            % scope,
-    "org.scalatestplus"       %% "scalacheck-1-17"               % "3.2.18.0"           % scope,
+    "org.mockito"             %% "mockito-scala"                 % "1.17.37"            % scope,
+    "org.scalatestplus"       %% "scalacheck-1-17"               % "3.2.18.0"           % scope
   )
 }
