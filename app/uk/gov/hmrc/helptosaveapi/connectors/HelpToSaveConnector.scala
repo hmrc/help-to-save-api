@@ -89,7 +89,7 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
   override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[HttpResponse]= {
+  ): Future[HttpResponse] = {
     val reqBody = CreateAccountInfo(body, eligibilityReason, clientCode)
     val headers: (String, String) = s"$correlationIdHeaderName" -> s"$correlationId"
     http

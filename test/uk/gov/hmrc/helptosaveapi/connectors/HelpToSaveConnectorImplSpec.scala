@@ -154,7 +154,7 @@ class HelpToSaveConnectorImplSpec
         when(
           method = GET,
           uri = getAccountUrl,
-          headers= headers
+          headers = headers
         ).thenReturn(httpResponse.status, httpResponse.body)
         val result = await(connector.getAccount(nino, systemId, correlationId))
         result.status shouldBe 200
@@ -198,12 +198,8 @@ class HelpToSaveConnectorImplSpec
       "return http response when it calling getUserEnrolmentStatus" in {
         val enrollmentStatusUrl = "/help-to-save/enrolment-status"
         val httpResponse = HttpResponse(200, "")
-        when(GET,
-          enrollmentStatusUrl,
-          Map("nino" -> nino),
-          headers
-        ).thenReturn(httpResponse.status, httpResponse.body)
-        val result = await(connector.getUserEnrolmentStatus(nino,correlationId))
+        when(GET, enrollmentStatusUrl, Map("nino" -> nino), headers).thenReturn(httpResponse.status, httpResponse.body)
+        val result = await(connector.getUserEnrolmentStatus(nino, correlationId))
         result.status shouldBe 200
       }
     }
