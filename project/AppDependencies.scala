@@ -1,4 +1,3 @@
-import play.sbt.PlayImport.ws
 import sbt.*
 
 object AppDependencies {
@@ -8,11 +7,9 @@ object AppDependencies {
   val hmrcMongoVersion = "1.7.0"
 
   val compile: Seq[ModuleID] = Seq(
-    ws,
     hmrc                %% s"bootstrap-backend-$playVersion" % hmrcBootstrapVersion,
     "uk.gov.hmrc.mongo" %% s"hmrc-mongo-$playVersion"        % hmrcMongoVersion,
-    "org.typelevel"     %% "cats-core"                       % "2.12.0",
-    "com.github.kxbmap" %% "configs"                         % "0.6.1"
+    "org.typelevel"     %% "cats-core"                       % "2.12.0"
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
