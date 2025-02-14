@@ -9,7 +9,7 @@ object AppDependencies {
   val compile: Seq[ModuleID] = Seq(
     hmrc                %% s"bootstrap-backend-$playVersion" % hmrcBootstrapVersion,
     "uk.gov.hmrc.mongo" %% s"hmrc-mongo-$playVersion"        % hmrcMongoVersion,
-    "org.typelevel"     %% "cats-core"                       % "2.12.0"
+    "org.typelevel"     %% "cats-core"                       % "2.13.0"
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
