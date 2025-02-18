@@ -1,5 +1,5 @@
 import play.sbt.PlayImport.ws
-import sbt._
+import sbt.*
 
 object AppDependencies {
   val hmrc = "uk.gov.hmrc"
@@ -16,7 +16,7 @@ object AppDependencies {
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
-    hmrc                      %% "stub-data-generator"           % "1.1.0"              % scope,
+    hmrc                      %% "stub-data-generator"           % "1.2.0"              % scope,
     "uk.gov.hmrc.mongo"       %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
     "uk.gov.hmrc"             %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
     "org.mockito"             %% "mockito-scala"                 % "1.17.30"            % scope,
