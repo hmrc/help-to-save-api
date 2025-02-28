@@ -8,7 +8,7 @@ object CodeCoverageSettings {
     ".*Reverse.*",
     ".*config.*",
     ".*(AuthService|BuildInfo|Routes|JsErrorOps|Metrics).*",
-    ".*http.*",
+    ".*http.*"
   )
 
   val settings: Seq[Setting[?]] = Seq(

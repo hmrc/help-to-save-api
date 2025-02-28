@@ -87,7 +87,7 @@ class HelpToSaveController @Inject() (
         authorised(userInfoRetrievals and v2Nino) { _ =>
           {
             case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ confidenceLevel ~ authNino =>
-              if (confidenceLevel == ConfidenceLevel.L200) {
+              if (confidenceLevel >= ConfidenceLevel.L200) {
                 val retrievedDetails = RetrievedUserDetails(
                   authNino,
                   itmpName.flatMap(_.givenName).orElse(ggName.flatMap(_.name)),

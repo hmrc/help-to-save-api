@@ -29,14 +29,14 @@ info:
               \nThe request to get account information will use the National Insurance Number (NINO) of the user as the account identifier. The NINO is inferred from the user's Government Gateway login session."
 
 
-  contact: {}
+  contact: { }
   version: '2.0'
 servers:
   - url: https://test-api.service.hmrc.gov.uk
     description: Sandbox
   - url: https://api.service.hmrc.gov.uk/
     description: Production
-    variables: {}
+    variables: { }
 paths:
   /individuals/help-to-save/account:
     get:
@@ -65,7 +65,7 @@ paths:
       responses:
         '200':
           description: Account information was successfully retrieved
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
@@ -100,7 +100,7 @@ paths:
                     bonusEstimate: 150
         '403':
           description: Forbidden Request
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
@@ -114,7 +114,7 @@ paths:
                 message: Missing NINO
         '404':
           description: Not Found
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
@@ -207,15 +207,15 @@ paths:
       responses:
         '200':
           description: The Help to Save account has been updated successfully
-          headers: {}
-          content: {}
+          headers: { }
+          content: { }
         '201':
           description: The Help to Save account has been created successfully
-          headers: {}
-          content: {}
+          headers: { }
+          content: { }
         '400':
           description: Bad Request
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
@@ -235,7 +235,7 @@ paths:
                     message: bank details were invalid
         '409':
           description: Conflict http response
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
@@ -357,7 +357,7 @@ paths:
                     accountExists: true
         '400':
           description: Bad Request
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
@@ -372,7 +372,7 @@ paths:
                 message: NINO doesn't match the expected regex
         '403':
           description: Forbidden Request
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
@@ -505,7 +505,7 @@ paths:
                     accountExists: true
         '400':
           description: Bad Request
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
@@ -520,7 +520,7 @@ paths:
                 message: NINO doesn't match the expected regex
         '403':
           description: Forbidden Request
-          headers: {}
+          headers: { }
           content:
             application/json:
               schema:
