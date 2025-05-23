@@ -69,9 +69,8 @@ trait WireMockMethods {
     private def thenReturnInternal(status: Int, headers: Map[String, String], body: Option[String]): StubMapping = {
       val response = {
         val statusResponse = aResponse().withStatus(status)
-        val responseWithHeaders = headers.foldLeft(statusResponse) {
-          case (res, (key, value)) =>
-            res.withHeader(key, value)
+        val responseWithHeaders = headers.foldLeft(statusResponse) { case (res, (key, value)) =>
+          res.withHeader(key, value)
         }
         body match {
           case Some(extractedBody) => responseWithHeaders.withBody(extractedBody)

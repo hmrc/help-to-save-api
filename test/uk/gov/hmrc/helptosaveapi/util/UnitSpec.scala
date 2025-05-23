@@ -43,20 +43,17 @@ trait UnitSpec extends AnyWordSpec with Matchers {
   def status(of: Future[play.api.mvc.Result])(implicit timeout: Duration): Int =
     status(Await.result(of, timeout))
 
-  def jsonBodyOf(result: play.api.mvc.Result)(
-    implicit
+  def jsonBodyOf(result: play.api.mvc.Result)(implicit
     mat: Materializer
   ): JsValue =
     Json.parse(bodyOf(result))
 
-  def jsonBodyOf(resultF: Future[play.api.mvc.Result])(
-    implicit
+  def jsonBodyOf(resultF: Future[play.api.mvc.Result])(implicit
     mat: Materializer
   ): Future[JsValue] =
     resultF.map(jsonBodyOf)
 
-  def bodyOf(result: play.api.mvc.Result)(
-    implicit
+  def bodyOf(result: play.api.mvc.Result)(implicit
     mat: Materializer
   ): String = {
     val bodyBytes: ByteString = await(result.body.consumeData)
@@ -68,8 +65,7 @@ trait UnitSpec extends AnyWordSpec with Matchers {
     bodyBytes.decodeString(Charset.defaultCharset().name)
   }
 
-  def bodyOf(resultF: Future[play.api.mvc.Result])(
-    implicit
+  def bodyOf(resultF: Future[play.api.mvc.Result])(implicit
     mat: Materializer
   ): Future[String] =
     resultF.map(bodyOf)

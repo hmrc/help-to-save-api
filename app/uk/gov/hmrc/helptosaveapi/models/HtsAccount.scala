@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.helptosaveapi.models
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, Json, Reads, Writes}
 
 import java.time.LocalDate
 

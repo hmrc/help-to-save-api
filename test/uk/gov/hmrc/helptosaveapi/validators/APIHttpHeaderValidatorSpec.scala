@@ -39,8 +39,8 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ -> "value") ++ List(
-          HeaderNames.CONTENT_TYPE                      -> ContentTypes.JSON,
-          HeaderNames.ACCEPT                            -> "application/vnd.hmrc.2.0+json"
+          HeaderNames.CONTENT_TYPE -> ContentTypes.JSON,
+          HeaderNames.ACCEPT       -> "application/vnd.hmrc.2.0+json"
         ): _*
       )
 
@@ -51,7 +51,7 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ -> "value") ++ List(
-          HeaderNames.ACCEPT                            -> "application/vnd.hmrc.2.0+json"
+          HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"
         ): _*
       )
 

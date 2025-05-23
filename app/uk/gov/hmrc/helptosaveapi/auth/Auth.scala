@@ -34,8 +34,8 @@ trait Auth extends AuthorisedFunctions { this: BackendController with Logging =>
   def authorised[A](retrievals: Retrieval[A])(action: HtsAction[A])(implicit ec: ExecutionContext): Action[AnyContent] =
     Action.async { implicit request =>
       authorised(authProviders)
-        .retrieve(retrievals) { action(request) }
-        .recover { handleFailure() }
+        .retrieve(retrievals)(action(request))
+        .recover(handleFailure())
     }
 
   def handleFailure(): PartialFunction[Throwable, Result] = {

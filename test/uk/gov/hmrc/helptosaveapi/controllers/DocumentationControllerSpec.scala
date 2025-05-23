@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
+import com.typesafe.config.Config
 import play.api.Configuration
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
@@ -53,10 +54,10 @@ class DocumentationControllerSpec extends TestSupport {
   "yaml" must {
     "return the yaml documentation when called" in {
       val result: Future[Result] = controller.yaml("2.0", "application.yaml")(FakeRequest())
-      val raml =
-        Source.fromInputStream(getClass().getResourceAsStream("/public/api/conf/2.0/application.yaml")).mkString
+      val yaml =
+        Source.fromInputStream(getClass.getResourceAsStream("/public/api/conf/2.0/application.yaml")).mkString
       status(result) shouldBe OK
-      contentAsString(result) shouldBe raml
+      contentAsString(result) shouldBe yaml
     }
   }
 
@@ -67,5 +68,12 @@ class DocumentationControllerSpec extends TestSupport {
 
       Json.toJson[APIAccess](apiAccess) shouldBe expectedJson
     }
+    "serialize and deserialize correctly" in {
+      val apiAccess = APIAccess(access)
+
+      val json = Json.toJson(apiAccess)
+      json.as[APIAccess] shouldEqual apiAccess
+    }
   }
+
 }

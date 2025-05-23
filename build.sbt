@@ -8,7 +8,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(CodeCoverageSettings.settings *)
   .settings(onLoadMessage := "")
   .settings(majorVersion := 2)
-  .settings(scalaVersion := "2.13.12")
+  .settings(scalaVersion := "3.3.5")
   .settings(PlayKeys.playDefaultPort := 7004)
   .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "resources")
   //silence authprovider warnings - we need to use the deprecated authprovider

@@ -16,23 +16,25 @@
 
 package uk.gov.hmrc.helptosaveapi.services
 
-import cats.data.Validated._
+import cats.data.Validated.*
 import cats.data.{NonEmptyList, ValidatedNel}
-import org.mockito.ArgumentMatchersSugar.*
-import play.api.libs.json._
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{reset, when}
+import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.libs.json.*
 import play.api.mvc.{AnyContent, AnyContentAsEmpty, AnyContentAsJson, Request}
 import play.api.test.FakeRequest
-import play.mvc.Http.Status._
+import play.mvc.Http.Status.*
 import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
-import uk.gov.hmrc.helptosaveapi.models._
+import uk.gov.hmrc.helptosaveapi.models.*
+import uk.gov.hmrc.helptosaveapi.models.createaccount.*
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.BankDetails
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountFieldSpec.TestCreateAccountRequest
-import uk.gov.hmrc.helptosaveapi.models.createaccount._
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.CreateAccountErrorResponse
-import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceSpec._
+import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceSpec.*
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, NINO, TestSupport, ValidatedOrErrorString, base64Encode}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
 import uk.gov.hmrc.http.HttpResponse
@@ -58,62 +60,65 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
     contentTypeCk: Boolean
   )(
     response: ValidatedOrErrorString[Request[AnyContent]]
-  ) =
+  ) = when(
     mockApiHttpHeaderValidator
-      .validateHttpHeaders[AnyContent](contentTypeCk)(*)
-      .returns(response)
+      .validateHttpHeaders[AnyContent](eqTo(contentTypeCk))(any())
+  )
+    .thenReturn(response)
 
   private def mockEligibilityCheckHeaderValidator(
     contentTypeCk: Boolean
   )(
     response: ValidatedOrErrorString[Request[AnyContent]]
   ) =
-    mockApiHttpHeaderValidator
-      .validateHttpHeaders[AnyContent](contentTypeCk)(*)
-      .returns(response)
+    when(
+      mockApiHttpHeaderValidator
+        .validateHttpHeaders[AnyContent](eqTo(contentTypeCk))(any())
+    )
+      .thenReturn(response)
 
   private def mockCreateAccountRequestValidator(
     request: CreateAccountRequest
   )(response: Either[String, Unit]) =
-    mockCreateAccountRequestValidatorM
-      .validateRequest(request)
-      .returns(fromEither(response).bimap(e => NonEmptyList.of(e), _ => request))
+    when(
+      mockCreateAccountRequestValidatorM
+        .validateRequest(eqTo(request))
+    )
+      .thenReturn(fromEither(response).bimap(e => NonEmptyList.of(e), _ => request))
 
   private def mockEligibilityCheckRequestValidator(
     nino: String
   )(response: ValidatedNel[String, String]) =
-    mockEligibilityRequestValidator.validateNino(nino).returns(response)
+    when(mockEligibilityRequestValidator.validateNino(eqTo(nino))).thenReturn(response)
 
   private def mockEligibilityCheck(nino: String, correlationId: UUID)(
     response: Either[String, HttpResponse]
-  ) =
-    helpToSaveConnector
-      .checkEligibility(nino, correlationId)(*, *)
-      .returns(
-        response.fold(
-          e => Future.failed(new Exception(e)),
-          Future.successful
-        )
+  ) = when(helpToSaveConnector.checkEligibility(eqTo(nino), eqTo(correlationId))(any(), any()))
+    .thenReturn(
+      response.fold(
+        e => Future.failed(new Exception(e)),
+        Future.successful
       )
+    )
 
   private def mockCreateAccountService(expectedBody: CreateAccountBody)(
     response: Either[String, HttpResponse]
-  ) =
-    helpToSaveConnector
-      .createAccount(expectedBody, *, *, *)
-      .returns(
-        response.fold(
-          e => Future.failed(new Exception(e)),
-          Future.successful
-        )
+  ) = when(helpToSaveConnector.createAccount(eqTo(expectedBody), any(), any(), any())(any(), any()))
+    .thenReturn(
+      response.fold(
+        e => Future.failed(new Exception(e)),
+        Future.successful
       )
+    )
 
   private def mockGetAccount(nino: String, systemId: String)(
     response: Either[String, HttpResponse]
   ) =
-    helpToSaveConnector
-      .getAccount(nino, systemId, *)(*, *)
-      .returns(
+    when(
+      helpToSaveConnector
+        .getAccount(eqTo(nino), eqTo(systemId), any())(any(), any())
+    )
+      .thenReturn(
         response.fold(
           e => Future.failed(new Exception(e)),
           Future.successful
@@ -123,9 +128,11 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   private def mockStoreEmail(encodedEmail: String, nino: String, correlationId: UUID)(
     response: Either[String, HttpResponse]
   ) =
-    helpToSaveConnector
-      .storeEmail(encodedEmail, nino, correlationId)(*, *)
-      .returns(
+    when(
+      helpToSaveConnector
+        .storeEmail(eqTo(encodedEmail), eqTo(nino), eqTo(correlationId))(any(), any())
+    )
+      .thenReturn(
         response.fold(
           e => Future.failed(new Exception(e)),
           Future.successful
@@ -135,23 +142,32 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   private def mockEligibilityStorePut(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(
     response: Either[String, Unit]
   ) =
-    mockEligibilityStore
-      .put(correlationId, eligibility, nino)(*)
-      .returns(Future.successful(response))
+    when(
+      mockEligibilityStore
+        .put(eqTo(correlationId), eqTo(eligibility), eqTo(nino))(any())
+    )
+      .thenReturn(Future.successful(response))
 
   private def mockEligibilityStoreGet(correlationId: UUID)(
     response: Either[String, Option[EligibilityResponseWithNINO]]
   ) =
-    mockEligibilityStore
-      .get(correlationId)(*)
-      .returns(Future.successful(response))
+    when(
+      mockEligibilityStore
+        .get(eqTo(correlationId))(any())
+    )
+      .thenReturn(Future.successful(response))
 
   private def mockBankDetailsValidation(nino: NINO, bankDetails: BankDetails)(
     response: Either[String, Boolean]
   ) =
-    helpToSaveConnector
-      .validateBankDetails(ValidateBankDetailsRequest(nino, bankDetails.sortCode, bankDetails.accountNumber))(*, *)
-      .returns(
+    when(
+      helpToSaveConnector
+        .validateBankDetails(eqTo(ValidateBankDetailsRequest(nino, bankDetails.sortCode, bankDetails.accountNumber)))(
+          any(),
+          any()
+        )
+    )
+      .thenReturn(
         Future.successful(
           response
             .fold(
@@ -164,9 +180,11 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   private def mockGetUserEnrolmentStatus(nino: String, correlationId: UUID)(
     jsonResponse: Option[JsValue]
   ) =
-    helpToSaveConnector
-      .getUserEnrolmentStatus(nino, correlationId)(*, *)
-      .returns(
+    when(
+      helpToSaveConnector
+        .getUserEnrolmentStatus(eqTo(nino), eqTo(correlationId))(any(), any())
+    )
+      .thenReturn(
         jsonResponse.fold[Future[HttpResponse]](Future.failed(new Exception("Oh no!"))) { body =>
           Future.successful(HttpResponse(200, body, Map.empty[String, Seq[String]]))
         }
@@ -295,6 +313,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
             onlineRequestWithEmail.body.nino,
             onlineRequestWithEmail.header.requestCorrelationId
           )(Right(HttpResponse(200, "")))
+
           mockCreateAccountService(onlineRequestWithEmail.body)(Right(HttpResponse(CREATED, "")))
 
           val result = await(
@@ -391,26 +410,26 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         "the email is missing and the email cannot be retrieved but the registration channel is not " +
           "online and the other missing mandatory details can be retrieved" in {
-          val generatedCreateAccountRequest =
-            createAccountRequestWithRetrievedDetails(createAccountHeader, "callCentre", "00").withEmail(None)
+            val generatedCreateAccountRequest =
+              createAccountRequestWithRetrievedDetails(createAccountHeader, "callCentre", "00").withEmail(None)
 
-          mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
-          mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
-          mockEligibilityStoreGet(generatedCreateAccountRequest.header.requestCorrelationId)(
-            Right(Some(apiEligibilityResponseWithNINO("retrievedNINO")))
-          )
-          generatedCreateAccountRequest.body.bankDetails
-            .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
-          mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
-
-          val result = await(
-            service.createAccountUserRestricted(
-              minimalJsonRequest("callCentre"),
-              fullRetrievedUserDetails.copy(email = None)
+            mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+            mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
+            mockEligibilityStoreGet(generatedCreateAccountRequest.header.requestCorrelationId)(
+              Right(Some(apiEligibilityResponseWithNINO("retrievedNINO")))
             )
-          )
-          result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
-        }
+            generatedCreateAccountRequest.body.bankDetails
+              .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
+            mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
+
+            val result = await(
+              service.createAccountUserRestricted(
+                minimalJsonRequest("callCentre"),
+                fullRetrievedUserDetails.copy(email = None)
+              )
+            )
+            result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
+          }
 
         "the communication preference is missing and the registration channel is online" in {
           val generatedCreateAccountRequest =
@@ -593,7 +612,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           val result = await(
             service.createAccountUserRestricted(
               FakeRequest().withJsonBody(Json.parse(s"""{ "header" : ${Json
-                                                         .toJson(createAccountHeader)} }""".stripMargin)),
+                                                        .toJson(createAccountHeader)} }""".stripMargin)),
               fullRetrievedUserDetails
             )
           )
@@ -1228,6 +1247,28 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
       }
     }
   }
+
+  "CreateAccountErrorResponse" should {
+
+    "serialize and deserialize correctly using implicit format" in {
+
+      val errorResponse = CreateAccountErrorResponse("Error occurred", "Detailed error message")
+      val json: JsValue = Json.toJson(errorResponse)(CreateAccountErrorResponse.format)
+      val deserializedErrorResponse = json.as[CreateAccountErrorResponse]
+
+      errorResponse shouldEqual deserializedErrorResponse
+
+    }
+
+    "convert to JSON correctly using toJson method" in {
+      val errorResponse = CreateAccountErrorResponse("Error occurred", "Detailed error message")
+      val json: JsValue = errorResponse.toJson
+
+      json shouldEqual Json.toJson(errorResponse)
+    }
+
+  }
+
 }
 
 object HelpToSaveApiServiceSpec {

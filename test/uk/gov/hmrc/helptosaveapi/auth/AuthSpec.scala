@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 
 package uk.gov.hmrc.helptosaveapi.auth
 
+import org.scalactic.Prettifier.default
 import play.api.http.Status
 import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.AuthorisationException.fromString
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, nino => v2Nino}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, nino as v2Nino}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, Logging}
+import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, Logging, TestSupport}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.{Await, Future}
 
 class AuthSpec extends AuthSupport {
@@ -40,9 +41,8 @@ class AuthSpec extends AuthSupport {
   val retrieve: Retrieval[Option[String] ~ Option[Credentials]] = v2Nino and credentials
 
   private def callAuth = auth.authorised(retrieve) { _ =>
-    {
-      case nino ~ credentials =>
-        Future.successful(Ok("authSuccess"))
+    { case nino ~ credentials =>
+      Future.successful(Ok("authSuccess"))
     }
   }
 
@@ -74,12 +74,17 @@ class AuthSpec extends AuthSupport {
         "unknown-blah"                -> Status.INTERNAL_SERVER_ERROR
       )
 
-      exceptions.foreach {
-        case (error, expectedStatus) =>
-          mockAuthWith(error)
-          val result = callAuth(FakeRequest())
-          status(result) shouldBe expectedStatus
+      exceptions.foreach { case (error, expectedStatus) =>
+        mockAuthWith(error)
+        val result = callAuth(FakeRequest())
+        status(result) shouldBe expectedStatus
       }
+    }
+
+    "handle InternalError exception" in {
+      mockAuthResultWithFail()(InternalError("Internal error"))
+      val result = callAuth(FakeRequest())
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
   }
 }

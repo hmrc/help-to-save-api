@@ -22,7 +22,7 @@ class ValidationSpec extends TestSupport {
 
   "Validation" must {
 
-    "have a method which can validate based on a boolean prediacte" in {
+    "have a method which can validate based on a boolean predicate" in {
       val i = 1
       def validation[A] = Validation.validationFromBoolean[Int, String](i) _
 

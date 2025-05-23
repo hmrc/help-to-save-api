@@ -29,13 +29,13 @@ object Logging {
 
   implicit class LoggerOps(val logger: Logger) {
 
-    def info(message: String, nino: String, additionalParams: (String, String)*)(
-      implicit transformer: LogMessageTransformer
+    def info(message: String, nino: String, additionalParams: (String, String)*)(implicit
+      transformer: LogMessageTransformer
     ): Unit =
       logger.info(transformer.transform(message, nino, additionalParams))
 
-    def warn(message: String, nino: String, additionalParams: (String, String)*)(
-      implicit transformer: LogMessageTransformer
+    def warn(message: String, nino: String, additionalParams: (String, String)*)(implicit
+      transformer: LogMessageTransformer
     ): Unit =
       logger.warn(transformer.transform(message, nino, additionalParams))
   }

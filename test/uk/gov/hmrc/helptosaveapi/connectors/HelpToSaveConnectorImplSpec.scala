@@ -17,7 +17,7 @@
 package uk.gov.hmrc.helptosaveapi.connectors
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
