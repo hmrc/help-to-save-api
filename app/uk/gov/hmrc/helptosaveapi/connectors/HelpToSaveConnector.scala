@@ -19,13 +19,14 @@ package uk.gov.hmrc.helptosaveapi.connectors
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.Configuration
 import play.api.libs.json.{Json, Writes}
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
 import uk.gov.hmrc.helptosaveapi.util.Logging
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,23 +34,23 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[HelpToSaveConnectorImpl])
 trait HelpToSaveConnector {
 
-  def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(
-    implicit hc: HeaderCarrier,
+  def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse]
 
-  def checkEligibility(nino: String, correlationId: UUID)(
-    implicit hc: HeaderCarrier,
+  def checkEligibility(nino: String, correlationId: UUID)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse]
 
-  def getAccount(nino: String, systemId: String, correlationId: UUID)(
-    implicit hc: HeaderCarrier,
+  def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse]
 
-  def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(
-    implicit hc: HeaderCarrier,
+  def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse]
 
@@ -57,8 +58,8 @@ trait HelpToSaveConnector {
     request: ValidateBankDetailsRequest
   )(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[HttpResponse]
 
-  def getUserEnrolmentStatus(nino: String, correlationId: UUID)(
-    implicit hc: HeaderCarrier,
+  def getUserEnrolmentStatus(nino: String, correlationId: UUID)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse]
 }
@@ -87,7 +88,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
   override def createAccount(body: CreateAccountBody, correlationId: UUID, clientCode: String, eligibilityReason: Int)(
-    implicit hc: HeaderCarrier,
+    implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] = {
     val reqBody = CreateAccountInfo(body, eligibilityReason, clientCode)
@@ -107,8 +109,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
     http.get(url"$eligibilityCheckUrl?nino=$nino").transform(_.addHttpHeaders(headers)).execute[HttpResponse]
   }
 
-  override def getAccount(nino: String, systemId: String, correlationId: UUID)(
-    implicit hc: HeaderCarrier,
+  override def getAccount(nino: String, systemId: String, correlationId: UUID)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] = {
     val url = getAccountUrl(nino)
@@ -121,8 +123,8 @@ class HelpToSaveConnectorImpl @Inject() (config: Configuration, http: HttpClient
     result
   }
 
-  override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(
-    implicit hc: HeaderCarrier,
+  override def storeEmail(encodedEmail: String, nino: String, correlationId: UUID)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[HttpResponse] = {
     val headers: (String, String) = s"$correlationIdHeaderName" -> s"$correlationId"

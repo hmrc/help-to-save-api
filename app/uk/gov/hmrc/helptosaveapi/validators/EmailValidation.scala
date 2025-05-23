@@ -75,16 +75,12 @@ class EmailValidation @Inject() (configuration: Configuration) {
       validatedFromBoolean(domainPart)(_.contains('.'), invalidEmailError)
 
     val hasTextAfterAtSymbolButBeforeDotCheck: ValidOrErrorStrings[String] = validatedFromBoolean(domainPart)(
-      { text =>
-        text.contains('.') && text.substring(0, text.indexOf('.')).length > 0
-      },
+      text => text.contains('.') && text.substring(0, text.indexOf('.')).length > 0,
       invalidEmailError
     )
 
     val hasTextAfterDotCheck: ValidOrErrorStrings[String] = validatedFromBoolean(domainPart)(
-      { text =>
-        text.contains('.') && text.substring(text.lastIndexOf('.') + 1).length > 0
-      },
+      text => text.contains('.') && text.substring(text.lastIndexOf('.') + 1).length > 0,
       invalidEmailError
     )
 

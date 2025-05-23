@@ -20,7 +20,7 @@ import org.apache.pekko.stream.Materializer
 import com.typesafe.config.Config
 import controllers.Assets
 import play.api.Configuration
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Json, Reads, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.filters.cors.CORSActionBuilder
 import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
@@ -33,7 +33,8 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class DocumentationController @Inject() (configuration: Configuration, cc: ControllerComponents, assets: Assets)(
-  implicit materializer: Materializer,
+  implicit
+  materializer: Materializer,
   executionContext: ExecutionContext
 ) extends BackendController(cc) {
 
@@ -59,7 +60,9 @@ object DocumentationController {
 
   object APIAccess {
 
-    implicit val apiAccessFormats: Format[APIAccess] = Json.format[APIAccess]
+//    implicit val apiAccessFormats: Format[APIAccess] = Json.format[APIAccess]
+    implicit val apiAccessWrites: Writes[APIAccess] = Json.writes[APIAccess]
+    implicit val apiAccessReads: Reads[APIAccess] = Json.reads[APIAccess]
 
     type Version = String
 

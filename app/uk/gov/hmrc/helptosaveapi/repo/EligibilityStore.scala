@@ -17,8 +17,8 @@
 package uk.gov.hmrc.helptosaveapi.repo
 
 import cats.data.OptionT
-import cats.instances.either._
-import cats.syntax.either._
+import cats.instances.either.*
+import cats.syntax.either.*
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.helptosaveapi.models.EligibilityResponse
@@ -34,12 +34,12 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[MongoEligibilityStore])
 trait EligibilityStore {
 
-  def get(correlationId: UUID)(
-    implicit ec: ExecutionContext
+  def get(correlationId: UUID)(implicit
+    ec: ExecutionContext
   ): Future[Either[String, Option[EligibilityResponseWithNINO]]]
 
-  def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(
-    implicit ec: ExecutionContext
+  def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(implicit
+    ec: ExecutionContext
   ): Future[Either[String, Unit]]
 
 }
@@ -55,8 +55,8 @@ object EligibilityStore {
 }
 
 @Singleton
-class MongoEligibilityStore @Inject() (mongoComponent: MongoComponent, servicesConfig: ServicesConfig)(
-  implicit ec: ExecutionContext
+class MongoEligibilityStore @Inject() (mongoComponent: MongoComponent, servicesConfig: ServicesConfig)(implicit
+  ec: ExecutionContext
 ) extends EligibilityStore {
 
   private type EitherStringOr[A] = Either[String, A]
@@ -78,34 +78,31 @@ class MongoEligibilityStore @Inject() (mongoComponent: MongoComponent, servicesC
           cache <- OptionT.fromOption[EitherStringOr](maybeCache)
           data  <- OptionT.fromOption[EitherStringOr](Some(cache.data))
           result <- OptionT.liftF[EitherStringOr, EligibilityResponseWithNINO](
-                     (data \ "eligibility")
-                       .validate[EligibilityResponseWithNINO]
-                       .asEither
-                       .leftMap(e => s"Could not parse data: ${e.mkString("; ")}")
-                   )
+                      (data \ "eligibility")
+                        .validate[EligibilityResponseWithNINO]
+                        .asEither
+                        .leftMap(e => s"Could not parse data: ${e.mkString("; ")}")
+                    )
         } yield result
 
         response.value
       }
-      .recover {
-        case e =>
-          Left(e.getMessage)
+      .recover { case e =>
+        Left(e.getMessage)
       }
 
-  override def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(
-    implicit ec: ExecutionContext
+  override def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(implicit
+    ec: ExecutionContext
   ): Future[Either[String, Unit]] =
     doCreateOrUpdate(
       correlationId.toString,
       "eligibility",
       Json.toJson(EligibilityResponseWithNINO(eligibility, nino))
     ).map[Either[String, Unit]] { dbUpdate =>
-        Right(())
-      }
-      .recover {
-        case e =>
-          Left(e.getMessage)
-      }
+      Right(())
+    }.recover { case e =>
+      Left(e.getMessage)
+    }
 
   private[repo] def doFindById(id: String) =
     preservingMdc {

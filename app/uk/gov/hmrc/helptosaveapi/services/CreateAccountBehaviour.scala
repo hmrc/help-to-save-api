@@ -118,17 +118,16 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService =>
               retrievedUserDetails.address.flatMap(_.line1),
               retrievedUserDetails.address.flatMap(_.line2),
               retrievedUserDetails.address.flatMap(_.postCode)
-            ).mapN {
-              case (l1, l2, p) =>
-                List[(CreateAccountField, JsValue)](
-                  AddressLine1 -> toJsValue(l1),
-                  AddressLine2 -> toJsValue(l2),
-                  Postcode     -> toJsValue(p),
-                  AddressLine3 -> toJsValue(retrievedUserDetails.address.flatMap(_.line3)),
-                  AddressLine4 -> toJsValue(retrievedUserDetails.address.flatMap(_.line4)),
-                  AddressLine5 -> toJsValue(retrievedUserDetails.address.flatMap(_.line5)),
-                  CountryCode  -> toJsValue(retrievedUserDetails.address.flatMap(_.countryCode))
-                ).map { case (k, v) => k -> Some(v) }
+            ).mapN { case (l1, l2, p) =>
+              List[(CreateAccountField, JsValue)](
+                AddressLine1 -> toJsValue(l1),
+                AddressLine2 -> toJsValue(l2),
+                Postcode     -> toJsValue(p),
+                AddressLine3 -> toJsValue(retrievedUserDetails.address.flatMap(_.line3)),
+                AddressLine4 -> toJsValue(retrievedUserDetails.address.flatMap(_.line4)),
+                AddressLine5 -> toJsValue(retrievedUserDetails.address.flatMap(_.line5)),
+                CountryCode  -> toJsValue(retrievedUserDetails.address.flatMap(_.countryCode))
+              ).map { case (k, v) => k -> Some(v) }
             }
           addressFields.getOrElse(List(CreateAccountField.Address -> None))
 
@@ -137,10 +136,9 @@ private[services] trait CreateAccountBehaviour { this: HelpToSaveApiService =>
       }
     }
 
-    val (data, stillMissing) = {
+    val (data, stillMissing) =
       collatedData.collect { case (field, Some(value)) => field -> value }.toMap ->
         collatedData.collect { case (field, None) => field }
-    }
 
     if (stillMissing.nonEmpty) {
       Left(ApiBackendError("MISSING_DATA", s"cannot retrieve data: [${stillMissing.mkString(", ")}]"))

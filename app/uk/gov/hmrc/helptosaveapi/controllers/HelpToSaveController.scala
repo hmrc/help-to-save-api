@@ -48,7 +48,7 @@ class HelpToSaveController @Inject() (
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
-  private val userInfoRetrievals = {
+  private val userInfoRetrievals =
     v2.Retrievals.name and
       v2.Retrievals.dateOfBirth and
       v2.Retrievals.itmpName and
@@ -56,7 +56,6 @@ class HelpToSaveController @Inject() (
       v2.Retrievals.itmpAddress and
       v2.Retrievals.email and
       v2.Retrievals.confidenceLevel
-  }
 
   def apiErrorToResult(e: ApiError): Result = e match {
     case _: ApiAccessError     => Forbidden(Json.toJson(e))
@@ -85,21 +84,20 @@ class HelpToSaveController @Inject() (
         // we can't do the user retrievals before this point because the user retrievals
         // will definitely fail with a 500 response from auth for privileged access
         authorised(userInfoRetrievals and v2Nino) { _ =>
-          {
-            case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ confidenceLevel ~ authNino =>
-              if (confidenceLevel >= ConfidenceLevel.L200) {
-                val retrievedDetails = RetrievedUserDetails(
-                  authNino,
-                  itmpName.flatMap(_.givenName).orElse(ggName.flatMap(_.name)),
-                  itmpName.flatMap(_.familyName).orElse(ggName.flatMap(_.lastName)),
-                  itmpDob.orElse(dob),
-                  itmpAddress,
-                  email
-                )
-                helpToSaveApiService.createAccountUserRestricted(request, retrievedDetails).map(handleResult)
-              } else {
-                Future.successful(Unauthorized("Insufficient confidence level"))
-              }
+          { case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ confidenceLevel ~ authNino =>
+            if (confidenceLevel >= ConfidenceLevel.L200) {
+              val retrievedDetails = RetrievedUserDetails(
+                authNino,
+                itmpName.flatMap(_.givenName).orElse(ggName.flatMap(_.name)),
+                itmpName.flatMap(_.familyName).orElse(ggName.flatMap(_.lastName)),
+                itmpDob.orElse(dob),
+                itmpAddress,
+                email
+              )
+              helpToSaveApiService.createAccountUserRestricted(request, retrievedDetails).map(handleResult)
+            } else {
+              Future.successful(Unauthorized("Insufficient confidence level"))
+            }
           }
         }(ec)(request)
 
@@ -204,11 +202,10 @@ class HelpToSaveController @Inject() (
     }
   }
 
-  val unsupportedCredentialsProviderResult: Result = {
+  val unsupportedCredentialsProviderResult: Result =
     Forbidden(
       Json.toJson(
         ApiAccessError("UNSUPPORTED_CREDENTIALS_PROVIDER", "credentials provider not recognised").asInstanceOf[ApiError]
       )
     )
-  }
 }

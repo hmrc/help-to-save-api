@@ -34,8 +34,8 @@ private[services] trait EmailBehaviour {
 
   type StoreEmailResponseType = Future[Either[ApiError, Unit]]
 
-  def storeEmail(nino: String, email: String, correlationId: UUID)(
-    implicit hc: HeaderCarrier,
+  def storeEmail(nino: String, email: String, correlationId: UUID)(implicit
+    hc: HeaderCarrier,
     ec: ExecutionContext,
     logMessageTransformer: LogMessageTransformer
   ): StoreEmailResponseType = {
@@ -58,11 +58,10 @@ private[services] trait EmailBehaviour {
             Left(ApiBackendError())
         }
       }
-      .recover {
-        case e =>
-          logger.warn(s"error during storing email for the api user, error=${e.getMessage}")
-          pagerDutyAlerting.alert("could not store email in mongo for the api user")
-          Left(ApiBackendError())
+      .recover { case e =>
+        logger.warn(s"error during storing email for the api user, error=${e.getMessage}")
+        pagerDutyAlerting.alert("could not store email in mongo for the api user")
+        Left(ApiBackendError())
       }
   }
 

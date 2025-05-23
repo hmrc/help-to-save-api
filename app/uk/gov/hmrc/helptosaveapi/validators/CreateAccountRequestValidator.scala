@@ -94,16 +94,16 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
   }
 
   private def forenameValidation(name: String): ValidatedNel[String, String] =
-    (commonNameChecks(name, "forename"), forenameNoApostrophe(name)).mapN {
-      case _ => name
+    (commonNameChecks(name, "forename"), forenameNoApostrophe(name)).mapN { case _ =>
+      name
     }
 
   private def surnameValidation(name: String): ValidatedNel[String, String] = {
     val lastCharacterNonSpecial: ValidatedOrErrorString[String] =
       validatedFromBoolean(name)(!_.lastOption.exists(isSpecial(_)), "surname ended with special character")
 
-    (commonNameChecks(name, "surname"), lastCharacterNonSpecial).mapN {
-      case _ => name
+    (commonNameChecks(name, "surname"), lastCharacterNonSpecial).mapN { case _ =>
+      name
     }
   }
 
@@ -123,8 +123,8 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     val letterCheck: ValidatedOrErrorString[Option[String]] =
       validationFromBoolean(phoneNumber)(_.forall(!_.exists(_.isLetter)), _ => "phone number contained letters")
 
-    (hasDigit, specialCharacterCheck, letterCheck).mapN {
-      case _ => phoneNumber
+    (hasDigit, specialCharacterCheck, letterCheck).mapN { case _ =>
+      phoneNumber
     }
   }
 
@@ -151,17 +151,16 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     val noDigits: ValidatedOrErrorString[String] =
       validatedFromBoolean(name)(!_.exists(c => c.isDigit), s"$nameType contained a digit")
 
-    (firstCharacterNonSpecial, consecutiveSpecialCharacters, specialCharacterCheck, noDigits).mapN {
-      case _ => name
+    (firstCharacterNonSpecial, consecutiveSpecialCharacters, specialCharacterCheck, noDigits).mapN { case _ =>
+      name
     }
   }
 
   private def forenameNoApostrophe(name: String): ValidatedOrErrorString[String] =
     validatedFromBoolean(name)(!_.contains('\''), "forename contains an apostrophe")
 
-  /**
-    * Return a list of distinct special characters contained in the given string. Special
-    * characters found which are contained in `ignore` are not returned
+  /** Return a list of distinct special characters contained in the given string. Special characters found which are
+    * contained in `ignore` are not returned
     */
   private def specialCharacters(s: String, ignore: List[Char]): List[Char] =
     s.replaceAll(" ", "").filter(isSpecial(_, ignore)).toList.distinct
@@ -170,9 +169,8 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
   private def containsNConsecutiveSpecialCharacters(s: String, n: Int): Boolean =
     containsNConsecutive(s, n, isSpecial(_))
 
-  /**
-    * Does the given string contains `n` consecutive characters which satisfy the given predicate?
-    * `n` should be one or greater.
+  /** Does the given string contains `n` consecutive characters which satisfy the given predicate? `n` should be one or
+    * greater.
     */
   private def containsNConsecutive(s: String, n: Int, predicate: Char => Boolean): Boolean = {
     @tailrec
@@ -208,11 +206,10 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
   private def validatedFromBoolean[A](a: A)(isValid: A => Boolean, ifFalse: => String): ValidatedNel[String, A] =
     if (isValid(a)) Validated.Valid(a) else Validated.Invalid(NonEmptyList.of(ifFalse))
 
-  /**
-    * The given [[Char]] is special if the following is true:
-    * - it is not a whitespace character
-    * - it is not alphanumeric
-    * - it is not contained in `ignore`
+  /** The given [[Char]] is special if the following is true:
+    *   - it is not a whitespace character
+    *   - it is not alphanumeric
+    *   - it is not contained in `ignore`
     */
   private def isSpecial(c: Char, ignore: List[Char] = List.empty[Char]): Boolean =
     !(c === ' ' || c.isLetterOrDigit || ignore.contains(c))

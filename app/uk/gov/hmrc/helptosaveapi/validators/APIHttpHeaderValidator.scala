@@ -44,12 +44,11 @@ class APIHttpHeaderValidator extends Logging {
     )
 
   def txmHeadersCheck(implicit request: Request[_]): ValidatedOrErrorString[List[String]] = {
-    val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(
-      expectedKey =>
-        validationFromBoolean(expectedKey)(
-          request.headers.get(_).isDefined,
-          _ => s"Could not find header '$expectedKey'"
-        )
+    val listOfValidations: List[ValidatedNel[String, String]] = expectedTxmHeaders.map(expectedKey =>
+      validationFromBoolean(expectedKey)(
+        request.headers.get(_).isDefined,
+        _ => s"Could not find header '$expectedKey'"
+      )
     )
     listOfValidations.traverse[Validation, String](identity)
   }
