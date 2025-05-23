@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.helptosaveapi.util
 
-import org.mockito.ArgumentMatchersSugar.*
-import org.mockito.stubbing.ScalaOngoingStubbing
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.when
+import org.mockito.stubbing.OngoingStubbing
+import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
-import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.auth.core.retrieve.*
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders}
 
 import scala.concurrent.Future
@@ -37,14 +39,16 @@ trait AuthSupport extends TestSupport {
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   def mockAuthResultWithFail()(ex: Throwable): Unit =
-    mockAuthConnector
-      .authorise(*, *)(*, *)
-      .returns(Future.failed(ex))
+    when(
+      mockAuthConnector
+        .authorise(any(), any())(any(), any())
+    )
+      .thenReturn(Future.failed(ex))
 
-  def mockAuthResultWithSuccess[A](expectedRetrieval: Retrieval[A])(result: A): ScalaOngoingStubbing[Future[A]] =
-    mockAuthConnector
-      .authorise(*, expectedRetrieval)(*, *)
-      .returns(Future.successful(result))
+  def mockAuthResultWithSuccess[A](expectedRetrieval: Retrieval[A])(result: A): OngoingStubbing[Future[A]] =
+    when(mockAuthConnector.authorise(any(), eqTo(expectedRetrieval))(any(), any()))
+      .thenReturn(Future.successful(result))
+
 }
 
 object AuthSupport {

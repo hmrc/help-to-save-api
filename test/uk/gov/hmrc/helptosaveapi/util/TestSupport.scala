@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.helptosaveapi.util
 
-import org.apache.pekko.stream.Materializer
 import com.typesafe.config.ConfigFactory
 import controllers.Assets
-import org.mockito.IdiomaticMockito
+import org.apache.pekko.stream.Materializer
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HttpErrorHandler
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.ControllerComponents
@@ -30,7 +30,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
 
-class TestSupport extends UnitSpec with IdiomaticMockito {
+class TestSupport extends UnitSpec with MockitoSugar {
 
   lazy val fakeApplication: Application =
     new GuiceApplicationBuilder()

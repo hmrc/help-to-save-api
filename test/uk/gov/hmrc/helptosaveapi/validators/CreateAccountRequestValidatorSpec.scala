@@ -246,7 +246,7 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckPrope
           )
 
           result.isInvalid shouldBe true
-          result.leftSideValue.toString shouldBe "Invalid(NonEmptyList(surname ended with special character))"
+          result.leftSide.toString shouldBe "Invalid(NonEmptyList(surname ended with special character))"
         }
 
         "has a surname must be at least one letter" in {

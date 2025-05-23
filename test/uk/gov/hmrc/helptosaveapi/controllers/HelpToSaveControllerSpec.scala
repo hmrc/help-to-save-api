@@ -15,19 +15,20 @@
  */
 
 package uk.gov.hmrc.helptosaveapi.controllers
-
-import org.mockito.ArgumentMatchersSugar.*
-import play.api.libs.json.Json
-import play.api.mvc._
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.when
+import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.libs.json.*
+import play.api.mvc.*
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.auth.core.ConfidenceLevel
-import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId, nino => v2Nino}
-import uk.gov.hmrc.helptosaveapi.models._
+import uk.gov.hmrc.auth.core.retrieve.*
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId, nino as v2Nino}
+import uk.gov.hmrc.helptosaveapi.models.*
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
-import uk.gov.hmrc.helptosaveapi.util.AuthSupport._
+import uk.gov.hmrc.helptosaveapi.util.AuthSupport.*
 import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, DataGenerators, toFuture}
 
 import java.time.LocalDate
@@ -41,30 +42,38 @@ class HelpToSaveControllerSpec extends AuthSupport {
   private def mockCreateAccountPrivileged(request: Request[AnyContent])(
     response: Either[ApiError, CreateAccountSuccess]
   ) =
-    apiService
-      .createAccountPrivileged(request)(*, *)
-      .returns(toFuture(response))
+    when(
+      apiService
+        .createAccountPrivileged(eqTo(request))(any(), any())
+    )
+      .thenReturn(toFuture(response))
 
   private def mockCreateAccountUserRestricted(request: Request[AnyContent], retrievedUserDetails: RetrievedUserDetails)(
     response: Either[ApiError, CreateAccountSuccess]
   ) =
-    apiService
-      .createAccountUserRestricted(request, retrievedUserDetails)(*, *)
-      .returns(toFuture(response))
+    when(
+      apiService
+        .createAccountUserRestricted(eqTo(request), eqTo(retrievedUserDetails))(any(), any())
+    )
+      .thenReturn(toFuture(response))
 
   private def mockEligibilityCheck(nino: String)(
     response: Either[ApiError, EligibilityResponse]
   ) =
-    apiService
-      .checkEligibility(nino, *)(*, *, *)
-      .returns(toFuture(response))
+    when(
+      apiService
+        .checkEligibility(eqTo(nino), any())(any(), any(), any())
+    )
+      .thenReturn(toFuture(response))
 
   private def mockGetAccount(nino: String)(
     response: Either[ApiError, Option[Account]]
   ) =
-    apiService
-      .getAccount(nino)(*, *, *)
-      .returns(toFuture(response))
+    when(
+      apiService
+        .getAccount(eqTo(nino))(any(), any(), any())
+    )
+      .thenReturn(toFuture(response))
 
   "The CreateAccountController" when {
     val nino = "AE123456C"
@@ -107,6 +116,30 @@ class HelpToSaveControllerSpec extends AuthSupport {
           contentAsJson(result) shouldBe Json.toJson(error)
         }
 
+        "return BAD_REQUEST when no JSON is found in request body" in {
+          val error: ApiError = ApiValidationError("NO_JSON", "no JSON found in request body")
+
+          mockAuthResultWithSuccess(authProviderId)(privilegedCredentials)
+          mockCreateAccountPrivileged(fakeRequest)(Left(error))
+
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe BAD_REQUEST
+          contentAsJson(result) shouldBe Json.toJson(error)
+        }
+
+        "handle noJson requests to createAccount ApiValidationError" in {
+          val error: ApiError = ApiValidationError("NO_JSON", "no JSON found in request body")
+
+          mockAuthResultWithSuccess(authProviderId)(privilegedCredentials)
+          mockCreateAccountPrivileged(fakeRequest)(Left(error))
+
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe BAD_REQUEST
+          contentAsJson(result) shouldBe Json.toJson(error)
+        }
+
         "handle unexpected internal server errors and return InternalServerError" in {
           val apiBackendError: ApiError = ApiBackendError()
 
@@ -134,9 +167,10 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "the request is made with user-restricted access" must {
         val userInfoRetrievals: Retrieval[
-          Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[
-            String
-          ] ~ ConfidenceLevel
+          Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~
+            Option[
+              String
+            ] ~ ConfidenceLevel
         ] =
           v2.Retrievals.name and
             v2.Retrievals.dateOfBirth and
@@ -150,9 +184,10 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         def createAccountRetrievalResult(
           u: RetrievedUserDetails
-        ): Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[
-          String
-        ] ~ ConfidenceLevel ~ Option[String] = {
+        ): Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~
+          Option[
+            String
+          ] ~ ConfidenceLevel ~ Option[String] = {
           val dob = u.dateOfBirth
 
           new ~(Some(Name(u.forename, u.surname)), dob) and
@@ -281,7 +316,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.checkEligibilityDeriveNino()(fakeRequest)
 
           status(result) shouldBe OK
-          contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+          contentAsString(
+            result
+          ) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
           headers(result).keys should contain("X-Correlation-ID")
         }
 
@@ -293,7 +330,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.checkEligibility(nino)(fakeRequest)
 
           status(result) shouldBe OK
-          contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+          contentAsString(
+            result
+          ) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
           headers(result).keys should contain("X-Correlation-ID")
         }
 
@@ -379,7 +418,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val result = controller.checkEligibility(nino)(fakeRequest)
 
           status(result) shouldBe OK
-          contentAsString(result) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
+          contentAsString(
+            result
+          ) shouldBe """{"eligibility":{"isEligible":true,"hasWTC":true,"hasUC":true},"accountExists":false}"""
           headers(result).keys should contain("X-Correlation-ID")
         }
 
@@ -456,8 +497,13 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         val result = controller.getAccount()(fakeRequest)
         status(result) shouldBe OK
-        contentAsString(result) shouldBe
+
+        val expectedJson = Json.parse(
           """{"accountNumber":"1100000000001","headroom":40,"closed":false,"blockedFromPayment":false,"balance":100,"bonusTerms":[{"startDate":"20180101","endDate":"20191231","bonusEstimate":65.43},{"startDate":"20200101","endDate":"20211231","bonusEstimate":125.43}]}"""
+        )
+        val actualJson = Json.parse(contentAsString(result))
+
+        actualJson shouldBe expectedJson
       }
 
       "return an Internal Server Error when getting an account is unsuccessful" in {
