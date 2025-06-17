@@ -20,9 +20,8 @@ import cats.data.OptionT
 import cats.instances.either.*
 import cats.syntax.either.*
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.helptosaveapi.models.EligibilityResponse
-import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
+import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.helptosaveapi.models.{EligibilityResponse, EligibilityResponseWithNINO}
 import uk.gov.hmrc.mongo.cache.{CacheIdType, DataKey, MongoCacheRepository}
 import uk.gov.hmrc.mongo.{CurrentTimestampSupport, MongoComponent}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -41,16 +40,6 @@ trait EligibilityStore {
   def put(correlationId: UUID, eligibility: EligibilityResponse, nino: String)(implicit
     ec: ExecutionContext
   ): Future[Either[String, Unit]]
-
-}
-
-object EligibilityStore {
-
-  case class EligibilityResponseWithNINO(eligibilityResponse: EligibilityResponse, nino: String)
-
-  object EligibilityResponseWithNINO {
-    implicit val format: Format[EligibilityResponseWithNINO] = Json.format[EligibilityResponseWithNINO]
-  }
 
 }
 
@@ -73,7 +62,7 @@ class MongoEligibilityStore @Inject() (mongoComponent: MongoComponent, servicesC
     correlationId: UUID
   )(implicit ec: ExecutionContext): Future[Either[String, Option[EligibilityResponseWithNINO]]] =
     doFindById(correlationId.toString)
-      .map { maybeCache =>
+      .map[Either[String, Option[EligibilityResponseWithNINO]]] { maybeCache =>
         val response: OptionT[EitherStringOr, EligibilityResponseWithNINO] = for {
           cache <- OptionT.fromOption[EitherStringOr](maybeCache)
           data  <- OptionT.fromOption[EitherStringOr](Some(cache.data))

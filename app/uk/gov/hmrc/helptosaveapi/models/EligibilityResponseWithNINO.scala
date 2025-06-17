@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.util
+package uk.gov.hmrc.helptosaveapi.models
 
-import com.google.inject.ImplementedBy
-import uk.gov.hmrc.helptosaveapi.logging.Logging
+import play.api.libs.json.{Format, Json}
 
-@ImplementedBy(classOf[LoggingPagerDutyAlerting])
-trait PagerDutyAlerting {
+case class EligibilityResponseWithNINO(eligibilityResponse: EligibilityResponse, nino: String)
 
-  def alert(message: String): Unit
-
-}
-
-/** Pager duty alerts that are triggered via specific log messages */
-class LoggingPagerDutyAlerting extends PagerDutyAlerting with Logging {
-
-  private val alertPrefix: String = "[PagerDutyAlert]"
-
-  def alert(message: String): Unit = logger.warn(s"$alertPrefix: $message")
-
+object EligibilityResponseWithNINO {
+  implicit val format: Format[EligibilityResponseWithNINO] = Json.format[EligibilityResponseWithNINO]
 }

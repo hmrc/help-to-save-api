@@ -33,17 +33,17 @@ import play.mvc.Http.Status
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.metrics.Metrics
 import uk.gov.hmrc.helptosaveapi.models.Account.fromHtsAccount
-import uk.gov.hmrc.helptosaveapi.models.{Account, AccountAlreadyExists, ApiAccessError, ApiBackendError, ApiEligibilityResponse, ApiError, ApiValidationError, Eligibility, EligibilityResponse, EnrolmentStatus, HtsAccount, ValidateBankDetailsRequest}
+import uk.gov.hmrc.helptosaveapi.models.{Account, AccountAlreadyExists, ApiAccessError, ApiBackendError, ApiEligibilityResponse, ApiError, ApiValidationError, Eligibility, EligibilityCheckResponse, EligibilityResponse, EligibilityResponseWithNINO, EnrolmentStatus, HtsAccount, ValidateBankDetailsRequest}
 import uk.gov.hmrc.helptosaveapi.models.EnrolmentStatus.Enrolled
 import uk.gov.hmrc.helptosaveapi.models.createaccount.*
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
-import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService.{CheckEligibilityResponseType, CreateAccountResponseType, GetAccountResponseType}
-import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.{CreateAccountErrorResponse, EligibilityCheckResponse}
+import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountErrorResponse
 import uk.gov.hmrc.helptosaveapi.util.HttpResponseOps.httpResponseOps
 import uk.gov.hmrc.helptosaveapi.util.JsErrorOps.*
-import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, NINO, PagerDutyAlerting, toFuture}
+import uk.gov.hmrc.helptosaveapi.logging.Logging.LoggerOps
+import uk.gov.hmrc.helptosaveapi.logging.Logging
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, NINO, PagerDutyAlerting, toFuture}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -300,6 +300,7 @@ class HelpToSaveApiServiceImpl @Inject() (
               ecResponse.status match {
                 case OK =>
                   val _ = timer.stop()
+                  import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.EligibilityCheckResponseOps
                   val result = ecResponse.parseJson[EligibilityCheckResponse].flatMap(_.toApiEligibility)
                   result.fold(
                     { e =>
@@ -536,27 +537,6 @@ class HelpToSaveApiServiceImpl @Inject() (
 }
 
 object HelpToSaveApiServiceImpl {
-
-  private[HelpToSaveApiServiceImpl] case class EligibilityCheckResult(
-    result: String,
-    resultCode: Int,
-    reason: String,
-    reasonCode: Int
-  )
-
-  private[HelpToSaveApiServiceImpl] object EligibilityCheckResult {
-    implicit val format: Format[EligibilityCheckResult] = Json.format[EligibilityCheckResult]
-  }
-
-  private[HelpToSaveApiServiceImpl] case class EligibilityCheckResponse(
-    eligibilityCheckResult: EligibilityCheckResult,
-    threshold: Option[Double]
-  )
-
-  private[HelpToSaveApiServiceImpl] object EligibilityCheckResponse {
-    implicit val format: Format[EligibilityCheckResponse] = Json.format[EligibilityCheckResponse]
-  }
-
   // scalastyle:off magic.number
   private implicit class EligibilityCheckResponseOps(val r: EligibilityCheckResponse) extends AnyVal {
     def toApiEligibility: Either[String, EligibilityResponse] =
@@ -599,17 +579,6 @@ object HelpToSaveApiServiceImpl {
       }
 
     // scalastyle:on magic.number
-
-  }
-
-  case class CreateAccountErrorResponse(errorMessage: String, errorDetail: String)
-
-  object CreateAccountErrorResponse {
-    implicit val format: Format[CreateAccountErrorResponse] = Json.format[CreateAccountErrorResponse]
-
-    implicit class CreateAccountErrorResponseOps(val errorResponse: CreateAccountErrorResponse) extends AnyVal {
-      def toJson: JsValue = format.writes(errorResponse)
-    }
 
   }
 

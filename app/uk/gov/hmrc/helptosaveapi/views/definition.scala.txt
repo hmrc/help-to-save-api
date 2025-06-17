@@ -1,4 +1,4 @@
-@import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
+@import uk.gov.hmrc.helptosaveapi.models.APIAccess
 @import play.api.libs.json.Json
 
 @(access: String => APIAccess, enabled: String => Boolean)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.helptosaveapi.util
+package uk.gov.hmrc.helptosaveapi.models
 
-import com.google.inject.ImplementedBy
-import uk.gov.hmrc.helptosaveapi.logging.Logging
+import com.typesafe.config.Config
+import play.api.libs.json.{Json, Reads, Writes}
 
-@ImplementedBy(classOf[LoggingPagerDutyAlerting])
-trait PagerDutyAlerting {
+case class APIAccess(`type`: String)
 
-  def alert(message: String): Unit
+object APIAccess {
 
-}
+  implicit val apiAccessWrites: Writes[APIAccess] = Json.writes[APIAccess]
+  implicit val apiAccessReads: Reads[APIAccess] = Json.reads[APIAccess]
 
-/** Pager duty alerts that are triggered via specific log messages */
-class LoggingPagerDutyAlerting extends PagerDutyAlerting with Logging {
+  type Version = String
 
-  private val alertPrefix: String = "[PagerDutyAlert]"
-
-  def alert(message: String): Unit = logger.warn(s"$alertPrefix: $message")
-
+  def apply(config: Config)(version: Version): APIAccess =
+    APIAccess(
+      `type` = config.getString(s"version-$version.type")
+    )
 }

@@ -319,6 +319,37 @@ class CreateAccountRequestValidatorSpec extends TestSupport with ScalaCheckPrope
           result.isInvalid shouldBe true
           result shouldBe Invalid(NonEmptyList.of("invalid email provided with communicationPreference = 02"))
         }
+
+        "have email length more than max value of 64 when communicationPreference is 02" in {
+          val body = validCreateAccountBody.copy(
+            contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "02")
+          )
+          val longInvalidEmail = List.fill(7)("abcdefg").mkString
+          val bodyWithLongEmail = body.copy(contactDetails = body.contactDetails.copy(email = Some(longInvalidEmail)))
+          val result = validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              bodyWithLongEmail
+            )
+          )
+          result.isInvalid shouldBe true
+          result shouldBe Invalid(NonEmptyList.of("invalid email provided with communicationPreference = 02"))
+        }
+
+        "email with no domain when communicationPreference is 02" in {
+          val body = validCreateAccountBody.copy(
+            contactDetails = validCreateAccountBody.contactDetails.copy(communicationPreference = "02")
+          )
+          val bodyWithLongEmail = body.copy(contactDetails = body.contactDetails.copy(email = Some("email@.")))
+          val result = validator.validateRequest(
+            CreateAccountRequest(
+              validCreateAccountHeader,
+              bodyWithLongEmail
+            )
+          )
+          result.isInvalid shouldBe true
+          result shouldBe Invalid(NonEmptyList.of("invalid email provided with communicationPreference = 02"))
+        }
       }
 
     }

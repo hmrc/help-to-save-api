@@ -47,6 +47,16 @@ class HttpResponseOpsSpec extends AnyFlatSpec with Matchers with MockitoSugar {
     )
   }
 
+  it should "return an error response null if it does not contain JSON" in {
+    val httpResponse = mock[HttpResponse]
+    when(httpResponse.json).thenThrow(new RuntimeException("Invalid JSON"))
+
+    val ops = new HttpResponseOps(httpResponse)
+    ops.parseJson[Map[String, String]] shouldBe Left(
+      "Could not read http response as JSON (Invalid JSON). Response body was null"
+    )
+  }
+
   it should "return an error if the JSON is invalid" in {
     val invalidJson = Json.parse("""{"key": 123}""")
     val httpResponse = mock[HttpResponse]

@@ -195,6 +195,19 @@ class HelpToSaveControllerSpec extends AuthSupport {
             u.address and u.email and ConfidenceLevel.L200 and u.nino
         }
 
+        def createAccountRetrievalResultLowConfLevel(
+          u: RetrievedUserDetails
+        ): Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~
+          Option[
+            String
+          ] ~ ConfidenceLevel ~ Option[String] = {
+          val dob = u.dateOfBirth
+
+          new ~(Some(Name(u.forename, u.surname)), dob) and
+            Some(ItmpName(u.forename, None, u.surname)) and dob and
+            u.address and u.email and ConfidenceLevel.L50 and u.nino
+        }
+
         val ggCredentials = GGCredId("id")
 
         "return a Created response if the request is valid and account create is successful " in {
@@ -291,6 +304,20 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
           status(result) shouldBe FORBIDDEN
           contentAsJson(result) shouldBe Json.toJson(apiAccessError)
+        }
+        "handle access errors and return Unauthorised" in {
+          val apiAccessError: ApiError = ApiAccessError()
+          val retrievedUserDetails = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
+          val userDetailsRetrieval = createAccountRetrievalResultLowConfLevel(retrievedUserDetails)
+
+          mockAuthResultWithSuccess(authProviderId)(ggCredentials)
+          mockAuthResultWithSuccess(createAccountUserDetailsRetrievals)(userDetailsRetrieval)
+          mockCreateAccountUserRestricted(fakeRequest, retrievedUserDetails)(Left(apiAccessError))
+
+          val result = controller.createAccount()(fakeRequest)
+
+          status(result) shouldBe UNAUTHORIZED
+          contentAsString(result) shouldBe "Insufficient confidence level"
         }
       }
 

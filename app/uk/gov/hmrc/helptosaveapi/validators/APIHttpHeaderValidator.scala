@@ -25,7 +25,8 @@ import cats.syntax.traverse._
 import play.api.http.{ContentTypes, HeaderNames}
 import play.api.mvc.{Headers, Request}
 import uk.gov.hmrc.helptosaveapi.util.Validation._
-import uk.gov.hmrc.helptosaveapi.util.{Logging, ValidatedOrErrorString}
+import uk.gov.hmrc.helptosaveapi.util.ValidatedOrErrorString
+import uk.gov.hmrc.helptosaveapi.logging.Logging
 
 class APIHttpHeaderValidator extends Logging {
 

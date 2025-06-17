@@ -24,7 +24,8 @@ import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.AuthorisationException.fromString
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, nino as v2Nino}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
-import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, Logging, TestSupport}
+import uk.gov.hmrc.helptosaveapi.logging.Logging
+import uk.gov.hmrc.helptosaveapi.util.{AuthSupport, TestSupport}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.duration.*

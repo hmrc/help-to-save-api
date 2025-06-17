@@ -18,9 +18,10 @@ package uk.gov.hmrc.helptosaveapi.services
 
 import play.mvc.Http.Status
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
+import uk.gov.hmrc.helptosaveapi.logging.Logging
 import uk.gov.hmrc.helptosaveapi.models.{ApiBackendError, ApiError}
-import uk.gov.hmrc.helptosaveapi.util.Logging._
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, PagerDutyAlerting, base64Encode}
+import uk.gov.hmrc.helptosaveapi.logging.Logging._
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, PagerDutyAlerting, base64Encode}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.util.UUID

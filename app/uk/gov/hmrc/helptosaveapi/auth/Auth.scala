@@ -20,7 +20,7 @@ import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.helptosaveapi.util.Logging
+import uk.gov.hmrc.helptosaveapi.logging.Logging
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
