@@ -23,7 +23,7 @@ import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnectorImpl.CreateAccountInfo
 import uk.gov.hmrc.helptosaveapi.models.ValidateBankDetailsRequest
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody
-import uk.gov.hmrc.helptosaveapi.util.Logging
+import uk.gov.hmrc.helptosaveapi.logging.Logging
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}

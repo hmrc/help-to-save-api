@@ -19,10 +19,6 @@ package uk.gov.hmrc.helptosaveapi.util
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
-object TryOps {
-  implicit def foldOps[A](t: Try[A]): TryOps[A] = new TryOps[A](t)
-}
-
 class TryOps[A](val t: Try[A]) extends AnyVal {
 
   def fold[B](f: Throwable => B, g: A => B): B = t match {

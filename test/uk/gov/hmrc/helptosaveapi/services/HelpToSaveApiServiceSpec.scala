@@ -28,12 +28,10 @@ import play.mvc.Http.Status.*
 import uk.gov.hmrc.auth.core.retrieve.ItmpAddress
 import uk.gov.hmrc.helptosaveapi.connectors.HelpToSaveConnector
 import uk.gov.hmrc.helptosaveapi.models.*
-import uk.gov.hmrc.helptosaveapi.models.createaccount.*
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountBody.BankDetails
+import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountErrorResponse, *}
 import uk.gov.hmrc.helptosaveapi.models.createaccount.CreateAccountFieldSpec.TestCreateAccountRequest
 import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore
-import uk.gov.hmrc.helptosaveapi.repo.EligibilityStore.EligibilityResponseWithNINO
-import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceImpl.CreateAccountErrorResponse
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiServiceSpec.*
 import uk.gov.hmrc.helptosaveapi.util.{DataGenerators, MockPagerDuty, NINO, TestSupport, ValidatedOrErrorString, base64Encode}
 import uk.gov.hmrc.helptosaveapi.validators.{APIHttpHeaderValidator, CreateAccountRequestValidator, EligibilityRequestValidator}
@@ -510,6 +508,36 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           val result =
             await(service.createAccountUserRestricted(request, fullRetrievedUserDetails.copy(nino = Some("nino"))))
           result shouldBe Right(CreateAccountSuccess(alreadyHadAccount = false))
+        }
+
+        "there's no nino in the request" in {
+          val generatedCreateAccountRequest =
+            createAccountRequestWithRetrievedDetails(createAccountHeader, "online", "02")
+              .withEmail(Some(validEmail))
+              .withNINO(null)
+
+          val request =
+            FakeRequest().withJsonBody(
+              minimalJson("online")
+                .as[JsObject]
+                .deepMerge(
+                  JsObject(List("body" -> JsObject(List("nino" -> JsString(null)))))
+                )
+            )
+
+          mockCreateAccountHeaderValidator(true)(Valid(FakeRequest()))
+          mockCreateAccountRequestValidator(generatedCreateAccountRequest)(Right(()))
+          mockEligibilityStoreGet(generatedCreateAccountRequest.header.requestCorrelationId)(
+            Right(Some(apiEligibilityResponseWithNINO(null)))
+          )
+          generatedCreateAccountRequest.body.bankDetails
+            .foreach(mockBankDetailsValidation(onlineRequestWithEmail.body.nino, _)(Right(true)))
+          mockStoreEmail(base64Encode(validEmail), null, correlationId)(Right(HttpResponse(200, "")))
+          mockCreateAccountService(generatedCreateAccountRequest.body)(Right(HttpResponse(CREATED, "")))
+
+          val result =
+            await(service.createAccountUserRestricted(request, fullRetrievedUserDetails.copy(nino = None)))
+          result shouldBe Left(ApiAccessError())
         }
 
         "the communicationPreference is given" in {
@@ -1037,6 +1065,16 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
           case other                       => fail(s"Expected Left(ApiValidationError) but got $other")
         }
       }
+
+      "return a validation error No Json if the request has empty content" in {
+        val resultFuture = service.createAccountPrivileged(
+          fakeRequest.withBody(AnyContentAsEmpty)
+        )
+        await(resultFuture) match {
+          case Left(e: ApiValidationError) => e.code shouldBe "NO_JSON"
+          case other                       => fail(s"Expected Left(ApiValidationError) but got $other")
+        }
+      }
     }
 
     "handling eligibility requests" must {
@@ -1067,6 +1105,21 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
         val result = await(service.checkEligibility(nino, correlationId))
         result shouldBe Right(ApiEligibilityResponse(Eligibility(true, false, true), false))
+      }
+
+      "handle valid requests and return Left(ApiBackendError) for unexpected HTTP status" in {
+        mockGetUserEnrolmentStatus(nino, correlationId)(Some(Json.toJson(EnrolmentStatusResponse(false, false))))
+        mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+        mockEligibilityCheckRequestValidator(nino)(Valid(nino))
+        mockEligibilityCheck(nino, correlationId)(
+          Right(HttpResponse(418, Json.parse(eligibilityJson(1, 6)), Map.empty[String, Seq[String]]))
+        )
+        mockEligibilityStorePut(correlationId, ApiEligibilityResponse(Eligibility(true, false, true), false), nino)(
+          Right(())
+        )
+        val result = await(service.checkEligibility(nino, correlationId))
+        result shouldBe Left(ApiBackendError())
+
       }
 
       "handle when the request contains invalid headers" in {
@@ -1238,12 +1291,30 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
         result shouldBe Right(Some(Account("1100000000001", 40.00, false, false, 100.00, bonusTerms)))
       }
 
+      "return ApiValidationError when the call to the connector is unsuccessful" in {
+
+        val error = "Error"
+        mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+        mockGetAccount(nino, systemId)(Left(error))
+
+        val result = await(service.getAccount(nino))
+        result shouldBe Left(ApiBackendError("SERVER_ERROR", "Server error"))
+      }
+
       "return an Api Error when an INTERNAL SERVER ERROR status is returned from the connector" in {
         mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
         mockGetAccount(nino, systemId)(Right(HttpResponse(500, "")))
 
         val result = await(service.getAccount(nino))
         result shouldBe Left(ApiBackendError())
+      }
+
+      "return None when NOT FOUND status is returned from the connector" in {
+        mockEligibilityCheckHeaderValidator(false)(Valid(fakeRequest))
+        mockGetAccount(nino, systemId)(Right(HttpResponse(NOT_FOUND, "")))
+
+        val result = await(service.getAccount(nino))
+        result shouldBe Right(None)
       }
     }
   }

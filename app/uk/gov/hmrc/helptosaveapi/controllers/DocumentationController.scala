@@ -16,15 +16,14 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
-import org.apache.pekko.stream.Materializer
 import com.typesafe.config.Config
 import controllers.Assets
+import org.apache.pekko.stream.Materializer
 import play.api.Configuration
-import play.api.libs.json.{Json, Reads, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.filters.cors.CORSActionBuilder
-import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
-import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess.Version
+import uk.gov.hmrc.helptosaveapi.models.APIAccess
+import uk.gov.hmrc.helptosaveapi.models.APIAccess.Version
 import uk.gov.hmrc.helptosaveapi.views.txt
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -51,25 +50,5 @@ class DocumentationController @Inject() (configuration: Configuration, cc: Contr
     CORSActionBuilder(configuration).async { implicit request =>
       assets.at(s"/public/api/conf/$version", file)(request)
     }
-
-}
-
-object DocumentationController {
-
-  case class APIAccess(`type`: String)
-
-  object APIAccess {
-
-//    implicit val apiAccessFormats: Format[APIAccess] = Json.format[APIAccess]
-    implicit val apiAccessWrites: Writes[APIAccess] = Json.writes[APIAccess]
-    implicit val apiAccessReads: Reads[APIAccess] = Json.reads[APIAccess]
-
-    type Version = String
-
-    def apply(config: Config)(version: Version): APIAccess =
-      APIAccess(
-        `type` = config.getString(s"version-$version.type")
-      )
-  }
 
 }

@@ -18,6 +18,7 @@ package uk.gov.hmrc.helptosaveapi.util
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.{Configuration, Logger}
+import uk.gov.hmrc.helptosaveapi.logging.Logging
 
 class LoggingSpec extends PlaySpec with MockitoSugar {
 

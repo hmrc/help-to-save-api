@@ -22,7 +22,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
-import uk.gov.hmrc.helptosaveapi.controllers.DocumentationController.APIAccess
+import uk.gov.hmrc.helptosaveapi.models.APIAccess
 import uk.gov.hmrc.helptosaveapi.util.TestSupport
 
 import scala.concurrent.Future

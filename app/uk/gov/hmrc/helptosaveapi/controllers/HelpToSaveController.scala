@@ -31,8 +31,9 @@ import uk.gov.hmrc.helptosaveapi.models.AccessType.{PrivilegedAccess, UserRestri
 import uk.gov.hmrc.helptosaveapi.models._
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
-import uk.gov.hmrc.helptosaveapi.util.Logging.LoggerOps
-import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, Logging, toFuture}
+import uk.gov.hmrc.helptosaveapi.logging.Logging.LoggerOps
+import uk.gov.hmrc.helptosaveapi.util.{LogMessageTransformer, toFuture}
+import uk.gov.hmrc.helptosaveapi.logging.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
