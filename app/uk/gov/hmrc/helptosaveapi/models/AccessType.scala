@@ -26,10 +26,10 @@ object AccessType {
 
   case object UserRestricted extends AccessType
 
-  def fromLegacyCredentials(credentials: LegacyCredentials): Either[String, AccessType] = credentials match {
-    case GGCredId(_)   => Right(UserRestricted)
-    case PAClientId(_) => Right(PrivilegedAccess)
-    case other         => Left(other.toString)
+  def fromCredentials(credentials: Option[Credentials]): Either[String, AccessType] = credentials match {
+    case Some(Credentials(_, "GovernmentGateway"))     => Right(UserRestricted)
+    case Some(Credentials(_, "PrivilegedApplication")) => Right(PrivilegedAccess)
+    case other                                         => Left(other.toString)
   }
 
 }
