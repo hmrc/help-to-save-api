@@ -24,7 +24,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{authProviderId => v2AuthProviderId, nino => v2Nino}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials => v2Credentials, nino => v2Nino}
 import uk.gov.hmrc.auth.core.{AuthConnector, ConfidenceLevel}
 import uk.gov.hmrc.helptosaveapi.auth.Auth
 import uk.gov.hmrc.helptosaveapi.models.AccessType.{PrivilegedAccess, UserRestricted}
@@ -64,7 +64,7 @@ class HelpToSaveController @Inject() (
     case _: ApiBackendError    => InternalServerError(Json.toJson(e))
   }
 
-  def createAccount(): Action[AnyContent] = authorised(v2AuthProviderId) { implicit request => credentials =>
+  def createAccount(): Action[AnyContent] = authorised(v2Credentials) { implicit request => credentials =>
     def handleResult(result: Either[ApiError, CreateAccountSuccess]): Result =
       result match {
         case Left(e: ApiError) =>
@@ -77,7 +77,7 @@ class HelpToSaveController @Inject() (
           }
       }
 
-    AccessType.fromLegacyCredentials(credentials) match {
+    AccessType.fromCredentials(credentials) match {
       case Right(PrivilegedAccess) =>
         helpToSaveApiService.createAccountPrivileged(request).map(handleResult)
 
@@ -108,39 +108,35 @@ class HelpToSaveController @Inject() (
     }
   }
 
-  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2AuthProviderId) {
-    implicit request => credentials =>
-      val correlationId = UUID.randomUUID()
+  def checkEligibilityDeriveNino(): Action[AnyContent] = authorised(v2Credentials) { implicit request => credentials =>
+    val correlationId = UUID.randomUUID()
+    val result: Future[Result] =
+      AccessType.fromCredentials(credentials) match {
+        case Right(UserRestricted) =>
+          authorised(v2Nino) { _ =>
+            _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
+          }(ec)(request)
 
-      val result: Future[Result] =
-        AccessType.fromLegacyCredentials(credentials) match {
-          case Right(UserRestricted) =>
-            authorised(v2Nino) { _ =>
-              _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
-            }(ec)(request)
+        case Right(PrivilegedAccess) =>
+          logger.warn(
+            s"no nino exists in the api url, but nino from auth exists and providerType is not 'GovernmentGateway', $correlationId"
+          )
+          toFuture(Forbidden)
 
-          case Right(PrivilegedAccess) =>
-            logger.warn(
-              s"no nino exists in the api url, but nino from auth exists and providerType is not 'GovernmentGateway', $correlationId"
-            )
-            toFuture(Forbidden)
-
-          case Left(e) =>
-            logger.warn(
-              s"Received check eligibility request with unsupported credentials provider type: $e, $correlationId"
-            )
-            unsupportedCredentialsProviderResult
-        }
-
-      result.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
-
+        case Left(e) =>
+          logger.warn(
+            s"Received check eligibility request with unsupported credentials provider type: $e, $correlationId"
+          )
+          unsupportedCredentialsProviderResult
+      }
+    result.map(_.withHeaders(correlationIdHeaderName -> correlationId.toString))
   }
 
-  def checkEligibility(urlNino: String): Action[AnyContent] = authorised(v2AuthProviderId) {
+  def checkEligibility(urlNino: String): Action[AnyContent] = authorised(v2Credentials) {
     implicit request => credentials =>
       val correlationId = UUID.randomUUID()
       val result: Future[Result] =
-        AccessType.fromLegacyCredentials(credentials) match {
+        AccessType.fromCredentials(credentials) match {
           case Right(UserRestricted) =>
             authorised(v2Nino) { _ =>
               _.fold[Future[Result]] {
