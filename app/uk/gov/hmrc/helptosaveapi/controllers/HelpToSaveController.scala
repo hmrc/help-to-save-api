@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.helptosaveapi.controllers
 
-import cats.instances.string._
-import cats.syntax.eq._
+import cats.instances.string.*
+import cats.syntax.eq.*
 import com.google.inject.Inject
 import play.api.Configuration
 import play.api.libs.json.Json
-import play.api.libs.json.Json._
-import play.api.mvc._
-import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials => v2Credentials, nino => v2Nino}
+import play.api.libs.json.Json.*
+import play.api.mvc.*
+import uk.gov.hmrc.auth.core.retrieve.*
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials as v2Credentials, nino as v2Nino}
 import uk.gov.hmrc.auth.core.{AuthConnector, ConfidenceLevel}
 import uk.gov.hmrc.helptosaveapi.auth.Auth
 import uk.gov.hmrc.helptosaveapi.models.AccessType.{PrivilegedAccess, UserRestricted}
-import uk.gov.hmrc.helptosaveapi.models._
+import uk.gov.hmrc.helptosaveapi.models.*
 import uk.gov.hmrc.helptosaveapi.models.createaccount.{CreateAccountSuccess, RetrievedUserDetails}
 import uk.gov.hmrc.helptosaveapi.services.HelpToSaveApiService
 import uk.gov.hmrc.helptosaveapi.logging.Logging.LoggerOps
@@ -37,6 +37,7 @@ import uk.gov.hmrc.helptosaveapi.logging.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.LocalDate
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,9 +50,10 @@ class HelpToSaveController @Inject() (
 
   val correlationIdHeaderName: String = config.underlying.getString("microservice.correlationIdHeaderName")
 
-  private val userInfoRetrievals =
-    v2.Retrievals.name and
-      v2.Retrievals.dateOfBirth and
+  private val userInfoRetrievals: Retrieval[
+    Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[String] ~ ConfidenceLevel
+  ] =
+    v2.Retrievals.dateOfBirth and
       v2.Retrievals.itmpName and
       v2.Retrievals.itmpDateOfBirth and
       v2.Retrievals.itmpAddress and
@@ -85,12 +87,12 @@ class HelpToSaveController @Inject() (
         // we can't do the user retrievals before this point because the user retrievals
         // will definitely fail with a 500 response from auth for privileged access
         authorised(userInfoRetrievals and v2Nino) { _ =>
-          { case ggName ~ dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ confidenceLevel ~ authNino =>
+          { case dob ~ itmpName ~ itmpDob ~ itmpAddress ~ email ~ confidenceLevel ~ authNino =>
             if (confidenceLevel >= ConfidenceLevel.L200) {
               val retrievedDetails = RetrievedUserDetails(
                 authNino,
-                itmpName.flatMap(_.givenName).orElse(ggName.flatMap(_.name)),
-                itmpName.flatMap(_.familyName).orElse(ggName.flatMap(_.lastName)),
+                itmpName.flatMap(_.givenName),
+                itmpName.flatMap(_.familyName),
                 itmpDob.orElse(dob),
                 itmpAddress,
                 email
