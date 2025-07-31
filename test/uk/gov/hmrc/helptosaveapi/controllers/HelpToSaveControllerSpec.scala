@@ -167,13 +167,10 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
       "the request is made with user-restricted access" must {
         val userInfoRetrievals: Retrieval[
-          Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~
-            Option[
-              String
-            ] ~ ConfidenceLevel
+          Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[String] ~
+            ConfidenceLevel
         ] =
-          v2.Retrievals.name and
-            v2.Retrievals.dateOfBirth and
+          v2.Retrievals.dateOfBirth and
             v2.Retrievals.itmpName and
             v2.Retrievals.itmpDateOfBirth and
             v2.Retrievals.itmpAddress and
@@ -184,27 +181,23 @@ class HelpToSaveControllerSpec extends AuthSupport {
 
         def createAccountRetrievalResult(
           u: RetrievedUserDetails
-        ): Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~
+        ): Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~
           Option[
             String
           ] ~ ConfidenceLevel ~ Option[String] = {
           val dob = u.dateOfBirth
 
-          new ~(Some(Name(u.forename, u.surname)), dob) and
-            Some(ItmpName(u.forename, None, u.surname)) and dob and
+          new ~(dob, Some(ItmpName(u.forename, None, u.surname))) and dob and
             u.address and u.email and ConfidenceLevel.L200 and u.nino
         }
 
         def createAccountRetrievalResultLowConfLevel(
           u: RetrievedUserDetails
-        ): Option[Name] ~ Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~
-          Option[
-            String
-          ] ~ ConfidenceLevel ~ Option[String] = {
+        ): Option[LocalDate] ~ Option[ItmpName] ~ Option[LocalDate] ~ Option[ItmpAddress] ~ Option[String] ~
+          ConfidenceLevel ~ Option[String] = {
           val dob = u.dateOfBirth
 
-          new ~(Some(Name(u.forename, u.surname)), dob) and
-            Some(ItmpName(u.forename, None, u.surname)) and dob and
+          new ~(dob, Some(ItmpName(u.forename, None, u.surname))) and dob and
             u.address and u.email and ConfidenceLevel.L50 and u.nino
         }
 
@@ -242,8 +235,8 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val (userDetailsRetrieval, retrievedUserDetails) = {
             val u = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
 
-            val retrieval = new ~(Some(Name(Some("a"), Some("b"))), Some(LocalDate.of(1, 2, 3))) and
-              Some(ItmpName(Some("c"), None, Some("d"))) and Some(LocalDate.of(3, 2, 1)) and
+            val retrieval = new ~(Some(LocalDate.of(1, 2, 3)), Some(ItmpName(Some("c"), None, Some("d")))) and
+              Some(LocalDate.of(3, 2, 1)) and
               u.address and u.email and ConfidenceLevel.L200 and u.nino
 
             val expectedRetrievedUserDetails =
