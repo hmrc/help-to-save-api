@@ -58,7 +58,7 @@ class CreateAccountBodySpec extends TestSupport {
 
         val reads = CreateAccountBody.reads("code")
 
-        Json.parse(jsonString("\"19920423\"")).validate[CreateAccountBody](reads) shouldBe JsSuccess(
+        Json.parse(jsonString("\"19920423\"")).validate[CreateAccountBody](using reads) shouldBe JsSuccess(
           CreateAccountBody(
             "nino",
             "name",
@@ -87,7 +87,7 @@ class CreateAccountBodySpec extends TestSupport {
           "\"23041992\"",
           "\"23-04-1992\"",
           "true"
-        ).foreach(s => Json.parse(jsonString(s)).validate[CreateAccountBody](reads) shouldBe a[JsError])
+        ).foreach(s => Json.parse(jsonString(s)).validate[CreateAccountBody](using reads) shouldBe a[JsError])
       }
 
       "strip out any spaces in the sortcode" in {
@@ -120,7 +120,7 @@ class CreateAccountBodySpec extends TestSupport {
 
         val reads = CreateAccountBody.reads("code")
 
-        Json.parse(jsonString).validate[CreateAccountBody](reads) shouldBe JsSuccess(
+        Json.parse(jsonString).validate[CreateAccountBody](using reads) shouldBe JsSuccess(
           CreateAccountBody(
             "nino",
             "name",
@@ -175,7 +175,7 @@ class CreateAccountBodySpec extends TestSupport {
 
         val reads = CreateAccountBody.reads("code")
 
-        Json.parse(jsonString).validate[CreateAccountBody](reads) shouldBe JsSuccess(
+        Json.parse(jsonString).validate[CreateAccountBody](using reads) shouldBe JsSuccess(
           CreateAccountBody(
             "nino",
             "name",

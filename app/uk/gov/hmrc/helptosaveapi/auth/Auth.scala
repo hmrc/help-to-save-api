@@ -25,7 +25,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait Auth extends AuthorisedFunctions { this: BackendController with Logging =>
+trait Auth extends AuthorisedFunctions { this: BackendController & Logging =>
 
   val authProviders: AuthProviders = AuthProviders(GovernmentGateway, PrivilegedApplication)
 

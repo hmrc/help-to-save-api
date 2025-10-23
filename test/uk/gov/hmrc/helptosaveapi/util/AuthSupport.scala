@@ -41,12 +41,12 @@ trait AuthSupport extends TestSupport {
   def mockAuthResultWithFail()(ex: Throwable): Unit =
     when(
       mockAuthConnector
-        .authorise(any(), any())(any(), any())
+        .authorise(any(), any())(using any(), any())
     )
       .thenReturn(Future.failed(ex))
 
   def mockAuthResultWithSuccess[A](expectedRetrieval: Retrieval[A])(result: A): OngoingStubbing[Future[A]] =
-    when(mockAuthConnector.authorise(any(), eqTo(expectedRetrieval))(any(), any()))
+    when(mockAuthConnector.authorise(any(), eqTo(expectedRetrieval))(using any(), any()))
       .thenReturn(Future.successful(result))
 
 }

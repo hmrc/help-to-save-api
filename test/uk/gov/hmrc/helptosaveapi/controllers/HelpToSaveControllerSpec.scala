@@ -44,7 +44,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
   ) =
     when(
       apiService
-        .createAccountPrivileged(eqTo(request))(any(), any())
+        .createAccountPrivileged(eqTo(request))(using any(), any())
     )
       .thenReturn(toFuture(response))
 
@@ -53,7 +53,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
   ) =
     when(
       apiService
-        .createAccountUserRestricted(eqTo(request), eqTo(retrievedUserDetails))(any(), any())
+        .createAccountUserRestricted(eqTo(request), eqTo(retrievedUserDetails))(using any(), any())
     )
       .thenReturn(toFuture(response))
 
@@ -62,7 +62,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
   ) =
     when(
       apiService
-        .checkEligibility(eqTo(nino), any())(any(), any(), any())
+        .checkEligibility(eqTo(nino), any())(using any(), any(), any())
     )
       .thenReturn(toFuture(response))
 
@@ -71,7 +71,7 @@ class HelpToSaveControllerSpec extends AuthSupport {
   ) =
     when(
       apiService
-        .getAccount(eqTo(nino))(any(), any(), any())
+        .getAccount(eqTo(nino))(using any(), any(), any())
     )
       .thenReturn(toFuture(response))
 
@@ -187,8 +187,8 @@ class HelpToSaveControllerSpec extends AuthSupport {
           ] ~ ConfidenceLevel ~ Option[String] = {
           val dob = u.dateOfBirth
 
-          new ~(dob, Some(ItmpName(u.forename, None, u.surname))) and dob and
-            u.address and u.email and ConfidenceLevel.L200 and u.nino
+          new ~(dob, Some(ItmpName(u.forename, None, u.surname))) `and` dob `and`
+            u.address `and` u.email `and` ConfidenceLevel.L200 `and` u.nino
         }
 
         def createAccountRetrievalResultLowConfLevel(
@@ -197,8 +197,8 @@ class HelpToSaveControllerSpec extends AuthSupport {
           ConfidenceLevel ~ Option[String] = {
           val dob = u.dateOfBirth
 
-          new ~(dob, Some(ItmpName(u.forename, None, u.surname))) and dob and
-            u.address and u.email and ConfidenceLevel.L50 and u.nino
+          new ~(dob, Some(ItmpName(u.forename, None, u.surname))) `and` dob `and`
+            u.address `and` u.email `and` ConfidenceLevel.L50 `and` u.nino
         }
 
         val ggCredentials = Some(Credentials("123-gg", "GovernmentGateway"))
@@ -235,9 +235,9 @@ class HelpToSaveControllerSpec extends AuthSupport {
           val (userDetailsRetrieval, retrievedUserDetails) = {
             val u = DataGenerators.random(DataGenerators.retrievedUserDetailsGen)
 
-            val retrieval = new ~(Some(LocalDate.of(1, 2, 3)), Some(ItmpName(Some("c"), None, Some("d")))) and
-              Some(LocalDate.of(3, 2, 1)) and
-              u.address and u.email and ConfidenceLevel.L200 and u.nino
+            val retrieval = new ~(Some(LocalDate.of(1, 2, 3)), Some(ItmpName(Some("c"), None, Some("d")))) `and`
+              Some(LocalDate.of(3, 2, 1)) `and`
+              u.address `and` u.email `and` ConfidenceLevel.L200 `and` u.nino
 
             val expectedRetrievedUserDetails =
               u.copy(forename = Some("c"), surname = Some("d"), dateOfBirth = Some(LocalDate.of(3, 2, 1)))

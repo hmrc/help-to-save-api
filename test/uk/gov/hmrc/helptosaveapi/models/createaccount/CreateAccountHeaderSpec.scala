@@ -39,7 +39,7 @@ class CreateAccountHeaderSpec extends AnyWordSpec with Matchers {
              |}
           """.stripMargin
 
-        Json.parse(jsonString("\"2017-11-23 20:33:37 GMT\"")).validate[CreateAccountHeader] shouldBe a[JsSuccess[_]]
+        Json.parse(jsonString("\"2017-11-23 20:33:37 GMT\"")).validate[CreateAccountHeader] shouldBe a[JsSuccess[?]]
 
         List(
           "\"2017-11-23 20:33:37\"",

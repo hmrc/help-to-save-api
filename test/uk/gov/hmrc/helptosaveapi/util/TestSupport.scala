@@ -44,6 +44,7 @@ class TestSupport extends UnitSpec with MockitoSugar {
           """.stripMargin)
         )
       )
+      .disable[uk.gov.hmrc.play.bootstrap.BuiltinModule]
       .build()
 
   implicit lazy val materializer: Materializer = fakeApplication.materializer

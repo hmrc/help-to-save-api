@@ -148,7 +148,7 @@ class HelpToSaveApiServiceImpl @Inject() (
     })
   }
 
-  private def storeEmailThenCreateAccount(json: JsValue, retrievedNINO: Option[String], request: Request[_])(implicit
+  private def storeEmailThenCreateAccount(json: JsValue, retrievedNINO: Option[String], request: Request[?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): CreateAccountResponseType =
@@ -414,13 +414,13 @@ class HelpToSaveApiServiceImpl @Inject() (
         }
     }
 
-  private def validateCreateAccountRequest(body: JsValue, request: Request[_])(
+  private def validateCreateAccountRequest(body: JsValue, request: Request[?])(
     f: CreateAccountRequest => CreateAccountResponseType
   ): CreateAccountResponseType =
     body.validate[CreateAccountRequest] match {
       case JsSuccess(createAccountRequest, _) =>
         (
-          httpHeaderValidator.validateHttpHeaders(contentTypeCk = true)(request),
+          httpHeaderValidator.validateHttpHeaders(contentTypeCk = true)(using request),
           createAccountRequestValidator.validateRequest(createAccountRequest)
         ).mapN { case (_, b) => b }
           .fold(
@@ -505,7 +505,7 @@ class HelpToSaveApiServiceImpl @Inject() (
     nino: String,
     correlationIdHeader: (String, String),
     timer: Timer.Context
-  )(f: String => CheckEligibilityResponseType)(implicit request: Request[_]): CheckEligibilityResponseType =
+  )(f: String => CheckEligibilityResponseType)(implicit request: Request[?]): CheckEligibilityResponseType =
     (httpHeaderValidator.validateHttpHeaders(contentTypeCk = false), eligibilityRequestValidator.validateNino(nino))
       .mapN { case (_, b) => b }
       .fold(
@@ -521,7 +521,7 @@ class HelpToSaveApiServiceImpl @Inject() (
 
   private def validateGetAccountRequest(
     f: () => GetAccountResponseType
-  )(implicit request: Request[_]): GetAccountResponseType =
+  )(implicit request: Request[?]): GetAccountResponseType =
     httpHeaderValidator
       .validateHttpHeaders(contentTypeCk = false)
       .toEither

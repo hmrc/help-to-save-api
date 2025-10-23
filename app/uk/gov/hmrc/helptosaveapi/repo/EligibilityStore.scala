@@ -25,7 +25,7 @@ import uk.gov.hmrc.helptosaveapi.models.{EligibilityResponse, EligibilityRespons
 import uk.gov.hmrc.mongo.cache.{CacheIdType, DataKey, MongoCacheRepository}
 import uk.gov.hmrc.mongo.{CurrentTimestampSupport, MongoComponent}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.play.http.logging.Mdc.preservingMdc
+import uk.gov.hmrc.mdc.Mdc.preservingMdc
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,7 +56,7 @@ class MongoEligibilityStore @Inject() (mongoComponent: MongoComponent, servicesC
     ttl = servicesConfig.getDuration("mongo-cache.expireAfter"),
     timestampSupport = new CurrentTimestampSupport,
     cacheIdType = CacheIdType.SimpleCacheId
-  )(ec)
+  )(using ec)
 
   override def get(
     correlationId: UUID

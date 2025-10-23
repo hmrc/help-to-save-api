@@ -27,21 +27,21 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
 
   val validator: APIHttpHeaderValidator = new APIHttpHeaderValidator
 
-  def requestWithHeaders(headers: Map[String, String]): Request[_] =
-    FakeRequest.apply("", "", Headers(headers.toList: _*), "")
+  def requestWithHeaders(headers: Map[String, String]): Request[?] =
+    FakeRequest.apply("", "", Headers(headers.toList*), "")
 
   "The HeaderValidatorImpl" when {
 
     "handling CreateAccount requests" must {
 
       def result(headers: Map[String, String]): ValidatedNel[String, Request[Any]] =
-        validator.validateHttpHeaders(true)(requestWithHeaders(headers))
+        validator.validateHttpHeaders(true)(using requestWithHeaders(headers))
 
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ -> "value") ++ List(
           HeaderNames.CONTENT_TYPE -> ContentTypes.JSON,
           HeaderNames.ACCEPT       -> "application/vnd.hmrc.2.0+json"
-        ): _*
+        )*
       )
 
       behave like testCommon(validRequestHeaders, result, true)
@@ -52,11 +52,11 @@ class APIHttpHeaderValidatorSpec extends TestSupport {
       val validRequestHeaders: Map[String, String] = Map(
         APIHttpHeaderValidator.expectedTxmHeaders.map(_ -> "value") ++ List(
           HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"
-        ): _*
+        )*
       )
 
       def result(headers: Map[String, String]): ValidatedNel[String, Request[Any]] =
-        validator.validateHttpHeaders(false)(requestWithHeaders(headers))
+        validator.validateHttpHeaders(false)(using requestWithHeaders(headers))
 
       behave like testCommon(validRequestHeaders, result, false)
     }

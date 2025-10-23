@@ -102,7 +102,7 @@ class HelpToSaveController @Inject() (
               Future.successful(Unauthorized("Insufficient confidence level"))
             }
           }
-        }(ec)(request)
+        }(using ec)(request)
 
       case Left(e) =>
         logger.warn(s"Received create account request with unsupported credentials provider type: $e")
@@ -117,7 +117,7 @@ class HelpToSaveController @Inject() (
         case Right(UserRestricted) =>
           authorised(v2Nino) { _ =>
             _.fold[Future[Result]](Forbidden)(getEligibility(_, correlationId))
-          }(ec)(request)
+          }(using ec)(request)
 
         case Right(PrivilegedAccess) =>
           logger.warn(
@@ -158,7 +158,7 @@ class HelpToSaveController @Inject() (
                   Forbidden
                 }
               }
-            }(ec)(request)
+            }(using ec)(request)
 
           case Right(PrivilegedAccess) =>
             getEligibility(urlNino, correlationId)

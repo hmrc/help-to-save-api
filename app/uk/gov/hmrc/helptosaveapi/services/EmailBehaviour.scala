@@ -28,7 +28,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 private[services] trait EmailBehaviour {
-  this: HelpToSaveApiService with Logging =>
+  this: HelpToSaveApiService & Logging =>
 
   val helpToSaveConnector: HelpToSaveConnector
   val pagerDutyAlerting: PagerDutyAlerting
