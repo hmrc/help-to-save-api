@@ -73,9 +73,9 @@ class CreateAccountRequestValidator @Inject() (emailValidation: EmailValidation)
     ).mapN { case _ => body }
   }
 
-  private val versionRegex: String => Matcher = "^(\\d\\.)+\\d+$".r.pattern.matcher _
+  private val versionRegex: String => Matcher = "^(\\d\\.)+\\d+$".r.pattern.matcher
 
-  private val clientCodeRegex: String => Matcher = "^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$".r.pattern.matcher _
+  private val clientCodeRegex: String => Matcher = "^[A-Z0-9][A-Z0-9_-]+[A-Z0-9]$".r.pattern.matcher
 
   def validateHeaders(header: CreateAccountHeader): ValidatedOrErrorString[CreateAccountHeader] = {
     val versionCheck: ValidatedOrErrorString[String] =

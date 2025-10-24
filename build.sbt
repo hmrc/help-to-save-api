@@ -8,11 +8,17 @@ lazy val microservice = Project(appName, file("."))
   .settings(CodeCoverageSettings.settings *)
   .settings(onLoadMessage := "")
   .settings(majorVersion := 2)
-  .settings(scalaVersion := "3.3.5")
+  .settings(scalaVersion := "3.7.1")
   .settings(PlayKeys.playDefaultPort := 7004)
   .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "resources")
-  .settings(scalacOptions += "-Wconf:src=routes/.*:s")
-  .settings(scalacOptions += "-Wconf:src=txt/.*:s") //silence warning from txt files
+  .settings(
+    scalacOptions ++= Seq(
+      "-Wconf:src=routes/.*:s",
+      "-Wconf:src=txt/.*:s",
+      "-Wconf:msg=unused:s",
+      "-Wconf:msg=Flag.*repeatedly:s"
+    )
+  ) //silence warning from txt files
   .settings(scalafmtOnCompile := true)
   .settings(libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test())
   // Disable default sbt Test options (might change with new versions of bootstrap)

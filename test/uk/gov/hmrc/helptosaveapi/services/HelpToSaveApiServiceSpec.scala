@@ -60,7 +60,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
     response: ValidatedOrErrorString[Request[AnyContent]]
   ) = when(
     mockApiHttpHeaderValidator
-      .validateHttpHeaders[AnyContent](eqTo(contentTypeCk))(any())
+      .validateHttpHeaders[AnyContent](eqTo(contentTypeCk))(using any())
   )
     .thenReturn(response)
 
@@ -71,7 +71,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   ) =
     when(
       mockApiHttpHeaderValidator
-        .validateHttpHeaders[AnyContent](eqTo(contentTypeCk))(any())
+        .validateHttpHeaders[AnyContent](eqTo(contentTypeCk))(using any())
     )
       .thenReturn(response)
 
@@ -91,7 +91,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
   private def mockEligibilityCheck(nino: String, correlationId: UUID)(
     response: Either[String, HttpResponse]
-  ) = when(helpToSaveConnector.checkEligibility(eqTo(nino), eqTo(correlationId))(any(), any()))
+  ) = when(helpToSaveConnector.checkEligibility(eqTo(nino), eqTo(correlationId))(using any(), any()))
     .thenReturn(
       response.fold(
         e => Future.failed(new Exception(e)),
@@ -101,7 +101,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
 
   private def mockCreateAccountService(expectedBody: CreateAccountBody)(
     response: Either[String, HttpResponse]
-  ) = when(helpToSaveConnector.createAccount(eqTo(expectedBody), any(), any(), any())(any(), any()))
+  ) = when(helpToSaveConnector.createAccount(eqTo(expectedBody), any(), any(), any())(using any(), any()))
     .thenReturn(
       response.fold(
         e => Future.failed(new Exception(e)),
@@ -114,7 +114,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   ) =
     when(
       helpToSaveConnector
-        .getAccount(eqTo(nino), eqTo(systemId), any())(any(), any())
+        .getAccount(eqTo(nino), eqTo(systemId), any())(using any(), any())
     )
       .thenReturn(
         response.fold(
@@ -128,7 +128,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   ) =
     when(
       helpToSaveConnector
-        .storeEmail(eqTo(encodedEmail), eqTo(nino), eqTo(correlationId))(any(), any())
+        .storeEmail(eqTo(encodedEmail), eqTo(nino), eqTo(correlationId))(using any(), any())
     )
       .thenReturn(
         response.fold(
@@ -142,7 +142,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   ) =
     when(
       mockEligibilityStore
-        .put(eqTo(correlationId), eqTo(eligibility), eqTo(nino))(any())
+        .put(eqTo(correlationId), eqTo(eligibility), eqTo(nino))(using any())
     )
       .thenReturn(Future.successful(response))
 
@@ -151,7 +151,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   ) =
     when(
       mockEligibilityStore
-        .get(eqTo(correlationId))(any())
+        .get(eqTo(correlationId))(using any())
     )
       .thenReturn(Future.successful(response))
 
@@ -161,6 +161,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
     when(
       helpToSaveConnector
         .validateBankDetails(eqTo(ValidateBankDetailsRequest(nino, bankDetails.sortCode, bankDetails.accountNumber)))(
+          using
           any(),
           any()
         )
@@ -180,7 +181,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
   ) =
     when(
       helpToSaveConnector
-        .getUserEnrolmentStatus(eqTo(nino), eqTo(correlationId))(any(), any())
+        .getUserEnrolmentStatus(eqTo(nino), eqTo(correlationId))(using any(), any())
     )
       .thenReturn(
         jsonResponse.fold[Future[HttpResponse]](Future.failed(new Exception("Oh no!"))) { body =>
@@ -1324,7 +1325,7 @@ class HelpToSaveApiServiceSpec extends TestSupport with MockPagerDuty {
     "serialize and deserialize correctly using implicit format" in {
 
       val errorResponse = CreateAccountErrorResponse("Error occurred", "Detailed error message")
-      val json: JsValue = Json.toJson(errorResponse)(CreateAccountErrorResponse.format)
+      val json: JsValue = Json.toJson(errorResponse)(using CreateAccountErrorResponse.format)
       val deserializedErrorResponse = json.as[CreateAccountErrorResponse]
 
       errorResponse shouldEqual deserializedErrorResponse

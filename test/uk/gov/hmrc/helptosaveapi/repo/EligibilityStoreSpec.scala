@@ -119,7 +119,7 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport with Loggin
     "mongoRepo get call throws exception" should {
       "fail" in {
         val store: MongoEligibilityStore =
-          new MongoEligibilityStore(mockMongoComponent, mockServicesConfig)(ExecutionContext.global) {
+          new MongoEligibilityStore(mockMongoComponent, mockServicesConfig)(using ExecutionContext.global) {
             override val mongoRepo: FailingMongoCacheRepo = new FailingMongoCacheRepo()
           }
         val result = await(store.get(cId))
@@ -130,7 +130,7 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport with Loggin
     "mongoRepo put call throws exception" should {
       "fail" in {
         val store: MongoEligibilityStore =
-          new MongoEligibilityStore(mockMongoComponent, mockServicesConfig)(ExecutionContext.global) {
+          new MongoEligibilityStore(mockMongoComponent, mockServicesConfig)(using ExecutionContext.global) {
             override val mongoRepo: FailingMongoCacheRepo = new FailingMongoCacheRepo()
           }
         val result = await(store.put(cId, eligibility, "nino"))
@@ -140,7 +140,7 @@ class EligibilityStoreSpec extends TestSupport with MongoTestSupport with Loggin
 
     "mongoRepo doFindById call throws exception for invalid response" in {
       val store: MongoEligibilityStore =
-        new MongoEligibilityStore(mockMongoComponent, mockServicesConfig)(ExecutionContext.global) {
+        new MongoEligibilityStore(mockMongoComponent, mockServicesConfig)(using ExecutionContext.global) {
           override val mongoRepo: EligibilityCacheRepo = new EligibilityCacheRepo()
         }
       await(store.doFindById(cId.toString))
