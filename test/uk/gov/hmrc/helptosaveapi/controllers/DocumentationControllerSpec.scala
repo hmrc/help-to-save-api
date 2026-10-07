@@ -30,7 +30,7 @@ import scala.io.Source
 
 class DocumentationControllerSpec extends TestSupport {
 
-  val access: String = "PRIVATE"
+  val access: String = "INTERNAL"
 
   val configuration: Configuration = Configuration(
     "api.access.version-2.0.type"    -> access,
@@ -63,7 +63,7 @@ class DocumentationControllerSpec extends TestSupport {
 
   "APIAccess" must {
     "write valid json" in {
-      val expectedJson = Json.parse("""{"type":"PRIVATE"}""")
+      val expectedJson = Json.parse("""{"type":"INTERNAL"}""")
       val apiAccess = APIAccess(access)
 
       Json.toJson[APIAccess](apiAccess) shouldBe expectedJson
